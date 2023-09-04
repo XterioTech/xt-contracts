@@ -47,3 +47,10 @@ export const deployWhitelistMinter = async (gateway: AddressLike) => {
   await contract.waitForDeployment();
   return contract;
 };
+
+export const deployLootboxUnwrapper = async (gateway: AddressLike) => {
+  const Contract = await hre.ethers.getContractFactory("LootboxUnwrapper");
+  const contract = await Contract.deploy(gateway);
+  await contract.waitForDeployment();
+  return contract;
+};

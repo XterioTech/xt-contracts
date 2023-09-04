@@ -4,17 +4,17 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-help
 import { deployWhitelistMinter } from "../../lib/deploy";
 import { nftTradingTestFixture } from "../common_fixtures";
 
+async function defaultFixture() {
+  const base = await nftTradingTestFixture();
+  const whitelistMinter = await deployWhitelistMinter(base.gateway);
+  // Add whitelistMinter to the whitelist
+  await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(whitelistMinter);
+  const [, , , u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
+
+  return { ...base, whitelistMinter, u1, u2, u3, u4, u5 };
+}
+
 describe("Test WhitelistMinter Contract", function () {
-  async function defaultFixture() {
-    const base = await nftTradingTestFixture();
-    const whitelistMinter = await deployWhitelistMinter(base.gateway);
-    // Add whitelistMinter to the whitelist
-    await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(whitelistMinter);
-    const [, , , u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
-
-    return { ...base, whitelistMinter, u1, u2, u3, u4, u5 };
-  }
-
   const startTime = 1999888777;
   const erc1155TokenId = 1;
   const buyingAmount = 4;

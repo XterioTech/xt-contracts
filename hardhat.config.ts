@@ -1,6 +1,9 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
+// import "@nomiclabs/hardhat-etherscan";
+import "@openzeppelin/hardhat-upgrades";
+import "hardhat-abi-exporter";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -12,6 +15,22 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  abiExporter: [
+    {
+      path: "./abi/pretty",
+      pretty: true,
+      runOnCompile: true,
+      clear: true,
+      flat: false,
+    },
+    {
+      path: "./abi/ugly",
+      pretty: false,
+      runOnCompile: true,
+      clear: true,
+      flat: false,
+    },
+  ],
 };
 
 export default config;
