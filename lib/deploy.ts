@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { TokenGateway } from "../typechain-types";
+import { MarketplaceV2, TokenGateway } from "../typechain-types";
 import { AddressLike } from "ethers";
 
 export const deployMajorToken = async (wallet: AddressLike) => {
@@ -9,11 +9,29 @@ export const deployMajorToken = async (wallet: AddressLike) => {
   return token;
 };
 
-export const deployGateway = async (gatewayAdmin: unknown) => {
-  const Gateway = await hre.ethers.getContractFactory("TokenGateway");
-  const gateway = (await hre.upgrades.deployProxy(Gateway, [gatewayAdmin])) as unknown as TokenGateway;
-  await gateway.waitForDeployment();
-  return gateway;
+export const deployGateway = async (gatewayAdmin: AddressLike) => {
+  const Contract = await hre.ethers.getContractFactory("TokenGateway");
+  const contract = (await hre.upgrades.deployProxy(Contract, [gatewayAdmin])) as unknown as TokenGateway;
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployMarketplaceV2 = async (
+  gateway: AddressLike,
+  paymentToken: AddressLike,
+  serviceFeeRecipient: AddressLike
+) => {
+  const Contract = await hre.ethers.getContractFactory("MarketplaceV2");
+  const contract = (await hre.upgrades.deployProxy(Contract)) as unknown as MarketplaceV2;
+  await contract.waitForDeployment();
+
+  // Initialize the marketplace contract.
+  await contract.addPaymentTokens([paymentToken]);
+  await contract.setServiceFeeRecipient(serviceFeeRecipient);
+  // Marketplace will in `atomicMatchAndDeposit` query the manager address of a token.
+  await contract.setGateway(gateway);
+
+  return contract;
 };
 
 export const deployForwarder = async () => {

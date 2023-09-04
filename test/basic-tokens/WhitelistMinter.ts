@@ -1,37 +1,18 @@
 import hre from "hardhat";
 import { expect } from "chai";
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { deployMajorToken, deployWhitelistMinter } from "../../lib/deploy";
-import { nftTestFixture } from "../common_fixtures";
+import { deployWhitelistMinter } from "../../lib/deploy";
+import { nftTradingTestFixture } from "../common_fixtures";
 
 describe("Test WhitelistMinter Contract", function () {
   async function defaultFixture() {
-    const base = await nftTestFixture();
-
-    const tokenName = "TestERC721";
-    const tokenSymbol = "TE721";
-    const baseURI = "https://api.test/meta/goerli";
-
-    const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
-    const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder);
-    await erc721.waitForDeployment();
-
-    const BasicERC1155C = await hre.ethers.getContractFactory("BasicERC1155C");
-    const erc1155 = await BasicERC1155C.deploy(baseURI, base.gateway, base.forwarder);
-    await erc1155.waitForDeployment();
-
-    const paymentToken = await deployMajorToken(base.owner.address);
+    const base = await nftTradingTestFixture();
     const whitelistMinter = await deployWhitelistMinter(base.gateway);
-
-    const [, , nftManager, u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
-
-    // NOTE: we need to configure this on-chain!!
-    await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc721, nftManager.address);
-    await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc1155, nftManager.address);
     // Add whitelistMinter to the whitelist
     await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(whitelistMinter);
+    const [, , , u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
 
-    return { ...base, paymentToken, whitelistMinter, erc721, erc1155, nftManager, u1, u2, u3, u4, u5 };
+    return { ...base, whitelistMinter, u1, u2, u3, u4, u5 };
   }
 
   const startTime = 1999888777;
