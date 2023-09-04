@@ -6,6 +6,7 @@ import "./interfaces/IBasicERC20.sol";
 import "./management/GatewayGuardedOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
@@ -13,6 +14,7 @@ contract BasicERC20 is
     IBasicERC20,
     ERC20,
     ERC20Burnable,
+    ERC20Permit,
     ERC2771Context,
     GatewayGuardedOwnable,
     Pausable
@@ -32,8 +34,9 @@ contract BasicERC20 is
         address trustedForwarder
     )
         ERC20(name, symbol)
-        GatewayGuarded(gateway)
+        ERC20Permit(name)
         ERC2771Context(trustedForwarder)
+        GatewayGuarded(gateway)
     {
         _decimals = decimal;
     }

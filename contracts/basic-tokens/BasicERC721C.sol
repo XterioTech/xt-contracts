@@ -21,7 +21,7 @@ contract BasicERC721C is
 {
     using Counters for Counters.Counter;
 
-    uint256 constant VERSION_BasicERC721C = 20230904;
+    uint256 public constant VERSION_BasicERC721C = 20230904;
 
     Counters.Counter private _tokenIdCounter;
 
@@ -113,7 +113,14 @@ contract BasicERC721C is
     }
 
     function contractURI() public view returns (string memory) {
-        return __baseURI;
+        return
+            string(
+                abi.encodePacked(
+                    __baseURI,
+                    "/",
+                    Strings.toHexString(uint160(address(this)), 20)
+                )
+            );
     }
 
     function setURI(
@@ -128,6 +135,16 @@ contract BasicERC721C is
 
     function unpause() external onlyGatewayOrOwner {
         _unpause();
+    }
+
+    function isApprovedForAll(
+        address account,
+        address operator
+    ) public view override returns (bool) {
+        if (IGateway(gateway).operatorWhitelist(operator)) {
+            return true;
+        }
+        return super.isApprovedForAll(account, operator);
     }
 
     function supportsInterface(

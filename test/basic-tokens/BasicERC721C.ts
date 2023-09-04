@@ -1,44 +1,36 @@
 import hre from "hardhat";
 import { expect } from "chai";
-import { deployedBytecode as CreatorTokenTransferValidatorBytecode } from "../../artifacts/@limitbreak/creator-token-contracts/contracts/utils/CreatorTokenTransferValidator.sol/CreatorTokenTransferValidator.json";
-import { loadFixture, setCode } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { deployForwarder, deployGateway } from "../../lib/deploy";
+import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { nftTestFixture, whitelistedOperator } from "../common_fixtures";
 
 const nullAddr = "0x0000000000000000000000000000000000000000";
-const defaultValidatorAddr = "0x0000721C310194CcfC01E523fc93C9cCcFa2A0Ac";
-const whitelistedOperator = "0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC";
 
 describe("Test BasicERC721C Contract", function () {
+  const tokenName = "TestERC721";
+  const tokenSymbol = "TE721";
+  const baseURI = "https://api.test/meta/goerli";
+
   async function defaultFixture() {
-    const [owner, gatewayAdmin, u0, u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
+    const base = await nftTestFixture();
+    const [, , u0, u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
 
-    // Set LimitBreak CreatorTokenTransferValidator contract at certain addresses
-    await setCode(defaultValidatorAddr, CreatorTokenTransferValidatorBytecode);
-    const transferValidator = await hre.ethers.getContractAt("CreatorTokenTransferValidator", defaultValidatorAddr);
-    await transferValidator.createOperatorWhitelist("default");
-    //  cannot simulate default transfer validator's constructor func. so we deploy another one
-    const TransferValidator = await hre.ethers.getContractFactory("CreatorTokenTransferValidator");
-    const customValidator = await TransferValidator.deploy(owner.address);
-    await customValidator.waitForDeployment();
-    await customValidator.addOperatorToWhitelist(1, whitelistedOperator);
-
-    const gateway = await deployGateway(gatewayAdmin.address);
-    await gateway.connect(gatewayAdmin).addManager(gatewayAdmin.address);
-    const forwarder = await deployForwarder();
-
-    const MockMarket = await hre.ethers.getContractFactory("MockMarket");
-    const mockMarket = await MockMarket.deploy();
-    await mockMarket.waitForDeployment();
-
-    const tokenName = "TestERC721";
-    const tokenSymbol = "TE721";
-    const baseURI = "https://api.test/meta/goerli";
     const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
-    const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, gateway, forwarder);
+    const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder);
     await erc721.waitForDeployment();
 
-    return { owner, gatewayAdmin, u0, u1, u2, u3, u4, u5, gateway, customValidator, erc721, mockMarket };
+    return { ...base, erc721, u0, u1, u2, u3, u4, u5 };
   }
+
+  it("Basic information", async function () {
+    const { erc721 } = await loadFixture(defaultFixture);
+    const erc721Addr = await erc721.getAddress();
+    expect(await erc721.name()).to.equal(tokenName);
+    expect(await erc721.symbol()).to.equal(tokenSymbol);
+    expect(await erc721.contractURI()).to.equal(`${baseURI}/${erc721Addr}`.toLowerCase());
+    expect(await erc721.tokenURI(1)).to.equal(
+      `${baseURI}/${erc721Addr}/${hre.ethers.zeroPadValue("0x01", 32)}`.toLowerCase()
+    );
+  });
 
   it("Cannot transfer when paused", async function () {
     const { erc721, u0, u1 } = await loadFixture(defaultFixture);

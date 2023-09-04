@@ -66,7 +66,7 @@ describe("Test TokenGateway Contract", function () {
     expect(await erc721.tokenURI(333)).to.equal(
       `ipfs://abc/${await erc721.getAddress()}/0x000000000000000000000000000000000000000000000000000000000000014d`.toLowerCase()
     );
-    expect(await erc721.contractURI()).to.equal("ipfs://abc");
+    expect(await erc721.contractURI()).to.equal(`ipfs://abc/${await erc721.getAddress()}`.toLowerCase());
 
     // reset erc721 owner
     await gateway.connect(u1).resetOwner(erc721, u2.address);

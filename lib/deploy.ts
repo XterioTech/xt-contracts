@@ -9,11 +9,13 @@ export const deployGateway = async (gatewayAdmin: unknown) => {
 };
 
 export const deployForwarder = async () => {
-  //   const Forwarder = await hre.ethers.getContractFactory("Forwarder");
-  //   const forwarder = await Forwarder.deploy();
-  //   await forwarder.waitForDeployment();
-  //   return forwarder;
-  const forwarder = await hre.ethers.deployContract("Forwarder");
-  await forwarder.waitForDeployment();
-  return forwarder;
+  const contract = await hre.ethers.deployContract("Forwarder");
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployWhitelistMinter = async () => {
+  const contract = await hre.ethers.deployContract("WhitelistMinter");
+  await contract.waitForDeployment();
+  return contract;
 };
