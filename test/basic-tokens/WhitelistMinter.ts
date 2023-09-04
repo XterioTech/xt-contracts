@@ -1,175 +1,283 @@
 import hre from "hardhat";
 import { expect } from "chai";
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { deployForwarder, deployGateway, deployWhitelistMinter } from "../../lib/deploy";
+import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { deployMajorToken, deployWhitelistMinter } from "../../lib/deploy";
+import { nftTestFixture } from "../common_fixtures";
 
 describe("Test WhitelistMinter Contract", function () {
   async function defaultFixture() {
-    const [owner, gatewayAdmin, u0, u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
-
-    const gateway = await deployGateway(gatewayAdmin.address);
-    await gateway.connect(gatewayAdmin).addManager(gatewayAdmin.address);
-    const forwarder = await deployForwarder();
-    const whitelistMinter = await deployWhitelistMinter();
+    const base = await nftTestFixture();
 
     const tokenName = "TestERC721";
     const tokenSymbol = "TE721";
     const baseURI = "https://api.test/meta/goerli";
+
     const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
-    const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, gateway, forwarder);
+    const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder);
     await erc721.waitForDeployment();
 
-    return { whitelistMinter, owner };
+    const BasicERC1155C = await hre.ethers.getContractFactory("BasicERC1155C");
+    const erc1155 = await BasicERC1155C.deploy(baseURI, base.gateway, base.forwarder);
+    await erc1155.waitForDeployment();
+
+    const paymentToken = await deployMajorToken(base.owner.address);
+    const whitelistMinter = await deployWhitelistMinter(base.gateway);
+
+    const [, , nftManager, u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
+
+    // NOTE: we need to configure this on-chain!!
+    await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc721, nftManager.address);
+    await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc1155, nftManager.address);
+    // Add whitelistMinter to the whitelist
+    await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(whitelistMinter);
+
+    return { ...base, paymentToken, whitelistMinter, erc721, erc1155, nftManager, u1, u2, u3, u4, u5 };
   }
 
-  // const startTime = 1999888777;
-  // const boxTokenId = 1;
-  // const buyingAmount = 4;
-  // const limitForBuyerID = 2728;
-  // const limitForTokenID = 2729;
-  // const integrationTest = async ({
-  //   payWithEth,
-  //   deadline,
-  //   buyingAmount,
-  //   paymentTokenAmount,
-  //   limitForBuyerAmount,
-  //   limitForTokenAmount,
-  // }) => {
-  //   // 1. Manager transfers some payment tokens to u1
-  //   await paymentToken.transfer(u1.address, paymentTokenAmount);
+  const startTime = 1999888777;
+  const erc1155TokenId = 1;
+  const buyingAmount = 4;
+  const limitForBuyerID = 2728;
+  const limitForTokenID = 2729;
 
-  //   // 2. Add whitelistMinter to the whitelist
-  //   await gateway.connect(gatewayAdmin).addOperatorWhitelist(whitelistMinter.address);
+  interface IntegrateTestParam {
+    payWithEth: boolean;
+    deadline: number;
+    buyingAmount: number;
+    paymentTokenAmount: number;
+    limitForBuyerAmount: number;
+    limitForTokenAmount: number;
+  }
 
-  //   // 3. User approves the whitelistMinter of spending payment tokens
-  //   await paymentToken.connect(u1).approve(whitelistMinter.address, paymentTokenAmount);
+  const integrationTest = async (params: IntegrateTestParam) => {
+    await integrationTest1155(params);
+    await integrationTest721(params);
+  };
 
-  //   // 3.2 If paying with ETH, faucet u1 with some ETHs
-  //   // TODO
+  const integrationTest1155 = async ({
+    payWithEth,
+    deadline,
+    buyingAmount,
+    paymentTokenAmount,
+    limitForBuyerAmount,
+    limitForTokenAmount,
+  }: IntegrateTestParam) => {
+    const { paymentToken, whitelistMinter, erc1155, nftManager, u1 } = await loadFixture(defaultFixture);
+    // 1. Manager transfers some payment tokens to u1
+    await paymentToken.transfer(u1.address, paymentTokenAmount);
 
-  //   // 5. Reset timestamp
-  //   await hre.network.provider.send("evm_setNextBlockTimestamp", [startTime]);
+    // 2. User approves the whitelistMinter of spending payment tokens
+    await paymentToken.connect(u1).approve(whitelistMinter, paymentTokenAmount);
 
-  //   // 6. NFT Manager prepares the signature
-  //   const msgHash = ethers.utils.solidityKeccak256(
-  //     [
-  //       "address", // recipient
-  //       "bool", // tokenType
-  //       "address", // boxTokenAddress
-  //       "uint256", // boxTokenId
-  //       "uint256", // amount
-  //       "uint256", // limits[0]
-  //       "uint256", // limits[1]
-  //       "uint256", // limits[2]
-  //       "uint256", // limits[3]
-  //       "address", // paymentTokenAddress
-  //       "uint256", // paymentTokenAmount
-  //       "uint256", // deadline
-  //       "uint256", // chainid
-  //     ],
-  //     [
-  //       u1.address,
-  //       false,
-  //       boxToken.address,
-  //       boxTokenId,
-  //       buyingAmount,
-  //       limitForBuyerID,
-  //       limitForBuyerAmount,
-  //       limitForTokenID,
-  //       limitForTokenAmount,
-  //       payWithEth ? hre.ethers.constants.AddressZero : paymentToken.address,
-  //       paymentTokenAmount,
-  //       deadline,
-  //       hre.network.config.chainId,
-  //     ]
-  //   );
-  //   const sig = await nftManager.signMessage(ethers.utils.arrayify(msgHash));
+    // 3 If paying with ETH, faucet u1 with some ETHs
+    // TODO
 
-  //   // 5. User buy the boxes with signature
-  //   await whitelistMinter
-  //     .connect(u1)
-  //     .mintWithSig(
-  //       false,
-  //       boxToken.address,
-  //       boxTokenId,
-  //       buyingAmount,
-  //       [limitForBuyerID, limitForBuyerAmount, limitForTokenID, limitForTokenAmount],
-  //       payWithEth ? hre.ethers.constants.AddressZero : paymentToken.address,
-  //       paymentTokenAmount,
-  //       deadline,
-  //       sig,
-  //       {
-  //         value: payWithEth ? paymentTokenAmount : 0,
-  //       }
-  //     );
+    // 4. Reset timestamp
+    time.setNextBlockTimestamp(startTime);
 
-  //   /******************** After Buying ********************/
+    // 5. NFT Manager prepares the signature
+    const msgHash = hre.ethers.solidityPackedKeccak256(
+      [
+        "address", // recipient
+        "bool", // tokenType
+        "address", // nft token address
+        "uint256", // nft token id (for 1155)
+        "uint256", // amount
+        "uint256", // limits[0]
+        "uint256", // limits[1]
+        "uint256", // limits[2]
+        "uint256", // limits[3]
+        "address", // paymentTokenAddress
+        "uint256", // paymentTokenAmount
+        "uint256", // deadline
+        "uint256", // chainid
+      ],
+      [
+        u1.address,
+        false,
+        await erc1155.getAddress(),
+        erc1155TokenId,
+        buyingAmount,
+        limitForBuyerID,
+        limitForBuyerAmount,
+        limitForTokenID,
+        limitForTokenAmount,
+        payWithEth ? hre.ethers.ZeroAddress : await paymentToken.getAddress(),
+        paymentTokenAmount,
+        deadline,
+        hre.network.config.chainId,
+      ]
+    );
+    const sig = await nftManager.signMessage(hre.ethers.getBytes(msgHash));
 
-  //   expect(await boxToken.balanceOf(u1.address, boxTokenId)).to.equal(buyingAmount);
-  //   if (!payWithEth) {
-  //     expect(await paymentToken.balanceOf(u1.address)).to.equal(0);
-  //     expect(await paymentToken.balanceOf(nftManager.address)).to.equal(paymentTokenAmount);
-  //   }
-  // };
+    // 6. User buy the boxes with signature
+    await whitelistMinter
+      .connect(u1)
+      .mintWithSig(
+        false,
+        erc1155,
+        erc1155TokenId,
+        buyingAmount,
+        [limitForBuyerID, limitForBuyerAmount, limitForTokenID, limitForTokenAmount],
+        payWithEth ? hre.ethers.ZeroAddress : paymentToken,
+        paymentTokenAmount,
+        deadline,
+        sig,
+        {
+          value: payWithEth ? paymentTokenAmount : 0,
+        }
+      );
 
-  // it("should pass integration test when paying with XTER", async function () {
-  //   await integrationTest({
-  //     payWithEth: false,
-  //     deadline: startTime + 15 * 60,
-  //     buyingAmount: 4,
-  //     paymentTokenAmount: 120,
-  //     limitForBuyerAmount: buyingAmount,
-  //     limitForTokenAmount: buyingAmount,
-  //   });
-  // });
+    /******************** After Buying ********************/
 
-  // it("should pass integration test when paying with ETH", async function () {
-  //   await integrationTest({
-  //     payWithEth: true,
-  //     deadline: startTime + 15 * 60,
-  //     buyingAmount: 4,
-  //     paymentTokenAmount: 120,
-  //     limitForBuyerAmount: buyingAmount,
-  //     limitForTokenAmount: buyingAmount,
-  //   });
-  // });
+    expect(await erc1155.balanceOf(u1.address, erc1155TokenId)).to.equal(buyingAmount);
+    if (!payWithEth) {
+      expect(await paymentToken.balanceOf(u1.address)).to.equal(0);
+      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(paymentTokenAmount);
+    }
+  };
 
-  // it("should fail integration test if ddl is exceeded", async function () {
-  //   await expect(
-  //     integrationTest({
-  //       payWithEth: false,
-  //       deadline: startTime - 1,
-  //       buyingAmount: 4,
-  //       paymentTokenAmount: 120,
-  //       limitForBuyerAmount: buyingAmount,
-  //       limitForTokenAmount: buyingAmount,
-  //     })
-  //   ).to.be.revertedWith("WhitelistMinter: too late");
-  // });
+  const integrationTest721 = async ({
+    payWithEth,
+    deadline,
+    buyingAmount,
+    paymentTokenAmount,
+    limitForBuyerAmount,
+    limitForTokenAmount,
+  }: IntegrateTestParam) => {
+    const { paymentToken, whitelistMinter, erc721, nftManager, u1 } = await loadFixture(defaultFixture);
+    // 1. Manager transfers some payment tokens to u1
+    await paymentToken.transfer(u1.address, paymentTokenAmount);
 
-  // it("should fail integration test if buyer limit is exceeded", async function () {
-  //   await expect(
-  //     integrationTest({
-  //       payWithEth: false,
-  //       deadline: startTime + 15 * 60,
-  //       buyingAmount: 4,
-  //       paymentTokenAmount: 120,
-  //       limitForBuyerAmount: buyingAmount - 1,
-  //       limitForTokenAmount: buyingAmount,
-  //     })
-  //   ).to.be.revertedWith("WhitelistMinter: buyer limit exceeded");
-  // });
+    // 2. User approves the whitelistMinter of spending payment tokens
+    await paymentToken.connect(u1).approve(whitelistMinter, paymentTokenAmount);
 
-  // it("should fail integration test if token limit is exceeded", async function () {
-  //   await expect(
-  //     integrationTest({
-  //       payWithEth: false,
-  //       deadline: startTime + 15 * 60,
-  //       buyingAmount: 4,
-  //       paymentTokenAmount: 120,
-  //       limitForBuyerAmount: buyingAmount,
-  //       limitForTokenAmount: buyingAmount - 1,
-  //     })
-  //   ).to.be.revertedWith("WhitelistMinter: token limit exceeded");
-  // });
+    // 3 If paying with ETH, faucet u1 with some ETHs
+    // TODO
+
+    // 4. Reset timestamp
+    time.setNextBlockTimestamp(startTime);
+
+    // 5. NFT Manager prepares the signature
+    const msgHash = hre.ethers.solidityPackedKeccak256(
+      [
+        "address", // recipient
+        "bool", // tokenType
+        "address", // nft token address
+        "uint256", // nft token id (for 1155)
+        "uint256", // amount
+        "uint256", // limits[0]
+        "uint256", // limits[1]
+        "uint256", // limits[2]
+        "uint256", // limits[3]
+        "address", // paymentTokenAddress
+        "uint256", // paymentTokenAmount
+        "uint256", // deadline
+        "uint256", // chainid
+      ],
+      [
+        u1.address,
+        true,
+        await erc721.getAddress(),
+        0,
+        buyingAmount,
+        limitForBuyerID,
+        limitForBuyerAmount,
+        limitForTokenID,
+        limitForTokenAmount,
+        payWithEth ? hre.ethers.ZeroAddress : await paymentToken.getAddress(),
+        paymentTokenAmount,
+        deadline,
+        hre.network.config.chainId,
+      ]
+    );
+    const sig = await nftManager.signMessage(hre.ethers.getBytes(msgHash));
+
+    // 6. User buy the nft with signature
+    await whitelistMinter
+      .connect(u1)
+      .mintWithSig(
+        true,
+        erc721,
+        0,
+        buyingAmount,
+        [limitForBuyerID, limitForBuyerAmount, limitForTokenID, limitForTokenAmount],
+        payWithEth ? hre.ethers.ZeroAddress : paymentToken,
+        paymentTokenAmount,
+        deadline,
+        sig,
+        {
+          value: payWithEth ? paymentTokenAmount : 0,
+        }
+      );
+
+    /******************** After Buying ********************/
+
+    expect(await erc721.ownerOf(1)).to.equal(u1.address);
+    if (!payWithEth) {
+      expect(await paymentToken.balanceOf(u1.address)).to.equal(0);
+      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(paymentTokenAmount);
+    }
+  };
+
+  it("should pass integration test when paying with XTER", async function () {
+    await integrationTest({
+      payWithEth: false,
+      deadline: startTime + 15 * 60,
+      buyingAmount: 4,
+      paymentTokenAmount: 120,
+      limitForBuyerAmount: buyingAmount,
+      limitForTokenAmount: buyingAmount,
+    });
+  });
+
+  it("should pass integration test when paying with ETH", async function () {
+    await integrationTest({
+      payWithEth: true,
+      deadline: startTime + 15 * 60,
+      buyingAmount: 4,
+      paymentTokenAmount: 120,
+      limitForBuyerAmount: buyingAmount,
+      limitForTokenAmount: buyingAmount,
+    });
+  });
+
+  it("should fail integration test if ddl is exceeded", async function () {
+    await expect(
+      integrationTest({
+        payWithEth: false,
+        deadline: startTime - 1,
+        buyingAmount: 4,
+        paymentTokenAmount: 120,
+        limitForBuyerAmount: buyingAmount,
+        limitForTokenAmount: buyingAmount,
+      })
+    ).to.be.revertedWith("WhitelistMinter: too late");
+  });
+
+  it("should fail integration test if buyer limit is exceeded", async function () {
+    await expect(
+      integrationTest({
+        payWithEth: false,
+        deadline: startTime + 15 * 60,
+        buyingAmount: 4,
+        paymentTokenAmount: 120,
+        limitForBuyerAmount: buyingAmount - 1,
+        limitForTokenAmount: buyingAmount,
+      })
+    ).to.be.revertedWith("WhitelistMinter: buyer limit exceeded");
+  });
+
+  it("should fail integration test if token limit is exceeded", async function () {
+    await expect(
+      integrationTest({
+        payWithEth: false,
+        deadline: startTime + 15 * 60,
+        buyingAmount: 4,
+        paymentTokenAmount: 120,
+        limitForBuyerAmount: buyingAmount,
+        limitForTokenAmount: buyingAmount - 1,
+      })
+    ).to.be.revertedWith("WhitelistMinter: token limit exceeded");
+  });
 });

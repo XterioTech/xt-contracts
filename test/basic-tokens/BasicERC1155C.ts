@@ -3,8 +3,6 @@ import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { nftTestFixture, whitelistedOperator } from "../common_fixtures";
 
-const nullAddr = "0x0000000000000000000000000000000000000000";
-
 describe("Test BasicERC1155C Contract", function () {
   const baseURI = "https://api.test/meta/goerli";
   async function defaultFixture() {
@@ -46,7 +44,7 @@ describe("Test BasicERC1155C Contract", function () {
     const { erc1155, mockMarket, u0, u1 } = await loadFixture(defaultFixture);
 
     /***************** Default None Security Policy ****************/
-    expect(await erc1155.getTransferValidator()).to.equal(nullAddr);
+    expect(await erc1155.getTransferValidator()).to.equal(hre.ethers.ZeroAddress);
     await erc1155.mint(u1.address, 1, 1, "0x");
     await erc1155.mint(u1.address, 2, 1, "0x");
     // OTC Transfer
