@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import "./interfaces/IGateway.sol";
+import "./interfaces/IBasicERC20.sol";
 import "./management/GatewayGuardedOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "./interfaces/IGateway.sol";
-import "./interfaces/IBasicERC20.sol";
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
 contract BasicERC20 is
@@ -17,29 +17,9 @@ contract BasicERC20 is
     GatewayGuardedOwnable,
     Pausable
 {
-    uint256 public constant VERSION = 20230904;
+    uint256 public constant VERSION_BasicERC20 = 20230904;
 
     uint8 private _decimals;
-
-    function _msgSender()
-        internal
-        view
-        virtual
-        override(ERC2771Context, Context)
-        returns (address sender)
-    {
-        return ERC2771Context._msgSender();
-    }
-
-    function _msgData()
-        internal
-        view
-        virtual
-        override(ERC2771Context, Context)
-        returns (bytes calldata)
-    {
-        return ERC2771Context._msgData();
-    }
 
     /**
      * @param gateway Gateway contract of the ERC20 contract.
@@ -81,7 +61,27 @@ contract BasicERC20 is
         address from,
         address to,
         uint256 amount
-    ) internal override whenNotPaused {
+    ) internal virtual override whenNotPaused {
         super._beforeTokenTransfer(from, to, amount);
+    }
+
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ERC2771Context, Context)
+        returns (address sender)
+    {
+        return ERC2771Context._msgSender();
+    }
+
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ERC2771Context, Context)
+        returns (bytes calldata)
+    {
+        return ERC2771Context._msgData();
     }
 }

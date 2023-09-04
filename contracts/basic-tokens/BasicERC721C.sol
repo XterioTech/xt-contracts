@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./interfaces/IGateway.sol";
+import "./interfaces/IBasicERC721.sol";
+import "./management/GatewayGuardedOwnable.sol";
 import "@limitbreak/creator-token-contracts/contracts/erc721c/ERC721C.sol";
 import "@limitbreak/creator-token-contracts/contracts/access/OwnableBasic.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import "./management/GatewayGuardedOwnable.sol";
-import "./interfaces/IGateway.sol";
-import "./interfaces/IBasicERC721.sol";
 
 contract BasicERC721C is
     IBasicERC721,
@@ -21,31 +21,11 @@ contract BasicERC721C is
 {
     using Counters for Counters.Counter;
 
-    uint256 constant VERSION = 20230831;
+    uint256 constant VERSION_BasicERC721C = 20230904;
 
     Counters.Counter private _tokenIdCounter;
 
     string private __baseURI;
-
-    function _msgSender()
-        internal
-        view
-        virtual
-        override(ERC2771Context, Context)
-        returns (address sender)
-    {
-        return ERC2771Context._msgSender();
-    }
-
-    function _msgData()
-        internal
-        view
-        virtual
-        override(ERC2771Context, Context)
-        returns (bytes calldata)
-    {
-        return ERC2771Context._msgData();
-    }
 
     /**
      * @param name the NFT contract name
@@ -65,14 +45,16 @@ contract BasicERC721C is
         ERC721OpenZeppelin(name, symbol)
         GatewayGuarded(gateway)
     {
-        
         __baseURI = baseURI;
     }
 
     /**
      * Mint `tokenId` to `to`. If `tokenId` is 0, use auto-increment id.
      */
-    function mint(address to, uint256 tokenId) external override onlyGatewayOrOwner {
+    function mint(
+        address to,
+        uint256 tokenId
+    ) external override onlyGatewayOrOwner {
         if (tokenId == 0) {
             uint256 id;
             while (true) {
@@ -108,7 +90,10 @@ contract BasicERC721C is
      */
     function burn(uint256 tokenId) public virtual {
         //solhint-disable-next-line max-line-length
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
+        require(
+            _isApprovedOrOwner(_msgSender(), tokenId),
+            "ERC721: caller is not token owner or approved"
+        );
         _burn(tokenId);
     }
 
@@ -131,11 +116,13 @@ contract BasicERC721C is
         return __baseURI;
     }
 
-    function setURI(string calldata newBaseURI) external override onlyGatewayOrOwner {
+    function setURI(
+        string calldata newBaseURI
+    ) external override onlyGatewayOrOwner {
         __baseURI = newBaseURI;
     }
 
-    function pause() external onlyGatewayOrOwner() {
+    function pause() external onlyGatewayOrOwner {
         _pause();
     }
 
@@ -146,15 +133,38 @@ contract BasicERC721C is
     function supportsInterface(
         bytes4 interfaceId
     ) public view override returns (bool) {
-        return interfaceId == type(IBasicERC721).interfaceId || super.supportsInterface(interfaceId);
+        return
+            interfaceId == type(IBasicERC721).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 firstTokenId,
-        uint256 batchSize) internal virtual override {
+        uint256 batchSize
+    ) internal virtual override {
         _requireNotPaused();
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+    }
+
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ERC2771Context, Context)
+        returns (address sender)
+    {
+        return ERC2771Context._msgSender();
+    }
+
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ERC2771Context, Context)
+        returns (bytes calldata)
+    {
+        return ERC2771Context._msgData();
     }
 }
