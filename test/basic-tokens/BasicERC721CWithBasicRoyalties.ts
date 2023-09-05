@@ -8,7 +8,7 @@ describe("Test BasicERC721CWithBasicRoyalties Contract", function () {
   const tokenSymbol = "TE721";
   const baseURI = "https://api.test/meta/goerli";
   const royaltyFeeNumerator = 100;
-  const royaltyFeeDenumerator = 10000;
+  const royaltyFeeDenominator = 10000;
 
   async function defaultFixture() {
     const base = await nftTestFixture();
@@ -40,7 +40,7 @@ describe("Test BasicERC721CWithBasicRoyalties Contract", function () {
     );
     const [receiver, royalty] = await erc721.royaltyInfo(1, 10000);
     expect(receiver).to.equal(royaltyReceiver.address);
-    expect(royalty).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenumerator);
+    expect(royalty).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenominator);
   });
 
   it("Can set default royalty", async function () {
@@ -51,7 +51,7 @@ describe("Test BasicERC721CWithBasicRoyalties Contract", function () {
     await erc721.setDefaultRoyalty(u1.address, royaltyFeeNumerator * 2);
     const [receiver, royalty] = await erc721.royaltyInfo(1, 10000);
     expect(receiver).to.equal(u1.address);
-    expect(royalty).to.equal((10000 * royaltyFeeNumerator * 2) / royaltyFeeDenumerator);
+    expect(royalty).to.equal((10000 * royaltyFeeNumerator * 2) / royaltyFeeDenominator);
   });
 
   it("Can set token royalty", async function () {
@@ -62,9 +62,9 @@ describe("Test BasicERC721CWithBasicRoyalties Contract", function () {
     await erc721.setTokenRoyalty(233, u1.address, royaltyFeeNumerator * 2);
     const [receiver, royalty] = await erc721.royaltyInfo(1, 10000);
     expect(receiver).to.equal(royaltyReceiver.address);
-    expect(royalty).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenumerator);
+    expect(royalty).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenominator);
     const [receiver2, royalty2] = await erc721.royaltyInfo(233, 10000);
     expect(receiver2).to.equal(u1.address);
-    expect(royalty2).to.equal((10000 * royaltyFeeNumerator * 2) / royaltyFeeDenumerator);
+    expect(royalty2).to.equal((10000 * royaltyFeeNumerator * 2) / royaltyFeeDenominator);
   });
 });

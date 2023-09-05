@@ -43,7 +43,7 @@ const config: HardhatUserConfig = {
       accounts: privateKey != "" ? [privateKey] : [],
     },
     opbnbTestnet: {
-      url: `https://opbnb-testnet.nodereal.io/v1/${process.env.API_KEY_NODEREAL_OPBNB}`,
+      url: `https://opbnb-testnet-rpc.bnbchain.org`,
       accounts: privateKey != "" ? [privateKey] : [],
     },
   },

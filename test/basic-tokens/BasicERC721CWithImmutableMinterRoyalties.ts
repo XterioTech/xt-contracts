@@ -8,7 +8,7 @@ describe("Test BasicERC721CWithImmutableMinterRoyalties Contract", function () {
   const tokenSymbol = "TE721";
   const baseURI = "https://api.test/meta/goerli";
   const royaltyFeeNumerator = 100;
-  const royaltyFeeDenumerator = 10000;
+  const royaltyFeeDenominator = 10000;
 
   async function defaultFixture() {
     const base = await nftTestFixture();
@@ -39,7 +39,7 @@ describe("Test BasicERC721CWithImmutableMinterRoyalties Contract", function () {
     );
     const [receiver, royalty] = await erc721.royaltyInfo(1, 10000);
     expect(receiver).to.equal(hre.ethers.ZeroAddress);
-    expect(royalty).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenumerator);
+    expect(royalty).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenominator);
   });
 
   it("Minter royalties", async function () {
@@ -47,10 +47,10 @@ describe("Test BasicERC721CWithImmutableMinterRoyalties Contract", function () {
     await erc721.mint(u1.address, 1);
     const [receiver, royalty] = await erc721.royaltyInfo(1, 10000);
     expect(receiver).to.equal(u1.address);
-    expect(royalty).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenumerator);
+    expect(royalty).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenominator);
     await erc721.connect(u1).burn(1);
     const [receiver2, royalty2] = await erc721.royaltyInfo(1, 10000);
     expect(receiver2).to.equal(hre.ethers.ZeroAddress);
-    expect(royalty2).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenumerator);
+    expect(royalty2).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenominator);
   });
 });
