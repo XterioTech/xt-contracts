@@ -11,6 +11,11 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
+/**
+ * @title BasicERC721C
+ * @author Libeccio Inc.
+ * @notice Extension of ERC721C that adds access control through TokenGateway.
+ */
 contract BasicERC721C is
     IBasicERC721,
     ERC2771Context,
@@ -89,7 +94,6 @@ contract BasicERC721C is
      * - The caller must own `tokenId` or be an approved operator.
      */
     function burn(uint256 tokenId) public virtual {
-        //solhint-disable-next-line max-line-length
         require(
             _isApprovedOrOwner(_msgSender(), tokenId),
             "ERC721: caller is not token owner or approved"
@@ -149,7 +153,7 @@ contract BasicERC721C is
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override returns (bool) {
+    ) public view virtual override returns (bool) {
         return
             interfaceId == type(IBasicERC721).interfaceId ||
             super.supportsInterface(interfaceId);

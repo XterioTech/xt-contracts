@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./BasicERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
 
-contract BasicERC20Capped is ERC20Capped, BasicERC20 {
+contract BasicERC20Capped is BasicERC20, ERC20Capped {
     uint256 public constant VERSION_BasicERC20Capped = 20230904;
 
     /**
