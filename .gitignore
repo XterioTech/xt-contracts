@@ -8,6 +8,13 @@ typechain-types
 # Hardhat files
 cache
 artifacts
-
-.DS_Store
 abi
+
+# Mac OS
+.DS_Store
+
+# sensitive files
+wallet.json
+wallet.dev.json
+wallet.prod.json
+
