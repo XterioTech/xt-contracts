@@ -54,3 +54,10 @@ export const deployLootboxUnwrapper = async (gateway: AddressLike) => {
   await contract.waitForDeployment();
   return contract;
 };
+
+export const deployCreatorTokenTransferValidator = async (defaultOwner: AddressLike) => {
+  const Contract = await hre.ethers.getContractFactory("CreatorTokenTransferValidator");
+  const contract = await Contract.deploy(defaultOwner);
+  await contract.waitForDeployment();
+  return contract;
+};

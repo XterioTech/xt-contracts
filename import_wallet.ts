@@ -1,6 +1,6 @@
 import fs from "fs";
 import { ethers } from "ethers";
-import { inputSimple, inputPassword2 } from "./input";
+import { inputSimple, inputPassword2 } from "./lib/input";
 
 const privateKey = inputSimple("Private Key: ");
 const password = inputPassword2("Password: ");
