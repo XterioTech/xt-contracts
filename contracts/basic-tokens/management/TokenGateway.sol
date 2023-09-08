@@ -80,13 +80,6 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
      *               Interfaces exposed to nft managers                 *
      ********************************************************************/
 
-    function resetOwner(
-        address _tokenContract,
-        address _newOwner
-    ) external onlyManagerOrWhitelist(_tokenContract) {
-        IGatewayGuardedOwnable(_tokenContract).resetOwner(_newOwner);
-    }
-
     /**
      * Call `mint` function on a BasicERC721 contract through gateway
      */
@@ -178,6 +171,13 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
     /********************************************************************
      *                       Manage nft managers                        *
      ********************************************************************/
+
+    function resetOwner(
+        address _tokenContract,
+        address _newOwner
+    ) external onlyRole(GATEWAY_MANAGER_ROLE) {
+        IGatewayGuardedOwnable(_tokenContract).resetOwner(_newOwner);
+    }
 
     /**
      * Set the manager of a certain NFT contract.

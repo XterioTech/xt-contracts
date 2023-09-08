@@ -9,11 +9,12 @@ describe("Test TokenGateway Contract", function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function defaultFixture() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, u1, u2] = await hre.ethers.getSigners();
+    const [owner, manager, u1, u2] = await hre.ethers.getSigners();
     const gateway = await deployGateway(owner.address);
     const forwarder = await deployForwarder();
+    await gateway.connect(owner).addManager(manager.address);
 
-    return { gateway, forwarder, owner, u1, u2 };
+    return { gateway, forwarder, owner, manager, u1, u2 };
   }
 
   it("Gateway admin role transfer", async function () {
@@ -31,7 +32,7 @@ describe("Test TokenGateway Contract", function () {
   });
 
   it("ERC721 gateway operations", async function () {
-    const { gateway, forwarder, owner, u1, u2 } = await loadFixture(defaultFixture);
+    const { gateway, forwarder, owner, manager, u1, u2 } = await loadFixture(defaultFixture);
     const tokenName = "TestERC721";
     const tokenSymbol = "TE721";
     const baseURI = "https://api.test/meta/goerli";
@@ -69,7 +70,7 @@ describe("Test TokenGateway Contract", function () {
     expect(await erc721.contractURI()).to.equal(`ipfs://abc/${await erc721.getAddress()}`.toLowerCase());
 
     // reset erc721 owner
-    await gateway.connect(u1).resetOwner(erc721, u2.address);
+    await gateway.connect(manager).resetOwner(erc721, u2.address);
     expect(await erc721.owner()).to.equal(u2.address);
   });
 
