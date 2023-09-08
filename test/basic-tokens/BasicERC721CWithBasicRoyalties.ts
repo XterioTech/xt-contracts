@@ -2,6 +2,8 @@ import hre from "hardhat";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { nftTestFixture } from "../common_fixtures";
+import { IERC2981InterfaceID, IERC721InterfaceID, getInterfaceID } from "../../lib/utils";
+import { IBasicERC721__factory, ICreatorToken__factory } from "../../typechain-types";
 
 describe("Test BasicERC721CWithBasicRoyalties Contract", function () {
   const tokenName = "TestERC721";
@@ -41,6 +43,16 @@ describe("Test BasicERC721CWithBasicRoyalties Contract", function () {
     const [receiver, royalty] = await erc721.royaltyInfo(1, 10000);
     expect(receiver).to.equal(royaltyReceiver.address);
     expect(royalty).to.equal((10000 * royaltyFeeNumerator) / royaltyFeeDenominator);
+    expect(
+      await erc721.supportsInterface(getInterfaceID(IBasicERC721__factory.createInterface())),
+      "supportsInterface IBasicERC721"
+    ).to.be.true;
+    expect(
+      await erc721.supportsInterface(getInterfaceID(ICreatorToken__factory.createInterface())),
+      "supportsInterface ICreatorToken"
+    ).to.be.true;
+    expect(await erc721.supportsInterface(IERC721InterfaceID), "supportsInterface IERC721").to.be.true;
+    expect(await erc721.supportsInterface(IERC2981InterfaceID), "supportsInterface IERC2981").to.be.true;
   });
 
   it("Can set default royalty", async function () {

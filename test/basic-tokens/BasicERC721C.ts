@@ -2,6 +2,8 @@ import hre from "hardhat";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { nftTestFixture, whitelistedOperator } from "../common_fixtures";
+import { IERC721InterfaceID, getInterfaceID } from "../../lib/utils";
+import { IBasicERC721__factory, ICreatorToken__factory } from "../../typechain-types";
 
 describe("Test BasicERC721C Contract", function () {
   const tokenName = "TestERC721";
@@ -28,20 +30,62 @@ describe("Test BasicERC721C Contract", function () {
     expect(await erc721.tokenURI(1)).to.equal(
       `${baseURI}/${erc721Addr}/${hre.ethers.zeroPadValue("0x01", 32)}`.toLowerCase()
     );
+    expect(
+      await erc721.supportsInterface(getInterfaceID(IBasicERC721__factory.createInterface())),
+      "supportsInterface IBasicERC721"
+    ).to.be.true;
+    expect(
+      await erc721.supportsInterface(getInterfaceID(ICreatorToken__factory.createInterface())),
+      "supportsInterface ICreatorToken"
+    ).to.be.true;
+    expect(await erc721.supportsInterface(IERC721InterfaceID), "supportsInterface IERC721").to.be.true;
+  });
+
+  it("Cannot perform manage operations by normal address", async function () {
+    const { erc721, u0, u1 } = await loadFixture(defaultFixture);
+    // u0 cannot mint
+    await expect(erc721.connect(u0).mint(u1.address, 1)).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+    // u0 cannot mint batch
+    await expect(erc721.connect(u0).mintBatch(u1.address, [1, 2])).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+    // u0 cannot set uri
+    await expect(erc721.connect(u0).setURI("https://abc")).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+    // u0 cannot pause
+    await expect(erc721.connect(u0).pause()).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+    // u0 cannot unpause
+    await expect(erc721.connect(u0).unpause()).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
   });
 
   it("Cannot transfer when paused", async function () {
     const { erc721, u0, u1 } = await loadFixture(defaultFixture);
 
-    await erc721.mint(u1.address, 1);
+    await erc721.mintBatch(u1.address, [1, 3, 5]);
     await erc721.pause();
     await expect(
       erc721.connect(u1)["safeTransferFrom(address,address,uint256)"](u1.address, u0.address, 1)
     ).to.be.revertedWith("Pausable: paused");
     await expect(erc721.mint(u1.address, 2)).to.be.revertedWith("Pausable: paused");
     await erc721.unpause();
-    await erc721.connect(u1)["safeTransferFrom(address,address,uint256)"](u1.address, u0.address, 1);
+    await erc721.connect(u1)["safeTransferFrom(address,address,uint256)"](u1.address, u0.address, 3);
     await erc721.mint(u1.address, 2);
+  });
+
+  it("Cannot burn others' token", async function () {
+    const { erc721, u0, u1 } = await loadFixture(defaultFixture);
+
+    await erc721.mint(u1.address, 1);
+    await expect(erc721.connect(u0).burn(1)).to.be.revertedWith("ERC721: caller is not token owner or approved");
+    await erc721.connect(u1).approve(u0.address, 1);
+    await erc721.connect(u0).burn(1);
   });
 
   it("ERC721C None Security Policy", async function () {
@@ -50,7 +94,7 @@ describe("Test BasicERC721C Contract", function () {
     /***************** Default None Security Policy ****************/
     expect(await erc721.getTransferValidator()).to.equal(hre.ethers.ZeroAddress);
     await erc721.mint(u1.address, 1);
-    await erc721.mint(u1.address, 2);
+    await erc721.mint(u1.address, 0);
     // OTC Transfer
     await erc721.connect(u1)["safeTransferFrom(address,address,uint256)"](u1.address, u0.address, 1);
     expect(await erc721.ownerOf(1)).to.equal(u0.address);

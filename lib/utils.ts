@@ -1,3 +1,5 @@
+import { ethers, Interface } from "ethers";
+
 export enum Color {
   reset = "\x1b[0m",
   bright = "\x1b[1m",
@@ -13,3 +15,14 @@ export enum Color {
 export function colorize(color: Color, text: string) {
   return color + text + Color.reset;
 }
+
+export const getInterfaceID = (contractInterface: Interface) => {
+  let interfaceID = ethers.getBigInt(0);
+  contractInterface.forEachFunction((f) => {
+    interfaceID = interfaceID ^ ethers.getBigInt(f.selector);
+  });
+  return ethers.toBeHex(interfaceID);
+};
+export const IERC721InterfaceID = "0x80ac58cd";
+export const IERC1155InterfaceID = "0xd9b67a26";
+export const IERC2981InterfaceID = "0x2a55205a";

@@ -2,6 +2,8 @@ import hre from "hardhat";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { nftTestFixture, whitelistedOperator } from "../common_fixtures";
+import { IBasicERC1155__factory, ICreatorToken__factory } from "../../typechain-types";
+import { IERC1155InterfaceID, IERC2981InterfaceID, getInterfaceID } from "../../lib/utils";
 
 describe("Test BasicERC1155C Contract", function () {
   const baseURI = "https://api.test/meta/goerli";
@@ -24,6 +26,40 @@ describe("Test BasicERC1155C Contract", function () {
     await erc1155.setURI("ipfs://abc");
     expect(await erc1155.contractURI()).to.equal(`ipfs://abc/${contractAddr}`.toLowerCase());
     expect(await erc1155.uri(1)).to.equal(`ipfs://abc/${contractAddr}/{id}`.toLowerCase());
+    expect(
+      await erc1155.supportsInterface(getInterfaceID(IBasicERC1155__factory.createInterface())),
+      "supportsInterface IBasicERC1155"
+    ).to.be.true;
+    expect(
+      await erc1155.supportsInterface(getInterfaceID(ICreatorToken__factory.createInterface())),
+      "supportsInterface ICreatorToken"
+    ).to.be.true;
+    expect(await erc1155.supportsInterface(IERC1155InterfaceID), "supportsInterface IERC1155").to.be.true;
+    expect(await erc1155.supportsInterface(IERC2981InterfaceID), "supportsInterface IERC2981").to.be.false;
+  });
+
+  it("Cannot perform manage operations by normal address", async function () {
+    const { erc1155, u0, u1 } = await loadFixture(defaultFixture);
+    // u0 cannot mint
+    await expect(erc1155.connect(u0).mint(u1.address, 1, 1, "0x")).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+    // u0 cannot mint batch
+    await expect(erc1155.connect(u0).mintBatch(u1.address, [1, 2], [1, 1], "0x")).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+    // u0 cannot set uri
+    await expect(erc1155.connect(u0).setURI("https://abc")).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+    // u0 cannot pause
+    await expect(erc1155.connect(u0).pause()).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+    // u0 cannot unpause
+    await expect(erc1155.connect(u0).unpause()).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
   });
 
   it("Cannot transfer when paused", async function () {
@@ -45,8 +81,7 @@ describe("Test BasicERC1155C Contract", function () {
 
     /***************** Default None Security Policy ****************/
     expect(await erc1155.getTransferValidator()).to.equal(hre.ethers.ZeroAddress);
-    await erc1155.mint(u1.address, 1, 1, "0x");
-    await erc1155.mint(u1.address, 2, 1, "0x");
+    await erc1155.mintBatch(u1.address, [1, 2], [1, 1], "0x");
     // OTC Transfer
     await erc1155.connect(u1).safeTransferFrom(u1.address, u0.address, 1, 1, "0x");
     expect(await erc1155.balanceOf(u0.address, 1)).to.equal(1);

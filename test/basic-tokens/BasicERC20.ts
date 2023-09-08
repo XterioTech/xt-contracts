@@ -29,6 +29,22 @@ describe("Test BasicERC20 Contract", function () {
     expect(await erc20.decimals()).to.equal(decimal);
   });
 
+  it("Cannot perform manage operations by normal address", async function () {
+    const { erc20, u0, u1 } = await loadFixture(defaultFixture);
+    // u0 cannot mint
+    await expect(erc20.connect(u0).mint(u1.address, 1)).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+    // u0 cannot pause
+    await expect(erc20.connect(u0).pause()).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+    // u0 cannot unpause
+    await expect(erc20.connect(u0).unpause()).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
+  });
+
   it("Mint", async function () {
     const { gateway, gatewayAdmin, erc20, u0, u1, u2, u3 } = await loadFixture(defaultFixture);
 
