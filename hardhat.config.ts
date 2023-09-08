@@ -8,6 +8,7 @@ import "@openzeppelin/hardhat-upgrades";
 import "hardhat-abi-exporter";
 import * as dotenv from "dotenv";
 dotenv.config();
+import "./extensions";
 
 let privateKey = "";
 if (process.env.ACCOUNT_PRIVATE_KEY) {

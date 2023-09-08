@@ -1,5 +1,3 @@
-import hre from "hardhat";
-
 type NetworkAddressMap = { [network: string]: string };
 export enum ContractName {
   TokenGateway = "TokenGateway",
@@ -19,11 +17,7 @@ const hyperMap = {
 export function getAddressForNetwork(contract: ContractName, network: string): string {
   const address = hyperMap[contract][network];
   if (!address) {
-    throw new Error(`${contract} not deployed or address not configured on network [${hre.network.name}]`);
+    throw new Error(`${contract} not deployed or address not configured on network [${network}]`);
   }
   return address;
-}
-
-export function getAddressForCurrentNetwork(contract: ContractName): string {
-  return getAddressForNetwork(contract, hre.network.name);
 }

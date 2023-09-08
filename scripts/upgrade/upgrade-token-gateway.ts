@@ -1,10 +1,10 @@
 import hre from "hardhat";
-import { ContractName, getAddressForCurrentNetwork } from "../../lib/constant";
+import { ContractName, getAddressForNetwork } from "../../lib/constant";
 
 async function main() {
   // We get the contract to deploy
   const Contract = await hre.ethers.getContractFactory("TokenGateway");
-  const proxyAddress = getAddressForCurrentNetwork(ContractName.TokenGateway);
+  const proxyAddress = getAddressForNetwork(ContractName.TokenGateway, hre.network.name);
   const instance = await hre.upgrades.upgradeProxy(proxyAddress, Contract);
   await instance.waitForDeployment();
 
