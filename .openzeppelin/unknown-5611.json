@@ -444,7 +444,7 @@
             "label": "_roles",
             "offset": 0,
             "slot": "1",
-            "type": "t_mapping(t_bytes32,t_struct(RoleData)4158_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)4461_storage)",
             "contract": "AccessControl",
             "src": "@openzeppelin/contracts/access/AccessControl.sol:56"
           },
@@ -506,11 +506,11 @@
             "label": "mapping(address => uint256)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_struct(RoleData)4158_storage)": {
+          "t_mapping(t_bytes32,t_struct(RoleData)4461_storage)": {
             "label": "mapping(bytes32 => struct AccessControl.RoleData)",
             "numberOfBytes": "32"
           },
-          "t_struct(RoleData)4158_storage": {
+          "t_struct(RoleData)4461_storage": {
             "label": "struct AccessControl.RoleData",
             "members": [
               {

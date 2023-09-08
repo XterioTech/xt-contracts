@@ -11,7 +11,7 @@ const main = async () => {
   if (!verifyAddress) {
     console.info(colorize(Color.blue, `Deploy TokenGateway`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
-    if (!inputConfirm("Confirm? (y/N)")) {
+    if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
     }
@@ -19,14 +19,14 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`===================== Deploy TokenGateway =====================`);
     console.info(`============================================================`);
-    const gateway = await deployGateway(admin);
+    const gateway = await deployGateway(admin.address);
     const proxyAddress = await gateway.getAddress();
     console.info(`TokenGateway proxy @ ${proxyAddress}`);
 
     const implAddress = await hre.upgrades.erc1967.getImplementationAddress(proxyAddress);
     console.info(`TokenGateway impl @ ${implAddress}`);
 
-    verifyAddress = implAddress;
+    verifyAddress = proxyAddress;
   }
 
   if (!skipVerify) {

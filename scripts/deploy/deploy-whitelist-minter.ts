@@ -14,7 +14,7 @@ const main = async () => {
     console.info(colorize(Color.blue, `Deploy WhitelistMinter`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
     console.info(colorize(Color.yellow, `TokenGateway: ${gatewayAddress}`));
-    if (!inputConfirm("Confirm? (y/N)")) {
+    if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
     }

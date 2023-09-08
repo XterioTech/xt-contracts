@@ -11,7 +11,7 @@ const main = async () => {
   if (!address) {
     console.info(colorize(Color.blue, `Deploy Forwarder`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
-    if (!inputConfirm("Confirm? (y/N)")) {
+    if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
     }
