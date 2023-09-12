@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -558,7 +559,19 @@ contract MarketplaceV2 is
 
         // Calculate ERC20 fees
         uint256 fee2service = (totalCost * order.serviceFee) / BASE;
-        uint256 fee2cp = (totalCost * order.royaltyFee) / BASE;
+        uint256 royaltyFee = (totalCost * order.royaltyFee) / BASE;
+
+        (bool success, bytes memory result) = order.targetTokenAddress.staticcall(
+            abi.encodeWithSelector(IERC2981.royaltyInfo.selector, order.targetTokenId, order.price)
+        );
+
+        if (success && result.length == 64) {
+            (order.royaltyFeeRecipient, royaltyFee) = abi.decode(result, (address, uint256));
+            require(
+                totalCost > fee2service + royaltyFee,
+                "MarketplaceV2: wrong royalty fee"
+            );
+        }
 
         address paymentTokenAddress = order.paymentTokenAddress;
 
@@ -577,9 +590,9 @@ contract MarketplaceV2 is
                     "MarketplaceV2: failed to send native tokens to service"
                 );
             }
-            if (fee2cp > 0) {
+            if (royaltyFee > 0) {
                 (bool sent2cp, ) = order.royaltyFeeRecipient.call{
-                    value: fee2cp
+                    value: royaltyFee
                 }("");
                 require(
                     sent2cp,
@@ -587,7 +600,7 @@ contract MarketplaceV2 is
                 );
             }
             (bool sent2seller, ) = to.call{
-                value: totalCost - fee2service - fee2cp
+                value: totalCost - fee2service - royaltyFee
             }("");
             require(
                 sent2seller,
@@ -615,17 +628,17 @@ contract MarketplaceV2 is
                     fee2service
                 );
             }
-            if (fee2cp > 0) {
+            if (royaltyFee > 0) {
                 paymentContract.safeTransferFrom(
                     from,
                     order.royaltyFeeRecipient,
-                    fee2cp
+                    royaltyFee
                 );
             }
             paymentContract.safeTransferFrom(
                 from,
                 to,
-                totalCost - fee2service - fee2cp
+                totalCost - fee2service - royaltyFee
             );
         }
     }
