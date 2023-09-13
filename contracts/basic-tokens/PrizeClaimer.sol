@@ -34,7 +34,7 @@ contract PrizeClaimer {
     // scoreNFT id => bool
     mapping(address => mapping(uint256 => bool)) hasClaimed;
 
-    event ReceivedETH(address sender, uint value);
+    event Received(address sender, uint value);
 
     event ClaimPrize(
         address indexed recipient,
@@ -57,7 +57,7 @@ contract PrizeClaimer {
     }
 
     receive() external payable {
-        emit ReceivedETH(msg.sender, msg.value);
+        emit Received(msg.sender, msg.value);
     }
 
     function awardPrize(
