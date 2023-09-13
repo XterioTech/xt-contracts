@@ -2,13 +2,11 @@
 
 pragma solidity ^0.8.0;
 import "../../basic-tokens/interfaces/IGateway.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract PrizeClaimer {
-    using SafeERC20 for IERC20;
+contract PrizeClaimer is AccessControl {
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     enum PrizeType {
         Type1, // ERC721, 1 * Dinosaur NFT
@@ -47,10 +45,14 @@ contract PrizeClaimer {
     );
 
     constructor(
+        address admin,
         address _gateway,
         address _signer_address,
         address _scoreNFTAddress
     ) {
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(OPERATOR_ROLE, admin);
+
         gateway = _gateway;
         signer_address = _signer_address;
         scoreNFTAddress = _scoreNFTAddress;
@@ -60,14 +62,72 @@ contract PrizeClaimer {
         emit Received(msg.sender, msg.value);
     }
 
-    function awardPrize(
+    /************************************ Management Functions *************************************/
+    function setSignerAddress(address _addr) public onlyRole(OPERATOR_ROLE) {
+        signer_address = _addr;
+    }
+
+    function setScoreNFTAddress(address _addr) public onlyRole(OPERATOR_ROLE) {
+        scoreNFTAddress = _addr;
+    }
+
+    function withdrawTo(
+        address _to
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bool sent) {
+        (sent, ) = _to.call{value: address(this).balance}("");
+    }
+
+    /************************************ Public Functions *************************************/
+    function claimWithSig(
+        uint8 _prizeTypeIdx,
+        address _scoreNFTAddress,
+        uint256 _scoreNFTTokenId,
+        address _prizeTokenAddress,
+        uint256 _prizeTokenId,
+        uint256 _prizeTokenAmount,
+        uint256 _deadline,
+        bytes calldata _sig // Signature provided by the backend
+    ) external {
+        // Check if before deadline
+        require(block.timestamp <= _deadline, "PrizeClaimer: too late");
+
+        // Check signature validity
+        bytes32 inputHash = _getInputHash(
+            _prizeTypeIdx,
+            _scoreNFTAddress,
+            _scoreNFTTokenId,
+            _prizeTokenAddress,
+            _prizeTokenId,
+            _prizeTokenAmount,
+            _deadline
+        );
+        _checkSigValidity(inputHash, _sig, signer_address);
+
+        require(
+            _checkCanClaim(_scoreNFTAddress, _scoreNFTTokenId),
+            "PrizeClaimer: not qualified scoreNFT HODL to claim or this tokenid has been claimed"
+        );
+
+        _awardPrize(
+            _prizeTypeIdx,
+            _scoreNFTAddress,
+            _scoreNFTTokenId,
+            _prizeTokenAddress,
+            _prizeTokenId,
+            _prizeTokenAmount
+        );
+    }
+
+    /************************************ Internal Functions *************************************/
+
+    function _awardPrize(
         uint8 _prizeType,
         address _scoreNFTAddress,
         uint256 _scoreNFTTokenId,
         address _prizeTokenAddress,
         uint256 _prizeTokenId,
         uint256 _prizeTokenAmount
-    ) public payable {
+    ) internal {
         PrizeType prize = _toPrizeType(_prizeType);
 
         if (prize == PrizeType.Type1) {
@@ -131,52 +191,12 @@ contract PrizeClaimer {
         );
     }
 
-    function _toPrizeType(uint8 value) private pure returns (PrizeType) {
+    function _toPrizeType(uint8 value) internal pure returns (PrizeType) {
         require(
             value >= uint8(PrizeType.Type1) && value <= uint8(PrizeType.Type12),
             "Invalid prize type"
         );
         return PrizeType(value);
-    }
-
-    function claimWithSig(
-        uint8 _prizeTypeIdx,
-        address _scoreNFTAddress,
-        uint256 _scoreNFTTokenId,
-        address _prizeTokenAddress,
-        uint256 _prizeTokenId,
-        uint256 _prizeTokenAmount,
-        uint256 _deadline,
-        bytes calldata _sig // Signature provided by the backend
-    ) external payable {
-        // Check if before deadline
-        require(block.timestamp <= _deadline, "PrizeClaimer: too late");
-
-        // Check signature validity
-        bytes32 inputHash = _getInputHash(
-            _prizeTypeIdx,
-            _scoreNFTAddress,
-            _scoreNFTTokenId,
-            _prizeTokenAddress,
-            _prizeTokenId,
-            _prizeTokenAmount,
-            _deadline
-        );
-        _checkSigValidity(inputHash, _sig, signer_address);
-
-        require(
-            _checkCanClaim(_scoreNFTAddress, _scoreNFTTokenId),
-            "PrizeClaimer: not qualified scoreNFT HODL to claim or this tokenid has been claimed"
-        );
-
-        awardPrize(
-            _prizeTypeIdx,
-            _scoreNFTAddress,
-            _scoreNFTTokenId,
-            _prizeTokenAddress,
-            _prizeTokenId,
-            _prizeTokenAmount
-        );
     }
 
     function _checkCanClaim(

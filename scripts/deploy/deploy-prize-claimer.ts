@@ -25,7 +25,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`=================== Deploy PrizeClaimer ====================`);
     console.info(`============================================================`);
-    const PrizeClaimer = await deployPrizeClaimer(gatewayAddress, signerAddress, scoreNFTAddress);
+    const PrizeClaimer = await deployPrizeClaimer(admin.address, gatewayAddress, signerAddress, scoreNFTAddress);
     address = await PrizeClaimer.getAddress();
     console.info(`PrizeClaimer @ ${address}`);
     console.info("Add operator whitelist in TokenGateway...");

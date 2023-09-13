@@ -62,9 +62,9 @@ export const deployCreatorTokenTransferValidator = async (defaultOwner: AddressL
   return contract;
 };
 
-export const deployPrizeClaimer = async (gateway: AddressLike, singer_address: AddressLike, scoreNFTAddress: AddressLike) => {
+export const deployPrizeClaimer = async (admin: AddressLike, gateway: AddressLike, singer_address: AddressLike, scoreNFTAddress: AddressLike) => {
   const Contract = await hre.ethers.getContractFactory("PrizeClaimer");
-  const contract = await Contract.deploy(gateway, singer_address, scoreNFTAddress);
+  const contract = await Contract.deploy(admin, gateway, singer_address, scoreNFTAddress);
   await contract.waitForDeployment();
   return contract;
 };

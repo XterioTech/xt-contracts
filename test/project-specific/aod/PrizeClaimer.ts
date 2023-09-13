@@ -4,9 +4,9 @@ import {
   loadFixture,
   time,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { deployPrizeClaimer } from "../../lib/deploy";
-import { commonERC721estFixture, commonTradingTestFixture } from "../common_fixtures";
-import { PrizeClaimer } from "../../typechain-types";
+import { deployPrizeClaimer } from "../../../lib/deploy";
+import { commonERC721estFixture, commonTradingTestFixture } from "../../common_fixtures";
+import { PrizeClaimer } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   ContractTransactionResponse,
@@ -21,7 +21,7 @@ async function defaultFixture() {
 
   const { erc721: scoreNFT } = await commonERC721estFixture(base, "ScoreNFT", "ScoreNFT", "ScoreNFT", base.manager)
 
-  const prizeClaimer = await deployPrizeClaimer(base.gateway, signer.address, await scoreNFT.getAddress());
+  const prizeClaimer = await deployPrizeClaimer(admin.address, base.gateway, signer.address, await scoreNFT.getAddress());
   // Add whitelistMinter to the whitelist
   await base.gateway
     .connect(base.gatewayAdmin)
@@ -230,5 +230,21 @@ describe("Test PrizeClaimer Contract", function () {
     expect(await Coupon.balanceOf(u1.address, _prizeTokenId)).to.equal(_prizeTokenAmount);
 
     await expect(constructAndClaim(prizeClaimer, signer, u1, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenId, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)).to.be.revertedWith('PrizeClaimer: not qualified scoreNFT HODL to claim or this tokenid has been claimed')
+  });
+
+  it.only("should pass Withdraw test", async function () {
+    const { base, admin, signer, u0, u1, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
+
+    // transfer Enough BNB to prizeClaimer
+    const prizeClaimerAddress = await prizeClaimer.getAddress();
+    const amount = hre.ethers.parseEther("50");
+    await signer.sendTransaction({
+      to: prizeClaimerAddress,
+      value: amount,
+    });
+
+    expect(await hre.ethers.provider.getBalance(prizeClaimerAddress)).to.equal(amount);
+    await prizeClaimer.connect(admin).withdrawTo(signer)
+    expect(await hre.ethers.provider.getBalance(prizeClaimerAddress)).to.equal(0);
   });
 });
