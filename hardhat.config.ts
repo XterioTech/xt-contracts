@@ -43,14 +43,14 @@ const config: HardhatUserConfig = {
       url: "https://nd-500-897-492.p2pify.com/a3e45094653b57e0699623939df446a9",
       accounts: privateKey != "" ? [privateKey] : [],
     },
-    opbnbTestnet: {
-      url: `https://opbnb-testnet-rpc.bnbchain.org`,
-      accounts: privateKey != "" ? [privateKey] : [],
-    },
     // opbnbTestnet: {
-    //   url: `https://opbnb-testnet.nodereal.io/v1/${process.env.API_KEY_NODEREAL_OPBNB}`,
+    //   url: `https://opbnb-testnet-rpc.bnbchain.org`,
     //   accounts: privateKey != "" ? [privateKey] : [],
     // },
+    opbnbTestnet: {
+      url: `https://opbnb-testnet.nodereal.io/v1/${process.env.API_KEY_NODEREAL_OPBNB}`,
+      accounts: privateKey != "" ? [privateKey] : [],
+    },
   },
   solidity: {
     version: "0.8.19",
