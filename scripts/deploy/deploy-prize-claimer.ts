@@ -38,7 +38,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/project-specific/aod/PrizeClaimer.sol:PrizeClaimer",
-        constructorArguments: [getAddressForNetwork(ContractName.TokenGateway, hre.network.name), signerAddress, scoreNFTAddress],
+        constructorArguments: [admin.address, getAddressForNetwork(ContractName.TokenGateway, hre.network.name), signerAddress, scoreNFTAddress],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);
