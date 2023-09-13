@@ -25,7 +25,7 @@ contract PrizeClaimer is AccessControl {
 
     address public gateway;
 
-    address public signer_address;
+    address public signerAddress;
 
     address public scoreNFTAddress;
 
@@ -47,14 +47,14 @@ contract PrizeClaimer is AccessControl {
     constructor(
         address admin,
         address _gateway,
-        address _signer_address,
+        address _signerAddress,
         address _scoreNFTAddress
     ) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(OPERATOR_ROLE, admin);
 
         gateway = _gateway;
-        signer_address = _signer_address;
+        signerAddress = _signerAddress;
         scoreNFTAddress = _scoreNFTAddress;
     }
 
@@ -64,7 +64,7 @@ contract PrizeClaimer is AccessControl {
 
     /************************************ Management Functions *************************************/
     function setSignerAddress(address _addr) public onlyRole(OPERATOR_ROLE) {
-        signer_address = _addr;
+        signerAddress = _addr;
     }
 
     function setScoreNFTAddress(address _addr) public onlyRole(OPERATOR_ROLE) {
@@ -89,7 +89,10 @@ contract PrizeClaimer is AccessControl {
         bytes calldata _sig // Signature provided by the backend
     ) external {
         // Check if before deadline
-        require(block.timestamp <= _deadline, "PrizeClaimer: too late");
+        require(
+            block.timestamp <= _deadline,
+            "PrizeClaimer: signature expired"
+        );
 
         // Check signature validity
         bytes32 inputHash = _getInputHash(
@@ -101,7 +104,7 @@ contract PrizeClaimer is AccessControl {
             _prizeTokenAmount,
             _deadline
         );
-        _checkSigValidity(inputHash, _sig, signer_address);
+        _checkSigValidity(inputHash, _sig, signerAddress);
 
         require(
             _checkCanClaim(_scoreNFTAddress, _scoreNFTTokenId),
