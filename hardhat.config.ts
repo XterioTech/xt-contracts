@@ -43,12 +43,16 @@ const config: HardhatUserConfig = {
       url: "https://nd-500-897-492.p2pify.com/a3e45094653b57e0699623939df446a9",
       accounts: privateKey != "" ? [privateKey] : [],
     },
+    opbnbTestnet: {
+      url: `https://opbnb-testnet-rpc.bnbchain.org`,
+      accounts: privateKey != "" ? [privateKey] : [],
+    },
     // opbnbTestnet: {
-    //   url: `https://opbnb-testnet-rpc.bnbchain.org`,
+    //   url: `https://opbnb-testnet.nodereal.io/v1/${process.env.API_KEY_NODEREAL_OPBNB}`,
     //   accounts: privateKey != "" ? [privateKey] : [],
     // },
-    opbnbTestnet: {
-      url: `https://opbnb-testnet.nodereal.io/v1/${process.env.API_KEY_NODEREAL_OPBNB}`,
+    opbnb: {
+      url: "https://opbnb-mainnet-rpc.bnbchain.org",
       accounts: privateKey != "" ? [privateKey] : [],
     },
   },
@@ -72,9 +76,17 @@ const config: HardhatUserConfig = {
     customChains: [
       {
         network: "opbnbTestnet",
-        chainId: 5611, // Replace with the correct chainId for the "opbnbTestnet testnet" network
+        chainId: 5611,
         urls: {
           apiURL: `https://open-platform.nodereal.io/${process.env.API_KEY_NODEREAL_OPBNB}/op-bnb-testnet/contract/`,
+          browserURL: "https://testnet.opbnbscan.com/",
+        },
+      },
+      {
+        network: "opbnb",
+        chainId: 204,
+        urls: {
+          apiURL: `https://open-platform.nodereal.io/${process.env.API_KEY_NODEREAL_OPBNB}/op-bnb/contract/`,
           browserURL: "https://opbnbscan.com/",
         },
       },
