@@ -37,7 +37,7 @@ const main = async () => {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/basic-tokens/PrizeClaimer.sol:PrizeClaimer",
+        contract: "contracts/project-specific/aod/PrizeClaimer.sol:PrizeClaimer",
         constructorArguments: [getAddressForNetwork(ContractName.TokenGateway, hre.network.name), signerAddress, scoreNFTAddress],
       });
     } catch (e) {
