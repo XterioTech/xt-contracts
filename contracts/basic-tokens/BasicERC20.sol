@@ -19,7 +19,7 @@ contract BasicERC20 is
     GatewayGuardedOwnable,
     Pausable
 {
-    uint256 public constant VERSION_BasicERC20 = 20230904;
+    uint256 public constant VERSION_BasicERC20 = 20230912;
 
     uint8 private _decimals;
 
@@ -64,7 +64,10 @@ contract BasicERC20 is
         address from,
         address to,
         uint256 amount
-    ) internal virtual override whenNotPaused {
+    ) internal virtual override {
+        if (from != address(0)) {
+            _requireNotPaused();
+        }
         super._beforeTokenTransfer(from, to, amount);
     }
 

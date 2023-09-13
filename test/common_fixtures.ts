@@ -16,6 +16,7 @@ export const gatewayForwarderFixture = async () => {
   return { gateway, forwarder, owner, gatewayAdmin };
 };
 
+
 // Fixture for testing NFT contracts
 export const nftTestFixture = async () => {
   const base = await gatewayForwarderFixture();
@@ -59,5 +60,68 @@ export const nftTradingTestFixture = async () => {
 
   const paymentToken = await deployMajorToken(base.owner.address);
 
-  return { ...base, paymentToken, erc721, erc1155, nftManager };
+  const erc20TokenName = "TestERC20";
+  const erc20TokenSymbol = "TE20";
+  const decimal = 18;
+  const BasicERC20 = await hre.ethers.getContractFactory("BasicERC20");
+  const erc20 = await BasicERC20.deploy(erc20TokenName, erc20TokenSymbol, decimal, base.gateway, base.forwarder);
+  await erc20.waitForDeployment();
+  await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc20, nftManager.address);
+
+
+  return { ...base, paymentToken, erc721, erc1155, nftManager, erc20 };
 };
+
+
+export const commonTradingTestFixture = async () => {
+  const base = await nftTestFixture();
+
+  const tokenName = "TestERC721";
+  const tokenSymbol = "TE721";
+  const baseURI = "https://api.test/meta/goerli";
+
+  const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
+  const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder);
+  await erc721.waitForDeployment();
+
+  const BasicERC1155C = await hre.ethers.getContractFactory("BasicERC1155C");
+  const erc1155 = await BasicERC1155C.deploy(baseURI, base.gateway, base.forwarder);
+  await erc1155.waitForDeployment();
+
+
+  const paymentToken = await deployMajorToken(base.owner.address);
+
+  const erc20TokenName = "TestERC20";
+  const erc20TokenSymbol = "TE20";
+  const decimal = 18;
+  const BasicERC20 = await hre.ethers.getContractFactory("BasicERC20");
+  const erc20 = await BasicERC20.deploy(erc20TokenName, erc20TokenSymbol, decimal, base.gateway, base.forwarder);
+  await erc20.waitForDeployment();
+
+
+  const [, , manager] = await hre.ethers.getSigners();
+  // NOTE: we need to configure this on-chain!!
+  await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc721, manager.address);
+  await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc1155, manager.address);
+  await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc20, manager.address);
+
+  return { ...base, paymentToken, erc721, erc1155, manager, erc20 };
+};
+
+
+export const commonERC721estFixture = async (base: any, tokenName: string, tokenSymbol: string, baseURI: string, manager: any) => {
+  const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
+  const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder);
+  await erc721.waitForDeployment();
+  await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc721, manager.address);
+  return { erc721 }
+}
+
+export const commonERC1155estFixture = async (base: any, baseURI: string, manager: any) => {
+  const BasicERC1155C = await hre.ethers.getContractFactory("BasicERC1155C");
+  const erc1155 = await BasicERC1155C.deploy(baseURI, base.gateway, base.forwarder);
+  await erc1155.waitForDeployment();
+  await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc1155, manager.address);
+
+  return { erc1155 }
+}
