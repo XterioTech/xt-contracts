@@ -87,7 +87,7 @@ async function constructAndClaim(
 
 describe("Test PrizeClaimer Contract", function () {
   it.only("should pass Type1 test", async function () {
-    const { base, admin, signer, u0, u1, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
+    const { base, admin, signer, u0, u1, u2, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
     const { gateway, gatewayAdmin, manager, erc1155: Coupon, erc721: DINO, erc20: DAM } = base
 
     this.timeout(30 * 1000);
@@ -96,18 +96,24 @@ describe("Test PrizeClaimer Contract", function () {
 
     // 1. Manager mints some scoreNFT tokens to u1 as the prizeClaimer tokens
     await gateway.connect(manager).ERC721_mint(await scoreNFT.getAddress(), u1.address, 0);
-    expect(await scoreNFT.balanceOf(u1.address)).to.equal(1);
+    await gateway.connect(manager).ERC721_mint(await scoreNFT.getAddress(), u1.address, 0);
 
     // 2. Reset timestamp
     time.setNextBlockTimestamp(startTime);
 
     const _prizeTypeIdx = 0   //Type1 = ERC721, 1 * Dinosaur NFT
     const _scoreNFTAddress = await scoreNFT.getAddress()
-    const _scoreNFTTokenId = 1
+    const _scoreNFTTokenIdOne = 1
     const _prizeTokenAddress = await DINO.getAddress()
     const _prizeTokenId = 0
     const _prizeTokenAmount = 1
-    await constructAndClaim(prizeClaimer, signer, u1, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenId, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)
+    await constructAndClaim(prizeClaimer, signer, u1, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenIdOne, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)
+    await expect(constructAndClaim(prizeClaimer, signer, u1, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenIdOne, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)).to.be.revertedWith("PrizeClaimer: not qualified scoreNFT HODL to claim or this tokenid has been claimed")
+
+    const _scoreNFTTokenIdTwo = 2
+    await expect(constructAndClaim(prizeClaimer, signer, u2, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenIdTwo, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)).to.be.revertedWith("PrizeClaimer: not qualified scoreNFT HODL to claim or this tokenid has been claimed")
+
+
     /******************** After Claiming ********************/
     expect(await DINO.ownerOf(1)).to.equal(u1.address);
   });
@@ -144,7 +150,6 @@ describe("Test PrizeClaimer Contract", function () {
       value: amount,
     });
 
-    console.log(await hre.ethers.provider.getBalance(prizeClaimerAddress))
     const beforeAmt = await hre.ethers.provider.getBalance(u1.address)
 
     const tx: ContractTransactionResponse = await constructAndClaim(prizeClaimer, signer, u1, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenId, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)

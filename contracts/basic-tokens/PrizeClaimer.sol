@@ -133,7 +133,7 @@ contract PrizeClaimer {
 
     function _toPrizeType(uint8 value) private pure returns (PrizeType) {
         require(
-            value >= uint8(PrizeType.Type1) && value <= uint8(PrizeType.Type10),
+            value >= uint8(PrizeType.Type1) && value <= uint8(PrizeType.Type12),
             "Invalid prize type"
         );
         return PrizeType(value);
@@ -165,8 +165,7 @@ contract PrizeClaimer {
         _checkSigValidity(inputHash, _sig, signer_address);
 
         require(
-            _scoreNFTAddress == scoreNFTAddress &&
-                !hasClaimed[_scoreNFTAddress][_scoreNFTTokenId],
+            _checkCanClaim(_scoreNFTAddress, _scoreNFTTokenId),
             "PrizeClaimer: not qualified scoreNFT HODL to claim or this tokenid has been claimed"
         );
 
@@ -178,6 +177,24 @@ contract PrizeClaimer {
             _prizeTokenId,
             _prizeTokenAmount
         );
+    }
+
+    function _checkCanClaim(
+        address _scoreNFTAddress,
+        uint256 _scoreNFTTokenId
+    ) internal view returns (bool) {
+        (bool success, bytes memory result) = scoreNFTAddress.staticcall(
+            abi.encodeWithSignature("ownerOf(uint256)", _scoreNFTTokenId)
+        );
+        address owner;
+        if (success && result.length >= 32) {
+            owner = abi.decode(result, (address));
+        }
+
+        return
+            _scoreNFTAddress == scoreNFTAddress &&
+            owner == msg.sender &&
+            !hasClaimed[_scoreNFTAddress][_scoreNFTTokenId];
     }
 
     function _getInputHash(
