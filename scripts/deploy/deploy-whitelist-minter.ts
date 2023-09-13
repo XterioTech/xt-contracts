@@ -9,8 +9,8 @@ const main = async () => {
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
 
+  const gatewayAddress = getAddressForNetwork(ContractName.TokenGateway, hre.network.name);
   if (!address) {
-    const gatewayAddress = getAddressForNetwork(ContractName.TokenGateway, hre.network.name);
     console.info(colorize(Color.blue, `Deploy WhitelistMinter`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
     console.info(colorize(Color.yellow, `TokenGateway: ${gatewayAddress}`));
@@ -34,7 +34,8 @@ const main = async () => {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/basic-tokens/Forwarder.sol:Forwarder",
+        contract: "contracts/basic-tokens/WhitelistMinter.sol:WhitelistMinter",
+        constructorArguments: [gatewayAddress],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);

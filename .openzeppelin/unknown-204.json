@@ -4,7 +4,13 @@
     "address": "0x9A160A64b840DfcDAD4DCaA05A66741Ee7340eFd",
     "txHash": "0xe1df12fd971f4f02e727a287d1b0fd3f50a3a1abc9b3ffb3ba73f56f13d2b62d"
   },
-  "proxies": [],
+  "proxies": [
+    {
+      "address": "0xd6170aeA4Cd53E9d031b382dAC4BdDeaDb439042",
+      "txHash": "0x69e242f989f05ba85be76d147790bd8499212dd4b9f3a773d24d6ace999a51f9",
+      "kind": "transparent"
+    }
+  ],
   "impls": {
     "1740f3eeb7289bf7e8cd5a3a9c970144d5a13b468d8b30dfea4ec1f9904170a7": {
       "address": "0xFDb5B53C38958a6c683C83fBA00aA1A0Faf2E042",
