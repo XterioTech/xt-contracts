@@ -19,8 +19,12 @@ describe("Test TokenGateway Contract", function () {
 
   it("Gateway admin role transfer", async function () {
     const { gateway, owner, u1, u2 } = await loadFixture(defaultFixture);
+    // Cannot add by non-admin address
+    await expect(gateway.connect(u1).addManager(u2.address)).to.be.reverted;
     // Add u2 as manager
     await gateway.connect(owner).addManager(u2.address);
+    // Cannot remove by non-admin address
+    await expect(gateway.connect(u1).removeManager(u2.address)).to.be.reverted;
     // Transfer the ownership to u1
     await gateway.connect(owner).transferGatewayOwnership(u1.address);
     // u1 remove u2 from managers
@@ -29,6 +33,21 @@ describe("Test TokenGateway Contract", function () {
     await expect(gateway.connect(owner).addManager(u2.address)).to.be.reverted;
     // newGatewayAdmin adds a gateway manager
     await gateway.connect(u1).addManager(u2.address);
+  });
+
+  it("Gateway operator whitelist", async function () {
+    const { gateway, forwarder, owner, u1, u2 } = await loadFixture(defaultFixture);
+    // Cannot add by non-admin address
+    await expect(gateway.connect(u1).addOperatorWhitelist(forwarder)).to.be.reverted;
+    // Cannot add EOA address
+    await expect(gateway.connect(owner).addOperatorWhitelist(u2.address)).to.be.revertedWith(
+      "TokenGateway: operator is not contract"
+    );
+    // Add a contract address
+    await gateway.connect(owner).addOperatorWhitelist(forwarder);
+    // Cannot remove by non-admin address
+    await expect(gateway.connect(u1).removeOperatorWhitelist(forwarder)).to.be.reverted;
+    await expect(gateway.connect(owner).removeOperatorWhitelist(forwarder)).to.emit(gateway, "RemoveOperatorWhitelist");
   });
 
   it("ERC721 gateway operations", async function () {
@@ -45,7 +64,10 @@ describe("Test TokenGateway Contract", function () {
     expect((await erc721.tokenURI(1234)).toLowerCase()).to.equal(
       `${baseURI}/${await erc721.getAddress()}/${hre.ethers.zeroPadValue("0x04d2", 32)}`.toLowerCase()
     );
-    await expect(gateway.connect(u2).ERC721_mint(erc721, u1, 111)).revertedWith(
+    await expect(gateway.connect(u2).ERC721_setURI(erc721, "new_uri")).revertedWith(
+      "TokenGateway: caller is not manager of the token contract and is not in whitelist"
+    );
+    await expect(gateway.connect(u2).ERC721_mint(erc721, u1.address, 111)).revertedWith(
       "TokenGateway: caller is not manager of the token contract and is not in whitelist"
     );
 
@@ -54,9 +76,11 @@ describe("Test TokenGateway Contract", function () {
     await gateway.connect(u1).ERC721_mint(erc721, owner.address, 222);
     await gateway.connect(u1).ERC721_mint(erc721, owner.address, 223);
     await gateway.connect(u1).ERC721_mint(erc721, u1.address, 333);
+    await gateway.connect(u1).ERC721_mintBatch(erc721, u2.address, [101, 102, 103]);
     expect(await erc721.ownerOf(222)).to.equal(owner.address);
     expect(await erc721.ownerOf(223)).to.equal(owner.address);
     expect(await erc721.ownerOf(333)).to.equal(u1.address);
+    expect(await erc721.ownerOf(101)).to.equal(u2.address);
 
     //  owner burns from owner
     await erc721.connect(u1).burn(333);
@@ -72,6 +96,49 @@ describe("Test TokenGateway Contract", function () {
     // reset erc721 owner
     await gateway.connect(manager).resetOwner(erc721, u2.address);
     expect(await erc721.owner()).to.equal(u2.address);
+  });
+
+  it("ERC1155 gateway operations", async function () {
+    const { gateway, forwarder, owner, manager, u1, u2 } = await loadFixture(defaultFixture);
+    const baseURI = "https://api.test/meta/goerli";
+    const BasicERC1155C = await hre.ethers.getContractFactory("BasicERC1155C");
+    const erc1155 = await BasicERC1155C.connect(u1).deploy(baseURI, gateway, forwarder);
+    await erc1155.waitForDeployment();
+
+    /***************** Basic Checks ****************/
+    expect(await erc1155.gateway()).to.equal(await gateway.getAddress());
+    expect((await erc1155.uri(1234)).toLowerCase()).to.equal(
+      `${baseURI}/${await erc1155.getAddress()}/{id}`.toLowerCase()
+    );
+    await expect(gateway.connect(u2).ERC1155_setURI(erc1155, "new_uri")).revertedWith(
+      "TokenGateway: caller is not manager of the token contract and is not in whitelist"
+    );
+    await expect(gateway.connect(u2).ERC1155_mint(erc1155, u1.address, 111, 1, "0x")).revertedWith(
+      "TokenGateway: caller is not manager of the token contract and is not in whitelist"
+    );
+    await expect(gateway.connect(u2).ERC1155_mintBatch(erc1155, u1.address, [111], [1], "0x")).revertedWith(
+      "TokenGateway: caller is not manager of the token contract and is not in whitelist"
+    );
+
+    /******************** Tests ********************/
+    await gateway.connect(u1).ERC1155_mint(erc1155, u1.address, 123, 2, "0x");
+    expect(await erc1155.balanceOf(u1.address, 123)).to.equal(2);
+    await gateway.connect(u1).ERC1155_mintBatch(erc1155, u2.address, [101, 102], [1, 2], "0x");
+    expect(await erc1155.balanceOf(u2.address, 101)).to.equal(1);
+    expect(await erc1155.balanceOf(u2.address, 102)).to.equal(2);
+
+    //  owner burns from owner
+    await erc1155.connect(u1).burn(u1.address, 123, 1);
+    expect(await erc1155.balanceOf(u1.address, 123)).to.equal(1);
+
+    // owner sets uri of erc1155
+    await gateway.connect(u1).ERC1155_setURI(erc1155, "ipfs://abc");
+    expect(await erc1155.uri(333)).to.equal(`ipfs://abc/${await erc1155.getAddress()}/{id}`.toLowerCase());
+    expect(await erc1155.contractURI()).to.equal(`ipfs://abc/${await erc1155.getAddress()}`.toLowerCase());
+
+    // reset erc721 owner
+    await gateway.connect(manager).resetOwner(erc1155, u2.address);
+    expect(await erc1155.owner()).to.equal(u2.address);
   });
 
   it("ERC20 gateway oprations", async function () {

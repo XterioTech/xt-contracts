@@ -51,6 +51,10 @@ const config: HardhatUserConfig = {
       url: `https://opbnb-testnet.nodereal.io/v1/${process.env.API_KEY_NODEREAL_OPBNB}`,
       accounts: privateKey != "" ? [privateKey] : [],
     },
+    opbnb: {
+      url: "https://opbnb-mainnet-rpc.bnbchain.org",
+      accounts: privateKey != "" ? [privateKey] : [],
+    },
   },
   solidity: {
     version: "0.8.19",
@@ -68,13 +72,22 @@ const config: HardhatUserConfig = {
       bscTestnet: process.env.API_KEY_ETHERSCAN_BSCTESTNET || "",
       bsc: process.env.API_KEY_ETHERSCAN_BSC || "",
       opbnbTestnet: process.env.API_KEY_NODEREAL_OPBNB || "",
+      opbnb: process.env.API_KEY_NODEREAL_OPBNB || "",
     },
     customChains: [
       {
         network: "opbnbTestnet",
-        chainId: 5611, // Replace with the correct chainId for the "opbnbTestnet testnet" network
+        chainId: 5611,
         urls: {
           apiURL: `https://open-platform.nodereal.io/${process.env.API_KEY_NODEREAL_OPBNB}/op-bnb-testnet/contract/`,
+          browserURL: "https://testnet.opbnbscan.com/",
+        },
+      },
+      {
+        network: "opbnb",
+        chainId: 204,
+        urls: {
+          apiURL: `https://open-platform.nodereal.io/${process.env.API_KEY_NODEREAL_OPBNB}/op-bnb-mainnet/contract/`,
           browserURL: "https://opbnbscan.com/",
         },
       },
