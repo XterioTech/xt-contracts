@@ -74,6 +74,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
      */
     function initialize(address _gatewayAdmin) public initializer {
         _grantRole(DEFAULT_ADMIN_ROLE, _gatewayAdmin);
+        _grantRole(GATEWAY_MANAGER_ROLE, _gatewayAdmin);
     }
 
     /********************************************************************
