@@ -55,6 +55,10 @@ const config: HardhatUserConfig = {
       url: "https://opbnb-mainnet-rpc.bnbchain.org",
       accounts: privateKey != "" ? [privateKey] : [],
     },
+    // opbnb: {
+    //   url: `https://opbnb-mainnet.nodereal.io/v1/${process.env.API_KEY_NODEREAL_OPBNB}`,
+    //   accounts: privateKey != "" ? [privateKey] : [],
+    // },
   },
   solidity: {
     version: "0.8.19",
