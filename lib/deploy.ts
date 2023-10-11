@@ -18,15 +18,17 @@ export const deployGateway = async (gatewayAdmin: AddressLike) => {
 
 export const deployMarketplaceV2 = async (
   gateway: AddressLike,
-  paymentToken: AddressLike,
-  serviceFeeRecipient: AddressLike
+  serviceFeeRecipient: AddressLike,
+  paymentToken?: AddressLike
 ) => {
   const Contract = await hre.ethers.getContractFactory("MarketplaceV2");
   const contract = (await hre.upgrades.deployProxy(Contract)) as unknown as MarketplaceV2;
   await contract.waitForDeployment();
 
   // Initialize the marketplace contract.
-  await contract.addPaymentTokens([paymentToken]);
+  if (paymentToken) {
+    await contract.addPaymentTokens([paymentToken]);
+  }
   await contract.setServiceFeeRecipient(serviceFeeRecipient);
   // Marketplace will in `atomicMatchAndDeposit` query the manager address of a token.
   await contract.setGateway(gateway);
