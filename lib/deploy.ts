@@ -12,28 +12,29 @@ export const deployMajorToken = async (wallet: AddressLike) => {
 
 export const deployGateway = async (gatewayAdmin: AddressLike, txOverrides?: Overrides) => {
   const Contract = await hre.ethers.getContractFactory("TokenGateway");
-  const contract = (await hre.upgrades.deployProxy(Contract, [gatewayAdmin]),
-  txOverrides ? { txOverrides } : undefined) as unknown as TokenGateway;
+  const contract = (await hre.upgrades.deployProxy(
+    Contract,
+    [gatewayAdmin],
+    txOverrides ? { txOverrides } : undefined
+  )) as unknown as TokenGateway;
   await contract.waitForDeployment();
   return contract;
 };
 
 export const deployMarketplaceV2 = async (
-  gateway: AddressLike,
+  gateway: AddressLike, // Marketplace will query the manager address of a token in `atomicMatchAndDeposit`
   serviceFeeRecipient: AddressLike,
   paymentToken?: AddressLike
 ) => {
+  const resolvedParams = await Promise.all([gateway, serviceFeeRecipient].map((v) => hre.ethers.resolveAddress(v)));
   const Contract = await hre.ethers.getContractFactory("MarketplaceV2");
-  const contract = (await hre.upgrades.deployProxy(Contract)) as unknown as MarketplaceV2;
+  const contract = (await hre.upgrades.deployProxy(Contract, resolvedParams)) as unknown as MarketplaceV2;
   await contract.waitForDeployment();
 
   // Initialize the marketplace contract.
   if (paymentToken) {
     await contract.addPaymentTokens([paymentToken]);
   }
-  await contract.setServiceFeeRecipient(serviceFeeRecipient);
-  // Marketplace will in `atomicMatchAndDeposit` query the manager address of a token.
-  await contract.setGateway(gateway);
 
   return contract;
 };
