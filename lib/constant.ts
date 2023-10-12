@@ -4,10 +4,12 @@ export enum ContractName {
 }
 
 export const tokenGatewayAddressMap: NetworkAddressMap = {
+  mainnet: "0xd6170aeA4Cd53E9d031b382dAC4BdDeaDb439042",
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
   bscTestnet: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   opbnbTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
   opbnb: "0xd6170aeA4Cd53E9d031b382dAC4BdDeaDb439042",
+  arbitrum: "0x90Edeb155A158e4AD2Ac22fBf2E2a78f1E16C416",
 };
 
 const hyperMap = {
