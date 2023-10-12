@@ -2,19 +2,26 @@ import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployMarketplaceV2 } from "../../lib/deploy";
-import { ContractName, getAddressForNetwork } from "../../lib/constant";
+import { ContractOrAddrName, getAddressForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let verifyAddress = process.env.verifyAddress;
-  const gatewayAddress = getAddressForNetwork(ContractName.TokenGateway, hre.network.name);
+  const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
   const serviceFeeRecipient = process.env.serviceFeeRecipient || admin.address;
+  const owner = process.env.owner || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
 
   if (!verifyAddress) {
     console.info(colorize(Color.blue, `Deploy Marketplace`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
+    console.info(colorize(Color.yellow, `TokenGateway: ${gatewayAddress}`));
     console.info(colorize(Color.yellow, `Service Fee Recipient: ${serviceFeeRecipient}`));
+    if (!owner) {
+      console.info(colorize(Color.red, `Owner will by default be the same as the Deployer`));
+    } else {
+      console.info(colorize(Color.yellow, `Owner: ${owner}`));
+    }
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
@@ -31,6 +38,12 @@ const main = async () => {
     console.info(`MarketplaceV2 impl @ ${implAddress}`);
 
     verifyAddress = proxyAddress;
+
+    if (owner) {
+      console.info(`Transfer ownership to ${owner} ...`);
+      await marketplace.transferOwnership(owner);
+      console.info(`Ownership Transferred`);
+    }
   }
 
   if (!skipVerify) {

@@ -2,13 +2,13 @@ import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployGateway } from "../../lib/deploy";
-import { getTxOverridesForNetwork } from "../../lib/constant";
+import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let verifyAddress = process.env.verifyAddress;
-  let gatewayAdmin = process.env.gatewayAdmin || admin.address;
+  let gatewayAdmin = process.env.gatewayAdmin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
 
   if (!verifyAddress) {
     console.info(colorize(Color.blue, `Deploy TokenGateway`));

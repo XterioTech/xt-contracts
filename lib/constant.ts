@@ -1,6 +1,7 @@
 type NetworkAddressMap = { [network: string]: string };
-export enum ContractName {
+export enum ContractOrAddrName {
   TokenGateway = "TokenGateway",
+  SafeManager = "SafeManager",
 }
 
 export const tokenGatewayAddressMap: NetworkAddressMap = {
@@ -15,12 +16,25 @@ export const tokenGatewayAddressMap: NetworkAddressMap = {
   opbnbTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
 };
 
+export const safeManagerAddressMap: NetworkAddressMap = {
+  mainnet: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
+  opbnb: "0x9b5D0Ccb7C95e448B742BA83D85282a38944b3E9", // Safe not available on opbnb, use XterAdmin1 address
+  arbitrumOne: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
+  polygon: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
+  bsc: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
+  // Testnets
+  goerli: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
+  bscTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
+  opbnbTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
+};
+
 const hyperMap = {
-  [ContractName.TokenGateway]: tokenGatewayAddressMap,
+  [ContractOrAddrName.TokenGateway]: tokenGatewayAddressMap,
+  [ContractOrAddrName.SafeManager]: safeManagerAddressMap,
 };
 
 // helper functions
-export function getAddressForNetwork(contract: ContractName, network: string): string {
+export function getAddressForNetwork(contract: ContractOrAddrName, network: string): string {
   const address = hyperMap[contract][network];
   if (!address) {
     throw new Error(`${contract} not deployed or address not configured on network [${network}]`);

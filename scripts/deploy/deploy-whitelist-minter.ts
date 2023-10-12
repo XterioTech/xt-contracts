@@ -2,14 +2,14 @@ import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployWhitelistMinter } from "../../lib/deploy";
-import { ContractName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
+import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
 
-  const gatewayAddress = getAddressForNetwork(ContractName.TokenGateway, hre.network.name);
+  const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
   if (!address) {
     console.info(colorize(Color.blue, `Deploy WhitelistMinter`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
