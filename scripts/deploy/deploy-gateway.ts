@@ -7,7 +7,7 @@ const main = async () => {
   const [admin] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let verifyAddress = process.env.verifyAddress;
-  let gatewayAdmin = process.env.gatewayAdmin || admin;
+  let gatewayAdmin = process.env.gatewayAdmin || admin.address;
 
   if (!verifyAddress) {
     console.info(colorize(Color.blue, `Deploy TokenGateway`));
