@@ -11,7 +11,13 @@ export const deployMajorToken = async (wallet: AddressLike) => {
 
 export const deployGateway = async (gatewayAdmin: AddressLike) => {
   const Contract = await hre.ethers.getContractFactory("TokenGateway");
-  const contract = (await hre.upgrades.deployProxy(Contract, [gatewayAdmin])) as unknown as TokenGateway;
+  const contract = (await hre.upgrades.deployProxy(Contract, [gatewayAdmin], {
+    timeout: 600000, // 10 minutes
+    // redeployImplementation: "never",
+    // txOverrides: {
+    //   gasPrice: 1000000008,
+    // },  // only for opbnb
+  })) as unknown as TokenGateway;
   await contract.waitForDeployment();
   return contract;
 };

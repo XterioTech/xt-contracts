@@ -63,6 +63,10 @@ const config: HardhatUserConfig = {
       url: "https://arbitrum-one.publicnode.com",
       accounts: privateKey != "" ? [privateKey] : [],
     },
+    polygon: {
+      url: "https://polygon-rpc.com",
+      accounts: privateKey != "" ? [privateKey] : [],
+    },
   },
   solidity: {
     version: "0.8.19",
@@ -83,6 +87,7 @@ const config: HardhatUserConfig = {
       opbnbTestnet: process.env.API_KEY_NODEREAL_OPBNB || "",
       opbnb: process.env.API_KEY_NODEREAL_OPBNB || "",
       arbitrumOne: process.env.API_KEY_ARBISCAN || "",
+      polygon: process.env.API_KEY_POLYGONSCAN || "",
     },
     customChains: [
       {
