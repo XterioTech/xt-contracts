@@ -4,12 +4,15 @@ export enum ContractName {
 }
 
 export const tokenGatewayAddressMap: NetworkAddressMap = {
-  mainnet: "0xd6170aeA4Cd53E9d031b382dAC4BdDeaDb439042",
+  mainnet: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+  opbnb: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+  arbitrumOne: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+  polygon: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+  bsc: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+  // Testnets
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
   bscTestnet: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   opbnbTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
-  opbnb: "0xd6170aeA4Cd53E9d031b382dAC4BdDeaDb439042",
-  arbitrum: "0x90Edeb155A158e4AD2Ac22fBf2E2a78f1E16C416",
 };
 
 const hyperMap = {
@@ -23,4 +26,15 @@ export function getAddressForNetwork(contract: ContractName, network: string): s
     throw new Error(`${contract} not deployed or address not configured on network [${network}]`);
   }
   return address;
+}
+
+export function getTxOverridesForNetwork(network: string): { gasPrice: number } | undefined {
+  switch (network) {
+    case "opbnb":
+      return { gasPrice: 1000000008 };
+    case "polygon":
+      return { gasPrice: 100000000000 };
+    default:
+      return undefined;
+  }
 }

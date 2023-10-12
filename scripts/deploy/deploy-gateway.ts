@@ -2,6 +2,7 @@ import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployGateway } from "../../lib/deploy";
+import { getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
@@ -21,7 +22,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`===================== Deploy TokenGateway =====================`);
     console.info(`============================================================`);
-    const gateway = await deployGateway(gatewayAdmin);
+    const gateway = await deployGateway(gatewayAdmin, getTxOverridesForNetwork(hre.network.name));
     const proxyAddress = await gateway.getAddress();
     console.info(`TokenGateway proxy @ ${proxyAddress}`);
 

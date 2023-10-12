@@ -1,6 +1,7 @@
 import hre from "hardhat";
 import { MarketplaceV2, TokenGateway } from "../typechain-types";
-import { AddressLike } from "ethers";
+import { AddressLike, Overrides } from "ethers";
+import { NonPayableOverrides } from "../typechain-types/common";
 
 export const deployMajorToken = async (wallet: AddressLike) => {
   const Token = await hre.ethers.getContractFactory("XterToken");
@@ -9,15 +10,10 @@ export const deployMajorToken = async (wallet: AddressLike) => {
   return token;
 };
 
-export const deployGateway = async (gatewayAdmin: AddressLike) => {
+export const deployGateway = async (gatewayAdmin: AddressLike, txOverrides?: Overrides) => {
   const Contract = await hre.ethers.getContractFactory("TokenGateway");
-  const contract = (await hre.upgrades.deployProxy(Contract, [gatewayAdmin], {
-    timeout: 600000, // 10 minutes
-    // redeployImplementation: "never",
-    // txOverrides: {
-    //   gasPrice: 1000000008,
-    // },  // only for opbnb
-  })) as unknown as TokenGateway;
+  const contract = (await hre.upgrades.deployProxy(Contract, [gatewayAdmin]),
+  txOverrides ? { txOverrides } : undefined) as unknown as TokenGateway;
   await contract.waitForDeployment();
   return contract;
 };
@@ -42,16 +38,19 @@ export const deployMarketplaceV2 = async (
   return contract;
 };
 
-export const deployForwarder = async () => {
+export const deployForwarder = async (txOverrides?: NonPayableOverrides & { from?: string }) => {
   const Contract = await hre.ethers.getContractFactory("Forwarder");
-  const contract = await Contract.deploy();
+  const contract = await Contract.deploy(txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
 
-export const deployWhitelistMinter = async (gateway: AddressLike) => {
+export const deployWhitelistMinter = async (
+  gateway: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
   const Contract = await hre.ethers.getContractFactory("WhitelistMinter");
-  const contract = await Contract.deploy(gateway);
+  const contract = await Contract.deploy(gateway, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };

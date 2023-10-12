@@ -1,0 +1,138 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0xa0Acf085B324491227f353613E39b11705497c51",
+    "txHash": "0x7f6f6602b4c2e43d55f08b0b5823b8d7448153b62725eb6fe2ed6f2836060c78"
+  },
+  "proxies": [
+    {
+      "address": "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+      "txHash": "0x6de2a606b810cd496009d68c4b3ea9a88da4d9fc1f61fb3e970ba2a73def0f1d",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "9cef537d3c08a16e10e3a03ab10f1f4a8194a1151b5022395b99eba6ffd52d86": {
+      "address": "0xF0232b1fAC7de145c458C26A2a8a9C00f1d58535",
+      "txHash": "0xba376635d551a573ceefc15cf89ee1a8ee165bbe895d82ab5c1cbb8dc1c28029",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)3279_storage)",
+            "contract": "AccessControl",
+            "src": "@openzeppelin/contracts/access/AccessControl.sol:56"
+          },
+          {
+            "label": "_nftManager",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:36"
+          },
+          {
+            "label": "nftPreviousManager",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:37"
+          },
+          {
+            "label": "nftManagerGraceTimeStart",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:38"
+          },
+          {
+            "label": "operatorWhitelist",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:43"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)3279_storage)": {
+            "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(RoleData)3279_storage": {
+            "label": "struct AccessControl.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}

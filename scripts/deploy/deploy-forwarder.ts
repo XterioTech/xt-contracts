@@ -2,6 +2,7 @@ import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployForwarder } from "../../lib/deploy";
+import { getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
@@ -19,7 +20,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`===================== Deploy Forwarder =====================`);
     console.info(`============================================================`);
-    const forwarder = await deployForwarder();
+    const forwarder = await deployForwarder(getTxOverridesForNetwork(hre.network.name));
     address = await forwarder.getAddress();
     console.info(`Forwarder @ ${address}`);
   }
