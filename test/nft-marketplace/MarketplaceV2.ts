@@ -16,7 +16,7 @@ import {
 
 async function defaultFixture() {
   const base = await nftTradingTestFixture();
-  const [, , , platform, seller, buyer, user3, randomUser] = await hre.ethers.getSigners();
+  const [, , , royaltyReceiver, platform, seller, buyer, user3, randomUser] = await hre.ethers.getSigners();
   const marketplace = await deployMarketplaceV2(base.gateway, platform.address, base.paymentToken);
   // Add marketplace to the token operator whitelist.
   await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(marketplace);
@@ -25,7 +25,6 @@ async function defaultFixture() {
   const tokenSymbol = "TE721";
   const baseURI = "https://api.test/meta/goerli";
   const BasicERC721CWithBasicRoyalties = await hre.ethers.getContractFactory("BasicERC721CWithBasicRoyalties");
-  const [, , royaltyReceiver, u1] = await hre.ethers.getSigners();
   const royaltyFeeNumerator = 200;
   const erc721WithBasicRoyalties = await BasicERC721CWithBasicRoyalties.deploy(
     tokenName,
@@ -145,7 +144,7 @@ describe("Test Marketplace Contract", function () {
         price: price,
         serviceFee: serviceFee,
         royaltyFee: royaltyFee,
-        royaltyFeeReceipient: nftManager.address,
+        royaltyFeeReceipient: royaltyReceiver.address,
         allowMint: false,
       };
 
@@ -288,7 +287,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
     });
 
@@ -343,7 +342,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
 
       // The token is transferred directly to the nft manager's address.
@@ -403,7 +402,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
     });
 
@@ -460,7 +459,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
     });
 
@@ -1104,7 +1103,7 @@ describe("Test Marketplace Contract", function () {
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
 
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(0);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(0);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
     });
   });
@@ -1433,7 +1432,7 @@ describe("Test Marketplace Contract", function () {
         price: price,
         serviceFee: serviceFee,
         royaltyFee: royaltyFee,
-        royaltyFeeReceipient: nftManager.address,
+        royaltyFeeReceipient: royaltyReceiver.address,
         allowMint: false,
       };
 
@@ -1575,7 +1574,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(balance - totalCost);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
     });
 
@@ -1639,7 +1638,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(balance - totalCost);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
 
       // nft manager's address token number not change
@@ -1699,7 +1698,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
     });
 
@@ -1755,7 +1754,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(balance - totalCost);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
     });
 
@@ -1894,7 +1893,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(balance * 2 - totalCost);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
     });
 
@@ -1974,7 +1973,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(balance * 2 - totalCost);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
     });
   });

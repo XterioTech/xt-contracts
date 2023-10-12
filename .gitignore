@@ -15,6 +15,4 @@ abi
 
 # sensitive files
 wallet.json
-wallet.dev.json
-wallet.prod.json
-
+wallet.*.json

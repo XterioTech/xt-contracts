@@ -44,18 +44,25 @@ export const nftTradingTestFixture = async () => {
   const tokenSymbol = "TE721";
   const baseURI = "https://api.test/meta/goerli";
 
+  const [, , nftManager] = await hre.ethers.getSigners();
+
   const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
-  const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder);
+  const erc721 = await BasicERC721C.connect(nftManager).deploy(
+    tokenName,
+    tokenSymbol,
+    baseURI,
+    base.gateway,
+    base.forwarder
+  );
   await erc721.waitForDeployment();
 
   const BasicERC1155C = await hre.ethers.getContractFactory("BasicERC1155C");
-  const erc1155 = await BasicERC1155C.deploy(baseURI, base.gateway, base.forwarder);
+  const erc1155 = await BasicERC1155C.connect(nftManager).deploy(baseURI, base.gateway, base.forwarder);
   await erc1155.waitForDeployment();
 
-  const [, , nftManager] = await hre.ethers.getSigners();
-  // NOTE: we need to configure this on-chain!!
-  await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc721, nftManager.address);
-  await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc1155, nftManager.address);
+  // // NOTE: we need to configure this on-chain!!
+  // await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc721, nftManager.address);
+  // await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc1155, nftManager.address);
 
   const paymentToken = await deployMajorToken(base.owner.address);
 

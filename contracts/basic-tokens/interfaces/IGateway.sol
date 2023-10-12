@@ -12,6 +12,11 @@ interface IGateway is IERC721Gateway, IERC1155Gateway, IERC20Gateway {
 
     function nftManager(address _nftContract) external view returns (address);
 
+    function isInManagement(
+        address _x,
+        address _tokenContract
+    ) external view returns (bool);
+
     function pause(address _contract) external;
 
     function unpause(address _contract) external;

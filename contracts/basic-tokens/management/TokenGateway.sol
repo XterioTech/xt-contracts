@@ -33,7 +33,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
      * Store a one-to-one relationship between a certain nft contract
      * and a manager address.
      */
-    mapping(address => address) public override nftManager;
+    mapping(address => address) _nftManager;
     mapping(address => address) nftPreviousManager;
     mapping(address => uint256) nftManagerGraceTimeStart;
 
@@ -193,14 +193,14 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         emit AssignManager(
             msg.sender,
             _tokenContract,
-            nftManager[_tokenContract],
+            _nftManager[_tokenContract],
             _manager
         );
 
-        nftPreviousManager[_tokenContract] = nftManager[_tokenContract];
+        nftPreviousManager[_tokenContract] = _nftManager[_tokenContract];
         nftManagerGraceTimeStart[_tokenContract] = block.timestamp;
 
-        nftManager[_tokenContract] = _manager;
+        _nftManager[_tokenContract] = _manager;
     }
 
     /********************************************************************
@@ -268,7 +268,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
             "TokenGateway: new gateway should be different than the current one"
         );
 
-        nftManager[_tokenContract] = address(0);
+        _nftManager[_tokenContract] = address(0);
         nftPreviousManager[_tokenContract] = address(0);
         IGatewayGuarded(_tokenContract).setGateway(_newGateway);
     }
@@ -294,9 +294,21 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    /********************************************************************
-     *                        Helper functions                          *
-     ********************************************************************/
+    /**
+     * @dev Return the token manager address for _tokenContract
+     * @notice If `nftManager` is not set in gateway, the owner of the _tokenContract is returned
+     */
+    function nftManager(
+        address _tokenContract
+    ) public view override returns (address) {
+        address configuredManager = _nftManager[_tokenContract];
+        if (configuredManager == address(0)) {
+            try Ownable(_tokenContract).owner() returns (address _owner) {
+                return _owner;
+            } catch {}
+        }
+        return configuredManager;
+    }
 
     /**
      * @dev Check if address `_x` is in management.
@@ -306,14 +318,14 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
     function isInManagement(
         address _x,
         address _tokenContract
-    ) public view returns (bool) {
+    ) public view override returns (bool) {
         try Ownable(_tokenContract).owner() returns (address _owner) {
             if (_owner == _x) {
                 return true;
             }
         } catch {}
         return
-            _x == nftManager[_tokenContract] ||
+            _x == _nftManager[_tokenContract] ||
             (_x == nftPreviousManager[_tokenContract] &&
                 block.timestamp <
                 nftManagerGraceTimeStart[_tokenContract] + 1 days);
