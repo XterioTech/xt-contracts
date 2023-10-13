@@ -42,13 +42,13 @@ export function getAddressForNetwork(contract: ContractOrAddrName, network: stri
   return address;
 }
 
-export function getTxOverridesForNetwork(network: string): { gasPrice: number } | undefined {
+export function getTxOverridesForNetwork(network: string): { gasPrice?: number } {
   switch (network) {
     case "opbnb":
       return { gasPrice: 1000000008 };
     case "polygon":
-      return { gasPrice: 100000000000 };
+      return { gasPrice: 300000000000 };
     default:
-      return undefined;
+      return {};
   }
 }

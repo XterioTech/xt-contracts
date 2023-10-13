@@ -2,14 +2,15 @@ import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployMarketplaceV2 } from "../../lib/deploy";
-import { ContractOrAddrName, getAddressForNetwork } from "../../lib/constant";
+import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let verifyAddress = process.env.verifyAddress;
   const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
-  const serviceFeeRecipient = process.env.serviceFeeRecipient || admin.address;
+  const serviceFeeRecipient =
+    process.env.serviceFeeRecipient || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
   const owner = process.env.owner || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
 
   if (!verifyAddress) {
@@ -30,7 +31,12 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`===================== Deploy Marketplace =====================`);
     console.info(`============================================================`);
-    const marketplace = await deployMarketplaceV2(gatewayAddress, serviceFeeRecipient);
+    const marketplace = await deployMarketplaceV2(
+      gatewayAddress,
+      serviceFeeRecipient,
+      undefined,
+      getTxOverridesForNetwork(hre.network.name)
+    );
     const proxyAddress = await marketplace.getAddress();
     console.info(`MarketplaceV2 proxy @ ${proxyAddress}`);
 
@@ -41,7 +47,7 @@ const main = async () => {
 
     if (owner) {
       console.info(`Transfer ownership to ${owner} ...`);
-      await marketplace.transferOwnership(owner);
+      await marketplace.transferOwnership(owner, getTxOverridesForNetwork(hre.network.name));
       console.info(`Ownership Transferred`);
     }
   }
