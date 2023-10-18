@@ -122,12 +122,17 @@ contract MarketplaceV2 is
 
     event SetGateway(address indexed gateway);
 
-    function initialize() public initializer {
+    function initialize(
+        address _gateway,
+        address _serviceFeeRecipient
+    ) public initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
 
         // Let native token be payment token
         paymentTokens[address(0)] = true;
+        gateway = _gateway;
+        serviceFeeRecipient = _serviceFeeRecipient;
     }
 
     /********************************************************************
@@ -561,12 +566,21 @@ contract MarketplaceV2 is
         uint256 fee2service = (totalCost * order.serviceFee) / BASE;
         uint256 royaltyFee = (totalCost * order.royaltyFee) / BASE;
 
-        (bool success, bytes memory result) = order.targetTokenAddress.staticcall(
-            abi.encodeWithSelector(IERC2981.royaltyInfo.selector, order.targetTokenId, order.price)
-        );
+        (bool success, bytes memory result) = order
+            .targetTokenAddress
+            .staticcall(
+                abi.encodeWithSelector(
+                    IERC2981.royaltyInfo.selector,
+                    order.targetTokenId,
+                    order.price
+                )
+            );
 
         if (success && result.length == 64) {
-            (order.royaltyFeeRecipient, royaltyFee) = abi.decode(result, (address, uint256));
+            (order.royaltyFeeRecipient, royaltyFee) = abi.decode(
+                result,
+                (address, uint256)
+            );
             require(
                 totalCost > fee2service + royaltyFee,
                 "MarketplaceV2: wrong royalty fee"

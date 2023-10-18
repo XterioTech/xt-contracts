@@ -1,7 +1,7 @@
 import { TokenGateway } from "./typechain-types";
 import { extendEnvironment } from "hardhat/config";
 import "hardhat/types/runtime";
-import { ContractName, getAddressForNetwork } from "./lib/constant";
+import { ContractOrAddrName, getAddressForNetwork } from "./lib/constant";
 
 interface HelperFuncs {
   loadTokenGateway(): Promise<TokenGateway>;
@@ -18,7 +18,7 @@ extendEnvironment((hre) => {
     loadTokenGateway: () => {
       return hre.ethers.getContractAt(
         "TokenGateway",
-        getAddressForNetwork(ContractName.TokenGateway, hre.network.name)
+        getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name)
       );
     },
   };

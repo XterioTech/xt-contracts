@@ -59,6 +59,14 @@ const config: HardhatUserConfig = {
     //   url: `https://opbnb-mainnet.nodereal.io/v1/${process.env.API_KEY_NODEREAL_OPBNB}`,
     //   accounts: privateKey != "" ? [privateKey] : [],
     // },
+    arbitrumOne: {
+      url: "https://arbitrum-one.publicnode.com",
+      accounts: privateKey != "" ? [privateKey] : [],
+    },
+    polygon: {
+      url: "https://polygon-rpc.com",
+      accounts: privateKey != "" ? [privateKey] : [],
+    },
   },
   solidity: {
     version: "0.8.19",
@@ -71,12 +79,15 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      mainnet: process.env.API_KEY_ETHERSCAN || "",
       rinkeby: process.env.API_KEY_ETHERSCAN || "",
       goerli: process.env.API_KEY_ETHERSCAN || "",
       bscTestnet: process.env.API_KEY_ETHERSCAN_BSCTESTNET || "",
       bsc: process.env.API_KEY_ETHERSCAN_BSC || "",
       opbnbTestnet: process.env.API_KEY_NODEREAL_OPBNB || "",
       opbnb: process.env.API_KEY_NODEREAL_OPBNB || "",
+      arbitrumOne: process.env.API_KEY_ARBISCAN || "",
+      polygon: process.env.API_KEY_POLYGONSCAN || "",
     },
     customChains: [
       {

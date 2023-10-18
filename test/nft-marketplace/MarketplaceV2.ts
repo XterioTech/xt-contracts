@@ -5,12 +5,19 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { deployMarketplaceV2 } from "../../lib/deploy";
 import { nftTradingTestFixture } from "../common_fixtures";
 import { AddressLike, BigNumberish } from "ethers";
-import { BasicERC1155C, BasicERC721C, BasicERC721CWithBasicRoyalties, MarketplaceV2, TokenGateway, XterToken } from "../../typechain-types";
+import {
+  BasicERC1155C,
+  BasicERC721C,
+  BasicERC721CWithBasicRoyalties,
+  MarketplaceV2,
+  TokenGateway,
+  XterToken,
+} from "../../typechain-types";
 
 async function defaultFixture() {
   const base = await nftTradingTestFixture();
-  const [, , , platform, seller, buyer, user3, randomUser] = await hre.ethers.getSigners();
-  const marketplace = await deployMarketplaceV2(base.gateway, base.paymentToken, platform.address);
+  const [, , , royaltyReceiver, platform, seller, buyer, user3, randomUser] = await hre.ethers.getSigners();
+  const marketplace = await deployMarketplaceV2(base.gateway, platform.address, base.paymentToken);
   // Add marketplace to the token operator whitelist.
   await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(marketplace);
 
@@ -18,13 +25,31 @@ async function defaultFixture() {
   const tokenSymbol = "TE721";
   const baseURI = "https://api.test/meta/goerli";
   const BasicERC721CWithBasicRoyalties = await hre.ethers.getContractFactory("BasicERC721CWithBasicRoyalties");
-  const [, , royaltyReceiver, u1] = await hre.ethers.getSigners();
   const royaltyFeeNumerator = 200;
-  const erc721WithBasicRoyalties = await BasicERC721CWithBasicRoyalties.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder, royaltyReceiver.address, royaltyFeeNumerator);
+  const erc721WithBasicRoyalties = await BasicERC721CWithBasicRoyalties.deploy(
+    tokenName,
+    tokenSymbol,
+    baseURI,
+    base.gateway,
+    base.forwarder,
+    royaltyReceiver.address,
+    royaltyFeeNumerator
+  );
   await erc721WithBasicRoyalties.waitForDeployment();
   await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc721WithBasicRoyalties, base.nftManager.address);
 
-  return { ...base, erc721WithBasicRoyalties, marketplace, platform, seller, buyer, user3, randomUser, royaltyReceiver, royaltyFeeNumerator };
+  return {
+    ...base,
+    erc721WithBasicRoyalties,
+    marketplace,
+    platform,
+    seller,
+    buyer,
+    user3,
+    randomUser,
+    royaltyReceiver,
+    royaltyFeeNumerator,
+  };
 }
 
 describe("Test Marketplace Contract", function () {
@@ -38,15 +63,26 @@ describe("Test Marketplace Contract", function () {
     erc1155: BasicERC1155C;
   let [platform, seller, buyer, nftManager, royaltyReceiver]: HardhatEthersSigner[] = [];
   let [marketplaceAddr, erc721Addr, erc721WithBasicRoyaltiesAddr, erc1155Addr, paymentTokenAddr]: AddressLike[] = [];
-  let royaltyFeeNumerator: number
+  let royaltyFeeNumerator: number;
 
   this.beforeEach(async () => {
-    ({ gateway, paymentToken, marketplace, erc721, erc721WithBasicRoyalties, erc1155, platform, seller, buyer, nftManager, royaltyReceiver, royaltyFeeNumerator } = await loadFixture(
-      defaultFixture
-    ));
+    ({
+      gateway,
+      paymentToken,
+      marketplace,
+      erc721,
+      erc721WithBasicRoyalties,
+      erc1155,
+      platform,
+      seller,
+      buyer,
+      nftManager,
+      royaltyReceiver,
+      royaltyFeeNumerator,
+    } = await loadFixture(defaultFixture));
     marketplaceAddr = await marketplace.getAddress();
     erc721Addr = await erc721.getAddress();
-    erc721WithBasicRoyaltiesAddr = await erc721WithBasicRoyalties.getAddress()
+    erc721WithBasicRoyaltiesAddr = await erc721WithBasicRoyalties.getAddress();
     erc1155Addr = await erc1155.getAddress();
     paymentTokenAddr = await paymentToken.getAddress();
   });
@@ -108,7 +144,7 @@ describe("Test Marketplace Contract", function () {
         price: price,
         serviceFee: serviceFee,
         royaltyFee: royaltyFee,
-        royaltyFeeReceipient: nftManager.address,
+        royaltyFeeReceipient: royaltyReceiver.address,
         allowMint: false,
       };
 
@@ -251,7 +287,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
     });
 
@@ -306,7 +342,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
 
       // The token is transferred directly to the nft manager's address.
@@ -366,7 +402,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
     });
 
@@ -423,7 +459,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
     });
 
@@ -1067,13 +1103,182 @@ describe("Test Marketplace Contract", function () {
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
 
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(0);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(0);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
     });
   });
 
   describe("ERC721C <> ERC20", () => {
     const getOrderInfo = async ({
+      tokenId,
+      price,
+      balance,
+      serviceFee,
+      royaltyFee,
+      sellerListingTime,
+      sellerExpirationTime,
+      sellerSalt,
+      buyerSalt,
+      sellerMaximumFill,
+      buyerMaximumFill,
+      sellerSellOrBuy,
+      buyerSellOrBuy,
+    }: {
+      tokenId: BigNumberish;
+      price: number;
+      balance: BigNumberish;
+      serviceFee: number;
+      royaltyFee: number;
+      sellerListingTime: BigNumberish;
+      sellerExpirationTime: BigNumberish;
+      sellerSalt: BigNumberish;
+      buyerSalt: BigNumberish;
+      sellerMaximumFill?: BigNumberish;
+      buyerMaximumFill?: BigNumberish;
+      sellerSellOrBuy?: boolean;
+      buyerSellOrBuy?: boolean;
+    }) => {
+      const transactionType = await marketplace.TRANSACT_ERC721();
+
+      // Mints paymentToken to buyer
+      await paymentToken.transfer(buyer.address, balance);
+      // Manager1 mints an NFT to seller.
+      await gateway.connect(nftManager).ERC721_mint(erc721WithBasicRoyalties, seller.address, tokenId);
+
+      /**
+       * 1. seller puts a sell bid on the market
+       * 2. buyer matches that bid, buys directly
+       */
+
+      // Get seller's nft tokenId
+      const sellerBalance = await erc721WithBasicRoyalties.balanceOf(seller.address);
+      expect(sellerBalance).to.equal(1);
+
+      const encoder = new hre.ethers.AbiCoder();
+
+      // Prepare Order info
+      const order = {
+        marketplaceAddress: marketplaceAddr,
+        targetTokenAddress: erc721WithBasicRoyaltiesAddr,
+        targetTokenId: tokenId,
+        paymentTokenAddress: paymentTokenAddr,
+        price: price,
+        serviceFee: serviceFee,
+        royaltyFee: royaltyFee,
+        royaltyFeeReceipient: nftManager.address,
+        allowMint: false,
+      };
+
+      const orderBytes = encoder.encode(
+        ["address", "address", "uint256", "address", "uint256", "uint256", "uint256", "address", "bool"],
+        [
+          order.marketplaceAddress,
+          order.targetTokenAddress,
+          order.targetTokenId,
+          order.paymentTokenAddress,
+          order.price,
+          order.serviceFee,
+          order.royaltyFee,
+          order.royaltyFeeReceipient,
+          order.allowMint,
+        ]
+      );
+
+      // Prepare seller metadata
+      const sellerMetadata = {
+        sellOrBuy: sellerSellOrBuy == undefined ? true : sellerSellOrBuy,
+        recipient: seller.address,
+        listingTime: sellerListingTime,
+        expirationTime: sellerExpirationTime,
+        maximumFill: sellerMaximumFill || 1,
+        forceFilled: false,
+        salt: sellerSalt,
+      };
+      const sellerMetadataBytes = encoder.encode(
+        ["bool", "address", "uint256", "uint256", "uint256", "bool", "uint256"],
+        [
+          sellerMetadata.sellOrBuy,
+          sellerMetadata.recipient,
+          sellerMetadata.listingTime,
+          sellerMetadata.expirationTime,
+          sellerMetadata.maximumFill,
+          sellerMetadata.forceFilled,
+          sellerMetadata.salt,
+        ]
+      );
+
+      // Seller signs
+      const sellerMessageHash = hre.ethers.solidityPackedKeccak256(
+        ["bytes32", "bytes", "bytes"],
+        [transactionType, orderBytes, sellerMetadataBytes]
+      );
+      const sellerSig = await seller.signMessage(hre.ethers.getBytes(sellerMessageHash));
+
+      // Prepare buyer metadata
+      const buyerMetadata = {
+        sellOrBuy: buyerSellOrBuy == undefined ? false : buyerSellOrBuy,
+        recipient: buyer.address,
+        listingTime: 0,
+        expirationTime: 0,
+        maximumFill: buyerMaximumFill || 1,
+        forceFilled: false,
+        salt: buyerSalt,
+      };
+      const buyerMetadataBytes = encoder.encode(
+        ["bool", "address", "uint256", "uint256", "uint256", "bool", "uint256"],
+        [
+          buyerMetadata.sellOrBuy,
+          buyerMetadata.recipient,
+          buyerMetadata.listingTime,
+          buyerMetadata.expirationTime,
+          buyerMetadata.maximumFill,
+          buyerMetadata.forceFilled,
+          buyerMetadata.salt,
+        ]
+      );
+
+      // Buyer signs
+      const buyerMessageHash = hre.ethers.solidityPackedKeccak256(
+        ["bytes32", "bytes", "bytes"],
+        [transactionType, orderBytes, buyerMetadataBytes]
+      );
+      const buyerSig = await buyer.signMessage(hre.ethers.getBytes(buyerMessageHash));
+
+      return {
+        transactionType,
+        order,
+        orderBytes,
+        sellerMetadataBytes,
+        sellerSig,
+        sellerMessageHash,
+        buyerMetadataBytes,
+        buyerSig,
+        buyerMessageHash,
+      };
+    };
+
+    it("Invalid royalty fee", async function () {
+      const tokenId = 1;
+      const price = 1000;
+      const balance = 1000;
+      const serviceFee = 100;
+      const royaltyFee = 100;
+      const sellerListingTime = 0;
+      const sellerExpirationTime = 0;
+      const sellerSalt = "0x0000000000000000000000000000000000000000000000000000000000000025";
+      const buyerSalt = "0x0000000000000000000000000000000000000000000000000000000000000026";
+
+      const {
+        transactionType,
+        order,
+        orderBytes,
+        sellerMetadataBytes,
+        sellerSig,
+        sellerMessageHash,
+        buyerMetadataBytes,
+        buyerSig,
+        buyerMessageHash,
+      } = await getOrderInfo({
         tokenId,
         price,
         balance,
@@ -1083,199 +1288,30 @@ describe("Test Marketplace Contract", function () {
         sellerExpirationTime,
         sellerSalt,
         buyerSalt,
-        sellerMaximumFill,
-        buyerMaximumFill,
-        sellerSellOrBuy,
-        buyerSellOrBuy,
-    }: {
-        tokenId: BigNumberish;
-        price: number;
-        balance: BigNumberish;
-        serviceFee: number;
-        royaltyFee: number;
-        sellerListingTime: BigNumberish;
-        sellerExpirationTime: BigNumberish;
-        sellerSalt: BigNumberish;
-        buyerSalt: BigNumberish;
-        sellerMaximumFill?: BigNumberish;
-        buyerMaximumFill?: BigNumberish;
-        sellerSellOrBuy?: boolean;
-        buyerSellOrBuy?: boolean;
-    }) => {
-        const transactionType = await marketplace.TRANSACT_ERC721();
+      });
 
-        // Mints paymentToken to buyer
-        await paymentToken.transfer(buyer.address, balance);
-        // Manager1 mints an NFT to seller.
-        await gateway.connect(nftManager).ERC721_mint(erc721WithBasicRoyalties, seller.address, tokenId);
+      /**
+       * Transaction preparations.
+       * 1. Seller approves the marketplace contract of spending `tokenId`.
+       * 2. Buyer approves the marketplace contract of spending `price` amount.
+       */
+      await erc721WithBasicRoyalties.connect(seller).approve(marketplaceAddr, tokenId);
+      await paymentToken.connect(buyer).approve(marketplaceAddr, price);
 
-        /**
-         * 1. seller puts a sell bid on the market
-         * 2. buyer matches that bid, buys directly
-         */
+      await erc721WithBasicRoyalties.setDefaultRoyalty(royaltyReceiver.address, 9999);
 
-            // Get seller's nft tokenId
-        const sellerBalance = await erc721WithBasicRoyalties.balanceOf(seller.address);
-        expect(sellerBalance).to.equal(1);
-
-        const encoder = new hre.ethers.AbiCoder();
-
-        // Prepare Order info
-        const order = {
-            marketplaceAddress: marketplaceAddr,
-            targetTokenAddress: erc721WithBasicRoyaltiesAddr,
-            targetTokenId: tokenId,
-            paymentTokenAddress: paymentTokenAddr,
-            price: price,
-            serviceFee: serviceFee,
-            royaltyFee: royaltyFee,
-            royaltyFeeReceipient: nftManager.address,
-            allowMint: false,
-        };
-
-        const orderBytes = encoder.encode(
-            ["address", "address", "uint256", "address", "uint256", "uint256", "uint256", "address", "bool"],
-            [
-                order.marketplaceAddress,
-                order.targetTokenAddress,
-                order.targetTokenId,
-                order.paymentTokenAddress,
-                order.price,
-                order.serviceFee,
-                order.royaltyFee,
-                order.royaltyFeeReceipient,
-                order.allowMint,
-            ]
-        );
-
-        // Prepare seller metadata
-        const sellerMetadata = {
-            sellOrBuy: sellerSellOrBuy == undefined ? true : sellerSellOrBuy,
-            recipient: seller.address,
-            listingTime: sellerListingTime,
-            expirationTime: sellerExpirationTime,
-            maximumFill: sellerMaximumFill || 1,
-            forceFilled: false,
-            salt: sellerSalt,
-        };
-        const sellerMetadataBytes = encoder.encode(
-            ["bool", "address", "uint256", "uint256", "uint256", "bool", "uint256"],
-            [
-                sellerMetadata.sellOrBuy,
-                sellerMetadata.recipient,
-                sellerMetadata.listingTime,
-                sellerMetadata.expirationTime,
-                sellerMetadata.maximumFill,
-                sellerMetadata.forceFilled,
-                sellerMetadata.salt,
-            ]
-        );
-
-        // Seller signs
-        const sellerMessageHash = hre.ethers.solidityPackedKeccak256(
-            ["bytes32", "bytes", "bytes"],
-            [transactionType, orderBytes, sellerMetadataBytes]
-        );
-        const sellerSig = await seller.signMessage(hre.ethers.getBytes(sellerMessageHash));
-
-        // Prepare buyer metadata
-        const buyerMetadata = {
-            sellOrBuy: buyerSellOrBuy == undefined ? false : buyerSellOrBuy,
-            recipient: buyer.address,
-            listingTime: 0,
-            expirationTime: 0,
-            maximumFill: buyerMaximumFill || 1,
-            forceFilled: false,
-            salt: buyerSalt,
-        };
-        const buyerMetadataBytes = encoder.encode(
-            ["bool", "address", "uint256", "uint256", "uint256", "bool", "uint256"],
-            [
-                buyerMetadata.sellOrBuy,
-                buyerMetadata.recipient,
-                buyerMetadata.listingTime,
-                buyerMetadata.expirationTime,
-                buyerMetadata.maximumFill,
-                buyerMetadata.forceFilled,
-                buyerMetadata.salt,
-            ]
-        );
-
-        // Buyer signs
-        const buyerMessageHash = hre.ethers.solidityPackedKeccak256(
-            ["bytes32", "bytes", "bytes"],
-            [transactionType, orderBytes, buyerMetadataBytes]
-        );
-        const buyerSig = await buyer.signMessage(hre.ethers.getBytes(buyerMessageHash));
-
-        return {
-            transactionType,
-            order,
-            orderBytes,
-            sellerMetadataBytes,
-            sellerSig,
-            sellerMessageHash,
-            buyerMetadataBytes,
-            buyerSig,
-            buyerMessageHash,
-        };
-    };
-
-    it("Invalid royalty fee", async function () {
-        const tokenId = 1;
-        const price = 1000;
-        const balance = 1000;
-        const serviceFee = 100;
-        const royaltyFee = 100;
-        const sellerListingTime = 0;
-        const sellerExpirationTime = 0;
-        const sellerSalt = "0x0000000000000000000000000000000000000000000000000000000000000025";
-        const buyerSalt = "0x0000000000000000000000000000000000000000000000000000000000000026";
-
-        const {
-            transactionType,
-            order,
-            orderBytes,
-            sellerMetadataBytes,
-            sellerSig,
-            sellerMessageHash,
-            buyerMetadataBytes,
-            buyerSig,
-            buyerMessageHash,
-        } = await getOrderInfo({
-            tokenId,
-            price,
-            balance,
-            serviceFee,
-            royaltyFee,
-            sellerListingTime,
-            sellerExpirationTime,
-            sellerSalt,
-            buyerSalt,
-        });
-
-        /**
-         * Transaction preparations.
-         * 1. Seller approves the marketplace contract of spending `tokenId`.
-         * 2. Buyer approves the marketplace contract of spending `price` amount.
-         */
-        await erc721WithBasicRoyalties.connect(seller).approve(marketplaceAddr, tokenId);
-        await paymentToken.connect(buyer).approve(marketplaceAddr, price);
-
-        await erc721WithBasicRoyalties.setDefaultRoyalty(royaltyReceiver.address, 9999)
-
-        await expect(
-            marketplace.atomicMatch(
-                transactionType,
-                orderBytes,
-                seller.address,
-                sellerMetadataBytes,
-                sellerSig,
-                buyer.address,
-                buyerMetadataBytes,
-                buyerSig
-            )
-        ).to.be.revertedWith("MarketplaceV2: wrong royalty fee");
+      await expect(
+        marketplace.atomicMatch(
+          transactionType,
+          orderBytes,
+          seller.address,
+          sellerMetadataBytes,
+          sellerSig,
+          buyer.address,
+          buyerMetadataBytes,
+          buyerSig
+        )
+      ).to.be.revertedWith("MarketplaceV2: wrong royalty fee");
     });
 
     it("Manager <> user transaction", async function () {
@@ -1290,25 +1326,25 @@ describe("Test Marketplace Contract", function () {
       const buyerSalt = "0x0000000000000000000000000000000000000000000000000000000000000026";
 
       const {
-          transactionType,
-          order,
-          orderBytes,
-          sellerMetadataBytes,
-          sellerSig,
-          sellerMessageHash,
-          buyerMetadataBytes,
-          buyerSig,
-          buyerMessageHash,
+        transactionType,
+        order,
+        orderBytes,
+        sellerMetadataBytes,
+        sellerSig,
+        sellerMessageHash,
+        buyerMetadataBytes,
+        buyerSig,
+        buyerMessageHash,
       } = await getOrderInfo({
-          tokenId,
-          price,
-          balance,
-          serviceFee,
-          royaltyFee,
-          sellerListingTime,
-          sellerExpirationTime,
-          sellerSalt,
-          buyerSalt,
+        tokenId,
+        price,
+        balance,
+        serviceFee,
+        royaltyFee,
+        sellerListingTime,
+        sellerExpirationTime,
+        sellerSalt,
+        buyerSalt,
       });
 
       /**
@@ -1320,15 +1356,15 @@ describe("Test Marketplace Contract", function () {
       await paymentToken.connect(buyer).approve(marketplaceAddr, price);
 
       await marketplace.atomicMatch(
-          transactionType,
-          orderBytes,
-          seller.address,
-          sellerMetadataBytes,
-          sellerSig,
-          buyer.address,
-          buyerMetadataBytes,
-          buyerSig
-      )
+        transactionType,
+        orderBytes,
+        seller.address,
+        sellerMetadataBytes,
+        sellerSig,
+        buyer.address,
+        buyerMetadataBytes,
+        buyerSig
+      );
       /**
        * Checks
        */
@@ -1341,7 +1377,6 @@ describe("Test Marketplace Contract", function () {
       expect(await paymentToken.balanceOf(receiver)).to.equal(royalty);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - Number(royalty));
     });
-
   });
 
   describe("ERC1155 <> ERC20", () => {
@@ -1397,7 +1432,7 @@ describe("Test Marketplace Contract", function () {
         price: price,
         serviceFee: serviceFee,
         royaltyFee: royaltyFee,
-        royaltyFeeReceipient: nftManager.address,
+        royaltyFeeReceipient: royaltyReceiver.address,
         allowMint: false,
       };
 
@@ -1539,7 +1574,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(balance - totalCost);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
     });
 
@@ -1603,7 +1638,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(balance - totalCost);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
 
       // nft manager's address token number not change
@@ -1663,7 +1698,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
     });
 
@@ -1719,7 +1754,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(balance - totalCost);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
     });
 
@@ -1858,7 +1893,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(balance * 2 - totalCost);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
     });
 
@@ -1938,7 +1973,7 @@ describe("Test Marketplace Contract", function () {
 
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(balance * 2 - totalCost);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(seller.address)).to.equal(totalCost - platFormFee - managerFee);
     });
   });

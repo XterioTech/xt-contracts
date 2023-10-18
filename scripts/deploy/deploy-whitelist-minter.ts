@@ -2,14 +2,14 @@ import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployWhitelistMinter } from "../../lib/deploy";
-import { ContractName, getAddressForNetwork } from "../../lib/constant";
+import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
 
-  const gatewayAddress = getAddressForNetwork(ContractName.TokenGateway, hre.network.name);
+  const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
   if (!address) {
     console.info(colorize(Color.blue, `Deploy WhitelistMinter`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
@@ -22,12 +22,15 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`===================== Deploy WhitelistMinter =====================`);
     console.info(`============================================================`);
-    const whitelistMinter = await deployWhitelistMinter(gatewayAddress);
+    const whitelistMinter = await deployWhitelistMinter(gatewayAddress, getTxOverridesForNetwork(hre.network.name));
     address = await whitelistMinter.getAddress();
     console.info(`WhitelistMinter @ ${address}`);
-    console.info("Add operator whitelist in TokenGateway...");
-    const gateway = await hre.ethers.getContractAt("TokenGateway", gatewayAddress);
-    await gateway.addOperatorWhitelist(address);
+
+    // in mainnet, we do this mannually through multisig address
+    // console.info("Add operator whitelist in TokenGateway...");
+    // const gateway = await hre.ethers.getContractAt("TokenGateway", gatewayAddress);
+    // await gateway.addOperatorWhitelist(address);
+    console.warn("Remember to add WhitelistMinter address to tokenGateway's operator whitelist");
   }
 
   if (!skipVerify) {
