@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { ContractOrAddrName, getAddressForNetwork } from "../../lib/constant";
+import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
 
 async function main() {
   // We get the contract to deploy
@@ -7,7 +7,9 @@ async function main() {
   const proxyAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
 
   const implAddressOld = await hre.upgrades.erc1967.getImplementationAddress(proxyAddress);
-  const instance = await hre.upgrades.upgradeProxy(proxyAddress, Contract);
+  const instance = await hre.upgrades.upgradeProxy(proxyAddress, Contract, {
+    txOverrides: getTxOverridesForNetwork(hre.network.name),
+  });
   await instance.waitForDeployment();
   const implAddressNew = await hre.upgrades.erc1967.getImplementationAddress(proxyAddress);
 

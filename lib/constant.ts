@@ -48,6 +48,8 @@ export function getTxOverridesForNetwork(network: string): { gasPrice?: number }
       return { gasPrice: 1000000008 };
     case "polygon":
       return { gasPrice: 300000000000 };
+    case "opbnbTestnet":
+      return { gasPrice: 2500000008 };
     default:
       return {};
   }
