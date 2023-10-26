@@ -20,7 +20,7 @@ contract BasicERC1155C is
     GatewayGuardedOwnable,
     Pausable
 {
-    uint256 public constant VERSION_BasicERC1155C = 20231019;
+    uint256 public constant VERSION_BasicERC1155C = 20231026;
 
     /**
      * @param _gateway NFTGateway contract of the NFT contract.
