@@ -54,7 +54,7 @@ contract BasicERC1155C is
     }
 
     function mintAirdrop(
-        address[] memory accounts,
+        address[] calldata accounts,
         uint256 id,
         uint256 amount,
         bytes calldata data

@@ -17,7 +17,7 @@ interface IBasicERC1155 {
     ) external;
 
     function mintAirdrop(
-        address[] memory accounts,
+        address[] calldata accounts,
         uint256 id,
         uint256 amount,
         bytes calldata data
