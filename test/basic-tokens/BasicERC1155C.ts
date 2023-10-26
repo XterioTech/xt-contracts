@@ -122,4 +122,14 @@ describe("Test BasicERC1155C Contract", function () {
       "ERC1155: transfer to non-ERC1155Receiver implementer"
     );
   });
+
+  it("erc1155C Can MintAirdrop", async function () {
+    const { erc1155, mockMarket, u0, u1, u2, u3, u4, u5 } = await loadFixture(defaultFixture);
+    await erc1155.mintAirdrop([u1.address, u2.address, u3.address, u4.address, u5.address], 1, 1, "0x");
+    expect(await erc1155.balanceOf(u1.address, 1)).to.equal(1);
+    expect(await erc1155.balanceOf(u2.address, 1)).to.equal(1);
+    expect(await erc1155.balanceOf(u3.address, 1)).to.equal(1);
+    expect(await erc1155.balanceOf(u4.address, 1)).to.equal(1);
+    expect(await erc1155.balanceOf(u5.address, 1)).to.equal(1);
+  });
 });
