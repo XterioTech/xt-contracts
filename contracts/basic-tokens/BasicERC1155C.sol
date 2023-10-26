@@ -53,6 +53,17 @@ contract BasicERC1155C is
         _mintBatch(to, ids, amounts, data);
     }
 
+    function mintAirdrop(
+        address[] memory accounts,
+        uint256 id,
+        uint256 amount,
+        bytes calldata data
+    ) external override onlyGatewayOrOwner {
+        for (uint256 i = 0; i < accounts.length; i++) {
+            _mint(accounts[i], id, amount, data);
+        }
+    }
+
     function uri(uint256) public view override returns (string memory) {
         return
             string(

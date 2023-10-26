@@ -16,5 +16,12 @@ interface IBasicERC1155 {
         bytes calldata data
     ) external;
 
+    function mintAirdrop(
+        address[] memory accounts,
+        uint256 id,
+        uint256 amount,
+        bytes calldata data
+    ) external;
+
     function setURI(string calldata newuri) external;
 }
