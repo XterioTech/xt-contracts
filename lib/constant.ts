@@ -68,3 +68,7 @@ export function getTxOverridesForNetwork(network: string): { gasPrice?: number }
       return {};
   }
 }
+
+export function isTestnet(network: string): boolean {
+  return network == "goerli" || network == "bscTestnet" || network == "opbnbTestnet";
+}

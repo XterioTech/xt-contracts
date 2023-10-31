@@ -2,7 +2,7 @@ import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployWhitelistMinter } from "../../lib/deploy";
-import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
+import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork, isTestnet } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
@@ -26,11 +26,14 @@ const main = async () => {
     address = await whitelistMinter.getAddress();
     console.info(`WhitelistMinter @ ${address}`);
 
-    // in mainnet, we do this mannually through multisig address
-    // console.info("Add operator whitelist in TokenGateway...");
-    // const gateway = await hre.ethers.getContractAt("TokenGateway", gatewayAddress);
-    // await gateway.addOperatorWhitelist(address);
-    console.warn("Remember to add WhitelistMinter address to tokenGateway's operator whitelist");
+    if (isTestnet(hre.network.name)) {
+      // console.info("Add operator whitelist in TokenGateway...");
+      const gateway = await hre.ethers.getContractAt("TokenGateway", gatewayAddress);
+      await gateway.addOperatorWhitelist(address, getTxOverridesForNetwork(hre.network.name));
+    } else {
+      // in mainnet, we do this mannually through multisig address
+      console.warn("Remember to add WhitelistMinter address to tokenGateway's operator whitelist");
+    }
   }
 
   if (!skipVerify) {
