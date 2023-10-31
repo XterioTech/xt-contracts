@@ -9,9 +9,9 @@ async function defaultFixture() {
   const whitelistMinter = await deployWhitelistMinter(base.gateway);
   // Add whitelistMinter to the whitelist
   await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(whitelistMinter);
-  const [, , , u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
+  const [, , , payee, u1] = await hre.ethers.getSigners();
 
-  return { ...base, whitelistMinter, u1, u2, u3, u4, u5 };
+  return { ...base, whitelistMinter, payee, u1 };
 }
 
 describe("Test WhitelistMinter Contract", function () {
@@ -43,7 +43,7 @@ describe("Test WhitelistMinter Contract", function () {
     limitForBuyerAmount,
     limitForTokenAmount,
   }: IntegrateTestParam) => {
-    const { paymentToken, whitelistMinter, erc1155, nftManager, u1 } = await loadFixture(defaultFixture);
+    const { paymentToken, whitelistMinter, erc1155, nftManager, u1, payee } = await loadFixture(defaultFixture);
     // 1. Manager transfers some payment tokens to u1
     await paymentToken.transfer(u1.address, paymentTokenAmount);
 
@@ -70,6 +70,7 @@ describe("Test WhitelistMinter Contract", function () {
         "uint256", // limits[3]
         "address", // paymentTokenAddress
         "uint256", // paymentTokenAmount
+        "address", // payeeAddress
         "uint256", // deadline
         "uint256", // chainid
       ],
@@ -85,6 +86,7 @@ describe("Test WhitelistMinter Contract", function () {
         limitForTokenAmount,
         payWithEth ? hre.ethers.ZeroAddress : await paymentToken.getAddress(),
         paymentTokenAmount,
+        payee.address,
         deadline,
         hre.network.config.chainId,
       ]
@@ -102,6 +104,7 @@ describe("Test WhitelistMinter Contract", function () {
         [limitForBuyerID, limitForBuyerAmount, limitForTokenID, limitForTokenAmount],
         payWithEth ? hre.ethers.ZeroAddress : paymentToken,
         paymentTokenAmount,
+        payee.address,
         deadline,
         sig,
         {
@@ -114,7 +117,7 @@ describe("Test WhitelistMinter Contract", function () {
     expect(await erc1155.balanceOf(u1.address, erc1155TokenId)).to.equal(buyingAmount);
     if (!payWithEth) {
       expect(await paymentToken.balanceOf(u1.address)).to.equal(0);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(paymentTokenAmount);
+      expect(await paymentToken.balanceOf(payee.address)).to.equal(paymentTokenAmount);
     }
   };
 
@@ -126,7 +129,7 @@ describe("Test WhitelistMinter Contract", function () {
     limitForBuyerAmount,
     limitForTokenAmount,
   }: IntegrateTestParam) => {
-    const { paymentToken, whitelistMinter, erc721, nftManager, u1 } = await loadFixture(defaultFixture);
+    const { paymentToken, whitelistMinter, erc721, nftManager, u1, payee } = await loadFixture(defaultFixture);
     // 1. Manager transfers some payment tokens to u1
     await paymentToken.transfer(u1.address, paymentTokenAmount);
 
@@ -153,6 +156,7 @@ describe("Test WhitelistMinter Contract", function () {
         "uint256", // limits[3]
         "address", // paymentTokenAddress
         "uint256", // paymentTokenAmount
+        "address", // payeeAddress
         "uint256", // deadline
         "uint256", // chainid
       ],
@@ -168,6 +172,7 @@ describe("Test WhitelistMinter Contract", function () {
         limitForTokenAmount,
         payWithEth ? hre.ethers.ZeroAddress : await paymentToken.getAddress(),
         paymentTokenAmount,
+        payee.address,
         deadline,
         hre.network.config.chainId,
       ]
@@ -185,6 +190,7 @@ describe("Test WhitelistMinter Contract", function () {
         [limitForBuyerID, limitForBuyerAmount, limitForTokenID, limitForTokenAmount],
         payWithEth ? hre.ethers.ZeroAddress : paymentToken,
         paymentTokenAmount,
+        payee.address,
         deadline,
         sig,
         {
@@ -197,7 +203,7 @@ describe("Test WhitelistMinter Contract", function () {
     expect(await erc721.ownerOf(1)).to.equal(u1.address);
     if (!payWithEth) {
       expect(await paymentToken.balanceOf(u1.address)).to.equal(0);
-      expect(await paymentToken.balanceOf(nftManager.address)).to.equal(paymentTokenAmount);
+      expect(await paymentToken.balanceOf(payee.address)).to.equal(paymentTokenAmount);
     }
   };
 
