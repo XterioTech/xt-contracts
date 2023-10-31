@@ -45,6 +45,7 @@ contract WhitelistMinter {
      *        [3] _limitForTokenAmount
      * @param _paymentTokenAddress the token used for the payment
      * @param _paymentTokenAmount the price of the NFT
+     * @param _payeeAddress the payee address who will receive the payment
      * @param _deadline signature expiration time
      * @param _sig the signature provided by the backend, on behalf of nft manager
      */
@@ -54,10 +55,11 @@ contract WhitelistMinter {
         uint256 _tokenId,
         uint256 _amount,
         uint256[4] calldata _limits,
-        address _paymentTokenAddress, // The payment ERC20 token
-        uint256 _paymentTokenAmount, // The payment ERC20 token ammount
+        address _paymentTokenAddress,
+        uint256 _paymentTokenAmount,
+        address _payeeAddress,
         uint256 _deadline,
-        bytes calldata _sig // Signature provided by the backend
+        bytes calldata _sig
     ) external payable {
         // Check if before deadline
         require(block.timestamp <= _deadline, "WhitelistMinter: too late");
@@ -87,13 +89,11 @@ contract WhitelistMinter {
             _limits,
             _paymentTokenAddress,
             _paymentTokenAmount,
+            _payeeAddress,
             _deadline
         );
         address signer = IGateway(gateway).nftManager(_tokenAddress);
         _checkSigValidity(inputHash, _sig, signer);
-
-        // TODO TBD
-        address payeeAddress = signer;
 
         // Transfer payment tokens
         if (_paymentTokenAddress == address(0)) {
@@ -101,12 +101,12 @@ contract WhitelistMinter {
                 msg.value == _paymentTokenAmount,
                 "WhitelistMinter: Wrong native token amount"
             );
-            (bool sent, ) = payeeAddress.call{value: _paymentTokenAmount}("");
+            (bool sent, ) = _payeeAddress.call{value: _paymentTokenAmount}("");
             require(sent, "WhitelistMinter: Failed to send Ether to signer");
         } else if (_paymentTokenAmount != 0) {
             IERC20(_paymentTokenAddress).safeTransferFrom(
                 msg.sender,
-                payeeAddress,
+                _payeeAddress,
                 _paymentTokenAmount
             );
         }
@@ -135,7 +135,7 @@ contract WhitelistMinter {
             _amount,
             _paymentTokenAddress,
             _paymentTokenAmount,
-            payeeAddress
+            _payeeAddress
         );
     }
 
@@ -147,6 +147,7 @@ contract WhitelistMinter {
         uint256[4] memory _limits,
         address _paymentTokenAddress,
         uint256 _paymentTokenAmount,
+        address _payeeAddress,
         uint256 _deadline
     ) internal view returns (bytes32) {
         return
@@ -160,6 +161,7 @@ contract WhitelistMinter {
                     _limits,
                     _paymentTokenAddress,
                     _paymentTokenAmount,
+                    _payeeAddress,
                     _deadline,
                     block.chainid
                 )
