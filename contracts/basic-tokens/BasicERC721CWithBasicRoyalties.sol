@@ -10,7 +10,7 @@ import "@limitbreak/creator-token-contracts/contracts/programmable-royalties/Bas
  * @notice Extension of BasicERC721C that adds basic royalties support.
  */
 contract BasicERC721CWithBasicRoyalties is BasicERC721C, BasicRoyalties {
-    uint256 public constant VERSION_BasicERC721CWithBasicRoyalties = 20230904;
+    uint256 public constant VERSION_BasicERC721CWithBasicRoyalties = 20231019;
 
     constructor(
         string memory name,

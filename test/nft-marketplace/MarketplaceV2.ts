@@ -19,7 +19,7 @@ async function defaultFixture() {
   const [, , , royaltyReceiver, platform, seller, buyer, user3, randomUser] = await hre.ethers.getSigners();
   const marketplace = await deployMarketplaceV2(base.gateway, platform.address, base.paymentToken);
   // Add marketplace to the token operator whitelist.
-  await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(marketplace);
+  // await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(marketplace);
 
   const tokenName = "TestERC721";
   const tokenSymbol = "TE721";
@@ -322,6 +322,9 @@ describe("Test Marketplace Contract", function () {
        */
       await erc721.connect(seller).approve(marketplaceAddr, tokenId);
       await paymentToken.connect(buyer).approve(marketplaceAddr, price);
+
+      // cause deposit, buyer must delegate mkt to transfer
+      await erc721.connect(buyer).setApprovalForAll(marketplaceAddr, true);
 
       await marketplace.atomicMatchAndDeposit(
         transactionType,
@@ -1613,8 +1616,10 @@ describe("Test Marketplace Contract", function () {
        * 2. Buyer approves the marketplace contract of spending `price` amount.
        */
       await erc1155.connect(seller).setApprovalForAll(marketplaceAddr, true);
-
       await paymentToken.connect(buyer).approve(marketplaceAddr, fillAmt * price);
+
+      // cause deposit, recipient(buyer) must delegate mkt to transfer
+      await erc1155.connect(buyer).setApprovalForAll(marketplaceAddr, true);
 
       const originBalance = await erc1155.balanceOf(seller.address, tokenId);
 

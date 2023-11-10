@@ -14,6 +14,8 @@ contract BasicERC721CWithImmutableMinterRoyalties is
     BasicERC721C,
     ImmutableMinterRoyalties
 {
+    uint256 public constant VERSION_BasicERC721CWithImmutableMinterRoyalties = 20231019;
+
     constructor(
         string memory name,
         string memory symbol,

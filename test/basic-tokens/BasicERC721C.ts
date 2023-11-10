@@ -5,6 +5,8 @@ import { nftTestFixture, whitelistedOperator } from "../common_fixtures";
 import { IERC721InterfaceID, getInterfaceID } from "../../lib/utils";
 import { IBasicERC721__factory, ICreatorToken__factory } from "../../typechain-types";
 
+// https://github.com/limitbreakinc/creator-token-contracts/tree/main#transfer-security-levels-description
+
 describe("Test BasicERC721C Contract", function () {
   const tokenName = "TestERC721";
   const tokenSymbol = "TE721";

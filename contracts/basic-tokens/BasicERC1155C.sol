@@ -20,7 +20,7 @@ contract BasicERC1155C is
     GatewayGuardedOwnable,
     Pausable
 {
-    uint256 public constant VERSION_BasicERC1155C = 20230120;
+    uint256 public constant VERSION_BasicERC1155C = 20231026;
 
     /**
      * @param _gateway NFTGateway contract of the NFT contract.
@@ -51,6 +51,17 @@ contract BasicERC1155C is
         bytes calldata data
     ) external override onlyGatewayOrOwner {
         _mintBatch(to, ids, amounts, data);
+    }
+
+    function mintAirdrop(
+        address[] calldata accounts,
+        uint256 id,
+        uint256 amount,
+        bytes calldata data
+    ) external override onlyGatewayOrOwner {
+        for (uint256 i = 0; i < accounts.length; i++) {
+            _mint(accounts[i], id, amount, data);
+        }
     }
 
     function uri(uint256) public view override returns (string memory) {
@@ -111,16 +122,6 @@ contract BasicERC1155C is
         bytes memory data
     ) internal virtual override(ERC1155C, ERC1155) {
         ERC1155C._afterTokenTransfer(operator, from, to, ids, amounts, data);
-    }
-
-    function isApprovedForAll(
-        address account,
-        address operator
-    ) public view override returns (bool) {
-        if (IGateway(gateway).operatorWhitelist(operator)) {
-            return true;
-        }
-        return super.isApprovedForAll(account, operator);
     }
 
     function supportsInterface(

@@ -1,6 +1,7 @@
 type NetworkAddressMap = { [network: string]: string };
 export enum ContractOrAddrName {
   TokenGateway = "TokenGateway",
+  MarketplaceV2 = "MarketplaceV2",
   SafeManager = "SafeManager",
 }
 
@@ -14,6 +15,18 @@ export const tokenGatewayAddressMap: NetworkAddressMap = {
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
   bscTestnet: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   opbnbTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
+};
+
+export const marketplaceV2AddressMap: NetworkAddressMap = {
+  mainnet: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
+  opbnb: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
+  arbitrumOne: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
+  polygon: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
+  bsc: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
+  // Testnets
+  goerli: "0xDbE4F513dBc79dEF048Df54D870EfB3B2edE01cB",
+  bscTestnet: "0x2973fAe1Db21e3f30dF115d43094E7B2d83251c5",
+  opbnbTestnet: "0x1dDee87268F5AF34Ef2fBD128D0D8Dd21b67Bdb1",
 };
 
 export const safeManagerAddressMap: NetworkAddressMap = {
@@ -30,6 +43,7 @@ export const safeManagerAddressMap: NetworkAddressMap = {
 
 const hyperMap = {
   [ContractOrAddrName.TokenGateway]: tokenGatewayAddressMap,
+  [ContractOrAddrName.MarketplaceV2]: marketplaceV2AddressMap,
   [ContractOrAddrName.SafeManager]: safeManagerAddressMap,
 };
 
@@ -48,7 +62,13 @@ export function getTxOverridesForNetwork(network: string): { gasPrice?: number }
       return { gasPrice: 1000000008 };
     case "polygon":
       return { gasPrice: 300000000000 };
+    case "opbnbTestnet":
+      return { gasPrice: 2500000008 };
     default:
       return {};
   }
+}
+
+export function isTestnet(network: string): boolean {
+  return network == "goerli" || network == "bscTestnet" || network == "opbnbTestnet";
 }
