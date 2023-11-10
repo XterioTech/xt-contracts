@@ -32,7 +32,9 @@ const main = async () => {
       await gateway.addOperatorWhitelist(address, getTxOverridesForNetwork(hre.network.name));
     } else {
       // in mainnet, we do this mannually through multisig address
-      console.warn("Remember to add WhitelistMinter address to tokenGateway's operator whitelist");
+      console.warn(
+        colorize(Color.yellow, "Remember to add WhitelistMinter address to tokenGateway's operator whitelist")
+      );
     }
   }
 
