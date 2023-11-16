@@ -12,6 +12,7 @@ export const tokenGatewayAddressMap: NetworkAddressMap = {
   polygon: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   bsc: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   // Testnets
+  sepolia: "0x38f9e50EBF26e4E01db00aE5238e725d8647b115",
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
   bscTestnet: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   opbnbTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
@@ -36,6 +37,7 @@ export const safeManagerAddressMap: NetworkAddressMap = {
   polygon: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
   bsc: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
   // Testnets
+  sepolia: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
   goerli: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
   bscTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
   opbnbTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
@@ -70,5 +72,5 @@ export function getTxOverridesForNetwork(network: string): { gasPrice?: number }
 }
 
 export function isTestnet(network: string): boolean {
-  return network == "goerli" || network == "bscTestnet" || network == "opbnbTestnet";
+  return network == "goerli" || network == "sepolia" || network == "bscTestnet" || network == "opbnbTestnet";
 }

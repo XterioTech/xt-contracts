@@ -27,12 +27,12 @@ const config: HardhatUserConfig = {
       url: "https://mainnet.infura.io/v3/" + process.env.API_KEY_INFURA,
       accounts: privateKey != "" ? [privateKey] : [],
     },
-    rinkeby: {
-      url: "https://rinkeby.infura.io/v3/" + process.env.API_KEY_INFURA,
-      accounts: privateKey != "" ? [privateKey] : [],
-    },
     goerli: {
       url: "https://goerli.infura.io/v3/" + process.env.API_KEY_INFURA,
+      accounts: privateKey != "" ? [privateKey] : [],
+    },
+    sepolia: {
+      url: "https://sepolia.infura.io/v3/" + process.env.API_KEY_INFURA,
       accounts: privateKey != "" ? [privateKey] : [],
     },
     bscTestnet: {
@@ -80,8 +80,8 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       mainnet: process.env.API_KEY_ETHERSCAN || "",
-      rinkeby: process.env.API_KEY_ETHERSCAN || "",
       goerli: process.env.API_KEY_ETHERSCAN || "",
+      sepolia: process.env.API_KEY_ETHERSCAN || "",
       bscTestnet: process.env.API_KEY_ETHERSCAN_BSCTESTNET || "",
       bsc: process.env.API_KEY_ETHERSCAN_BSC || "",
       opbnbTestnet: process.env.API_KEY_NODEREAL_OPBNB || "",

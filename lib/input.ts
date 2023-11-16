@@ -5,7 +5,7 @@ export const inputSimple = (hint: string) => {
 };
 
 export const inputConfirm = (hint?: string) => {
-  return readlineSync.keyInYNStrict(`${hint || "Confirm?"} [y/n]`);
+  return readlineSync.keyInYNStrict(`${hint || "Confirm?"} `);
 };
 
 export const inputPassword = (hint: string) => {
