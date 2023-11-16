@@ -118,55 +118,55 @@ describe("Test PrizeClaimer Contract", function () {
     expect(await DINO.ownerOf(1)).to.equal(u1.address);
   });
 
-  it.only("should pass Type2 test", async function () {
-    const { base, admin, signer, u0, u1, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
-    const { gateway, gatewayAdmin, manager, erc1155: Coupon, erc721: DINO, erc20: DAM } = base
+  // it.only("should pass Type2 test", async function () {
+  //   const { base, admin, signer, u0, u1, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
+  //   const { gateway, gatewayAdmin, manager, erc1155: Coupon, erc721: DINO, erc20: DAM } = base
 
-    this.timeout(30 * 1000);
-    const startTime = 1999888777;
-    const deadline = startTime + 15 * 60;
+  //   this.timeout(30 * 1000);
+  //   const startTime = 1999888777;
+  //   const deadline = startTime + 15 * 60;
 
-    // 1. Manager mints some scoreNFT tokens to u1 as the prizeClaimer tokens
-    await gateway.connect(manager).ERC721_mint(await scoreNFT.getAddress(), u1.address, 0);
-    expect(await scoreNFT.balanceOf(u1.address)).to.equal(1);
+  //   // 1. Manager mints some scoreNFT tokens to u1 as the prizeClaimer tokens
+  //   await gateway.connect(manager).ERC721_mint(await scoreNFT.getAddress(), u1.address, 0);
+  //   expect(await scoreNFT.balanceOf(u1.address)).to.equal(1);
 
-    // 2. Reset timestamp
-    time.setNextBlockTimestamp(startTime);
+  //   // 2. Reset timestamp
+  //   time.setNextBlockTimestamp(startTime);
 
-    const _prizeTypeIdx = 1   //Type2 = BNB, 10
-    const _scoreNFTAddress = await scoreNFT.getAddress()
-    const _scoreNFTTokenId = 1
-    const _prizeTokenAddress = "0x0000000000000000000000000000000000000000"
-    const _prizeTokenId = 0
-    const _prizeTokenAmount = '10000000000000000000'
+  //   const _prizeTypeIdx = 1   //Type2 = BNB, 10
+  //   const _scoreNFTAddress = await scoreNFT.getAddress()
+  //   const _scoreNFTTokenId = 1
+  //   const _prizeTokenAddress = "0x0000000000000000000000000000000000000000"
+  //   const _prizeTokenId = 0
+  //   const _prizeTokenAmount = '10000000000000000000'
 
-    await expect(constructAndClaim(prizeClaimer, signer, u1, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenId, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)).to.be.revertedWith("PrizeClaimer: Insufficient BNB balance")
+  //   await expect(constructAndClaim(prizeClaimer, signer, u1, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenId, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)).to.be.revertedWith("PrizeClaimer: Insufficient BNB balance")
 
-    // transfer Enough BNB to prizeClaimer
-    const prizeClaimerAddress = await prizeClaimer.getAddress();
-    const amount = hre.ethers.parseEther("50");
-    await signer.sendTransaction({
-      to: prizeClaimerAddress,
-      value: amount,
-    });
+  //   // transfer Enough BNB to prizeClaimer
+  //   const prizeClaimerAddress = await prizeClaimer.getAddress();
+  //   const amount = hre.ethers.parseEther("50");
+  //   await signer.sendTransaction({
+  //     to: prizeClaimerAddress,
+  //     value: amount,
+  //   });
 
-    const beforeAmt = await hre.ethers.provider.getBalance(u1.address)
+  //   const beforeAmt = await hre.ethers.provider.getBalance(u1.address)
 
-    const tx: ContractTransactionResponse = await constructAndClaim(prizeClaimer, signer, u1, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenId, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)
+  //   const tx: ContractTransactionResponse = await constructAndClaim(prizeClaimer, signer, u1, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenId, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)
 
-    const txReceipt: ContractTransactionReceipt | null = await tx.wait();
+  //   const txReceipt: ContractTransactionReceipt | null = await tx.wait();
 
 
-    expect(tx).to.emit(prizeClaimer, "ClaimPrize").withArgs(u1.address, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenId, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount);
+  //   expect(tx).to.emit(prizeClaimer, "ClaimPrize").withArgs(u1.address, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenId, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount);
 
-    /******************** After Claiming ********************/
-    expect(await hre.ethers.provider.getBalance(prizeClaimerAddress)).to.equal(amount - getBigInt(_prizeTokenAmount));
-    const afterAmt = await hre.ethers.provider.getBalance(u1.address)
+  //   /******************** After Claiming ********************/
+  //   expect(await hre.ethers.provider.getBalance(prizeClaimerAddress)).to.equal(amount - getBigInt(_prizeTokenAmount));
+  //   const afterAmt = await hre.ethers.provider.getBalance(u1.address)
 
-    expect(getBigInt(afterAmt)).to.equal(getBigInt(beforeAmt) + getBigInt(_prizeTokenAmount) - txReceipt!.gasPrice * txReceipt!.gasUsed)
-  });
+  //   expect(getBigInt(afterAmt)).to.equal(getBigInt(beforeAmt) + getBigInt(_prizeTokenAmount) - txReceipt!.gasPrice * txReceipt!.gasUsed)
+  // });
 
-  it.only("should pass Type3-Type6 test", async function () {
+  it.only("should pass Type2-Type6 test", async function () {
     const { base, admin, signer, u0, u1, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
     const { gateway, gatewayAdmin, manager, erc1155: Coupon, erc721: DINO, erc20: DAM } = base
 

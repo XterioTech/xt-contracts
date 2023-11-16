@@ -10,17 +10,17 @@ contract PrizeClaimer is AccessControl {
 
     enum PrizeType {
         Type1, // ERC721, 1 * Dinosaur NFT
-        Type2, // BNB, 10
+        Type2, // DAM, 2M
         Type3, // DAM, 20k
         Type4, // DAM, 1k
         Type5, // DAM, 200
         Type6, // DAM, 100
         Type7, // ERC1155, 1 * Resource Pack
-        Type8, // ERC1155, 1 * SSR Coupon
-        Type9, // ERC1155, 1 * SR Coupon
-        Type10, // ERC1155, 1 * R Coupon
-        Type11, // ERC1155, 1 * A Coupon
-        Type12 // ERC1155, 1 * B Coupon
+        Type8, // ERC1155, 1 * NFT Coupon
+        Type9, // ERC1155
+        Type10, // ERC1155
+        Type11, // ERC1155
+        Type12 // ERC1155
     }
 
     address public gateway;
@@ -139,19 +139,8 @@ contract PrizeClaimer is AccessControl {
                 "PrizeClaimer: _prizeTokenId is not 0 for auto-increment id for ERC721"
             );
             IGateway(gateway).ERC721_mint(_prizeTokenAddress, msg.sender, 0);
-        } else if (prize == PrizeType.Type2) {
-            require(
-                _prizeTokenAddress == address(0),
-                "PrizeClaimer: _prizeTokenAddress is not Native token 0x00"
-            );
-            require(
-                address(this).balance >= _prizeTokenAmount,
-                "PrizeClaimer: Insufficient BNB balance"
-            );
-            address payeeAddress = msg.sender;
-            (bool sent, ) = payeeAddress.call{value: _prizeTokenAmount}("");
-            require(sent, "PrizeClaimer: Failed to send Ether to claimer");
         } else if (
+            prize == PrizeType.Type2 ||
             prize == PrizeType.Type3 ||
             prize == PrizeType.Type4 ||
             prize == PrizeType.Type5 ||
