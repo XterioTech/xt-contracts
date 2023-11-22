@@ -3,13 +3,8 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import {
-  ContractTransactionResponse,
-  ContractTransactionReceipt,
-  getBigInt
-} from 'ethers'
 import { ScoreNFT } from "../../../typechain-types";
-import { deployExternalERC1155, deployExternalERC721, deployScoreNFT } from "./deploy";
+import { deployExternalERC1155, deployExternalERC721, deployScoreNFT } from "../../../lib/deploy-aod";
 
 async function constructAndMintScoreNFT(
   scoreNFT: ScoreNFT,

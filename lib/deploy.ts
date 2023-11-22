@@ -10,7 +10,10 @@ export const deployMajorToken = async (wallet: AddressLike) => {
   return token;
 };
 
-export const deployGateway = async (gatewayAdmin: AddressLike, txOverrides?: Overrides) => {
+export const deployGateway = async (
+  gatewayAdmin: AddressLike,
+  txOverrides?: Overrides
+) => {
   const Contract = await hre.ethers.getContractFactory("TokenGateway");
   const contract = (await hre.upgrades.deployProxy(
     Contract,
@@ -27,7 +30,9 @@ export const deployMarketplaceV2 = async (
   paymentToken?: AddressLike,
   txOverrides?: Overrides
 ) => {
-  const resolvedParams = await Promise.all([gateway, serviceFeeRecipient].map((v) => hre.ethers.resolveAddress(v)));
+  const resolvedParams = await Promise.all(
+    [gateway, serviceFeeRecipient].map((v) => hre.ethers.resolveAddress(v))
+  );
   const Contract = await hre.ethers.getContractFactory("MarketplaceV2");
   const contract = (await hre.upgrades.deployProxy(
     Contract,
@@ -44,7 +49,9 @@ export const deployMarketplaceV2 = async (
   return contract;
 };
 
-export const deployForwarder = async (txOverrides?: NonPayableOverrides & { from?: string }) => {
+export const deployForwarder = async (
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
   const Contract = await hre.ethers.getContractFactory("Forwarder");
   const contract = await Contract.deploy(txOverrides || {});
   await contract.waitForDeployment();
@@ -68,17 +75,13 @@ export const deployLootboxUnwrapper = async (gateway: AddressLike) => {
   return contract;
 };
 
-export const deployCreatorTokenTransferValidator = async (defaultOwner: AddressLike) => {
-  const Contract = await hre.ethers.getContractFactory("CreatorTokenTransferValidator");
-  const contract = await Contract.deploy(defaultOwner);
-  await contract.waitForDeployment();
-  return contract;
-};
-
-export const deployPrizeClaimer = async (admin: AddressLike, gateway: AddressLike, singer_address: AddressLike, scoreNFTAddress: AddressLike, txOverrides?: NonPayableOverrides & { from?: string }
+export const deployCreatorTokenTransferValidator = async (
+  defaultOwner: AddressLike
 ) => {
-  const Contract = await hre.ethers.getContractFactory("PrizeClaimer");
-  const contract = await Contract.deploy(admin, gateway, singer_address, scoreNFTAddress, txOverrides || {})
+  const Contract = await hre.ethers.getContractFactory(
+    "CreatorTokenTransferValidator"
+  );
+  const contract = await Contract.deploy(defaultOwner);
   await contract.waitForDeployment();
   return contract;
 };

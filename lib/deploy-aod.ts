@@ -1,5 +1,8 @@
+
 import hre from "hardhat";
-import { AddressLike } from "ethers";
+import { MarketplaceV2, TokenGateway } from "../typechain-types";
+import { AddressLike, Overrides } from "ethers";
+import { NonPayableOverrides } from "../typechain-types/common";
 
 export const deployScoreNFT = async (
   name: string,
@@ -29,6 +32,43 @@ export const deployScoreNFT = async (
 };
 
 
+export const deployPrizeClaimer = async (
+  admin: AddressLike,
+  gateway: AddressLike,
+  singer_address: AddressLike,
+  scoreNFTAddress: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("PrizeClaimer");
+  const contract = await Contract.deploy(
+    admin,
+    gateway,
+    singer_address,
+    scoreNFTAddress,
+    txOverrides || {}
+  );
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployInvitationFund = async (
+  gateway: AddressLike,
+  scoreNFTAddress: AddressLike,
+  mintableTokenAddr: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("InvitationFund");
+  const contract = await Contract.deploy(
+    gateway,
+    scoreNFTAddress,
+    mintableTokenAddr,
+    txOverrides || {}
+  );
+  await contract.waitForDeployment();
+  return contract;
+};
+
+// ************ test contracts ************ //
 export const deployExternalERC721 = async (name: string, symbol: string, baseURI: string, _admin: string) => {
   const E721 = await hre.ethers.getContractFactory("ExternalERC721");
   const e721 = await E721.deploy(name, symbol, baseURI, _admin);

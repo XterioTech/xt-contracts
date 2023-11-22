@@ -4,7 +4,7 @@ import {
   loadFixture,
   time,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { deployPrizeClaimer } from "../../../lib/deploy";
+
 import { commonERC721estFixture, commonTradingTestFixture } from "../../common_fixtures";
 import { PrizeClaimer } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
@@ -13,6 +13,7 @@ import {
   ContractTransactionReceipt,
   getBigInt
 } from 'ethers'
+import { deployPrizeClaimer } from "../../../lib/deploy-aod";
 
 
 async function defaultFixture() {

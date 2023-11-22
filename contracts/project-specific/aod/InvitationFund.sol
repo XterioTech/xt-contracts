@@ -50,7 +50,7 @@ contract InvitationFund is Ownable {
         gateway = _gateway;
         scoreNFTAddress = _scoreNFTAddress;
         mintableToken = _mintableTokenAddr;
-        maxRewardedTotalToken = 10 ether; // ToDo...
+        maxRewardedTotalToken = 100 ether; // ToDo...
     }
 
     /** Handling Inviter Relations & Reward */
