@@ -1,12 +1,15 @@
 import hre from "hardhat";
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { ScoreNFT } from "../../../typechain-types";
 import { deployExternalERC1155, deployExternalERC721, deployScoreNFT } from "../../../lib/deploy-aod";
+import {
+  loadFixture,
+  time,
+} from "@nomicfoundation/hardhat-toolbox/network-helpers";
 
-async function constructAndMintScoreNFT(
+export async function constructAndMintScoreNFT(
   scoreNFT: ScoreNFT,
   signer: HardhatEthersSigner,
   recipient: HardhatEthersSigner,
@@ -14,7 +17,7 @@ async function constructAndMintScoreNFT(
   _rarityIdx: number,
   _score: number,
   _deadline: number,
-  msgValue?: number | string
+  msgValue?: string
 ) {
   // backend signer prepares the signature
   const msgHash = ethers.solidityPackedKeccak256(
@@ -39,7 +42,7 @@ async function constructAndMintScoreNFT(
   const _sig = await signer.signMessage(hre.ethers.getBytes(msgHash));
 
   return await scoreNFT.connect(recipient).mintScoreNFT(_modelIdx, _rarityIdx, _score, _deadline, _sig, {
-    value: msgValue ?? 0,
+    value: hre.ethers.parseUnits(msgValue ?? '0')
   })
 }
 
@@ -53,7 +56,8 @@ describe("Test ScoreNFT Contract", async function () {
   // const mechPalAddress = "0x70e5901AB4119A9B9c9bD4cF02540f5cf80e63cF"
 
   // 获取当前区块的时间戳
-  const startTime = 2000000000
+  const startTime = await time.latest()
+
 
   async function defaultFixture() {
     // Reset timestamp
@@ -110,7 +114,7 @@ describe("Test ScoreNFT Contract", async function () {
     const _score = 1000;
     const _deadline = startTime + 15 * 60;
 
-    await constructAndMintScoreNFT(scoreNFT, signer, u1, _modelIdx, _rarityIdx, _score, _deadline, 0.001 * 10 ** 18)
+    await constructAndMintScoreNFT(scoreNFT, signer, u1, _modelIdx, _rarityIdx, _score, _deadline, '0.001')
 
     expect(await scoreNFT.balanceOf(u1.address)).to.equal(1);
 
@@ -131,7 +135,7 @@ describe("Test ScoreNFT Contract", async function () {
     const _score = 1000;
     const _deadline = startTime + 15 * 60;
 
-    await constructAndMintScoreNFT(scoreNFT, signer, u1, _modelIdx, _rarityIdx, _score, _deadline, 0)
+    await constructAndMintScoreNFT(scoreNFT, signer, u1, _modelIdx, _rarityIdx, _score, _deadline, '0')
     expect(await scoreNFT.balanceOf(u1.address)).to.equal(1);
 
     const nft721Attr = await scoreNFT.nftAttributes(1)
@@ -151,7 +155,7 @@ describe("Test ScoreNFT Contract", async function () {
     const _score = 1000;
     const _deadline = startTime + 15 * 60;
 
-    await constructAndMintScoreNFT(scoreNFT, signer, u1, _modelIdx, _rarityIdx, _score, _deadline, 0)
+    await constructAndMintScoreNFT(scoreNFT, signer, u1, _modelIdx, _rarityIdx, _score, _deadline, '0')
     expect(await scoreNFT.balanceOf(u1.address)).to.equal(1);
 
     const nft721Attr = await scoreNFT.nftAttributes(1)
@@ -207,7 +211,7 @@ describe("Test ScoreNFT Contract", async function () {
     const _score3 = 1000;
 
     await constructAndMintScoreNFT(scoreNFT, signer, u1, _modelIdx2, _rarityIdx2, _score2, _deadline, msgValue.toString())
-    await constructAndMintScoreNFT(scoreNFT, signer, u1, _modelIdx3, _rarityIdx3, _score3, _deadline, 0)
+    await constructAndMintScoreNFT(scoreNFT, signer, u1, _modelIdx3, _rarityIdx3, _score3, _deadline, '0')
 
     expect(await scoreNFT.getMintedTokenIds(u1.address)).to.deep.equal(["1", "2", "3"].map(BigInt))
 

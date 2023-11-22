@@ -50,7 +50,7 @@ contract InvitationFund is Ownable {
         gateway = _gateway;
         scoreNFTAddress = _scoreNFTAddress;
         mintableToken = _mintableTokenAddr;
-        maxRewardedTotalToken = 100 ether; // ToDo...
+        maxRewardedTotalToken = 100_000_000 ether; // ToDo...
     }
 
     /** Handling Inviter Relations & Reward */
@@ -149,9 +149,7 @@ contract InvitationFund is Ownable {
     /********************************** Get Reward Functions ******************************************/
 
     function _sendReward(address inviter, uint256 tokenAmount) private {
-        rewardedTotalToken += tokenAmount;
         require(rewardedTotalToken < maxRewardedTotalToken, "TOTAL_LIMIT");
-
         IGateway(gateway).ERC20_mint(mintableToken, msg.sender, tokenAmount);
 
         _rewardedOf[inviter] += tokenAmount;
@@ -216,7 +214,7 @@ contract InvitationFund is Ownable {
     /********************************** Internal Query ScoreNFT Functions ******************************************/
     function getInviteeTotalCost(
         address invitee
-    ) internal view returns (uint256 total) {
+    ) public view returns (uint256 total) {
         (bool success, bytes memory result) = scoreNFTAddress.staticcall(
             abi.encodeWithSignature("minterTotalCost(address)", invitee)
         );
@@ -227,7 +225,7 @@ contract InvitationFund is Ownable {
 
     function hasInviteeMintedScoreNFT(
         address invitee
-    ) internal view returns (bool) {
+    ) public view returns (bool) {
         (bool success, bytes memory result) = scoreNFTAddress.staticcall(
             abi.encodeWithSignature("balanceOf(address)", invitee)
         );
