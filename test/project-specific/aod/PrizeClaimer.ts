@@ -86,7 +86,7 @@ async function constructAndClaim(
 
 
 describe("Test PrizeClaimer Contract", function () {
-  it.only("should pass Type1 test", async function () {
+  it("should pass Type1 test", async function () {
     const { base, admin, signer, u0, u1, u2, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
     const { gateway, gatewayAdmin, manager, erc1155: Coupon, erc721: DINO, erc20: DAM } = base
 
@@ -118,7 +118,7 @@ describe("Test PrizeClaimer Contract", function () {
     expect(await DINO.ownerOf(1)).to.equal(u1.address);
   });
 
-  // it.only("should pass Type2 test", async function () {
+  // it("should pass Type2 test", async function () {
   //   const { base, admin, signer, u0, u1, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
   //   const { gateway, gatewayAdmin, manager, erc1155: Coupon, erc721: DINO, erc20: DAM } = base
 
@@ -166,7 +166,7 @@ describe("Test PrizeClaimer Contract", function () {
   //   expect(getBigInt(afterAmt)).to.equal(getBigInt(beforeAmt) + getBigInt(_prizeTokenAmount) - txReceipt!.gasPrice * txReceipt!.gasUsed)
   // });
 
-  it.only("should pass Type2-Type6 test", async function () {
+  it("should pass Type2-Type6 test", async function () {
     const { base, admin, signer, u0, u1, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
     const { gateway, gatewayAdmin, manager, erc1155: Coupon, erc721: DINO, erc20: DAM } = base
 
@@ -204,7 +204,7 @@ describe("Test PrizeClaimer Contract", function () {
     expect(await DAM.balanceOf(u1.address)).to.equal(getBigInt(_prizeTokenAmount))
   });
 
-  it.only("should pass Type7-Type12 test", async function () {
+  it("should pass Type7-Type12 test", async function () {
     const { base, admin, signer, u0, u1, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
     const { gateway, gatewayAdmin, manager, erc1155: Coupon, erc721: DINO, erc20: DAM } = base
 
@@ -232,7 +232,7 @@ describe("Test PrizeClaimer Contract", function () {
     await expect(constructAndClaim(prizeClaimer, signer, u1, _prizeTypeIdx, _scoreNFTAddress, _scoreNFTTokenId, _prizeTokenAddress, _prizeTokenId, _prizeTokenAmount, deadline)).to.be.revertedWith('PrizeClaimer: not qualified scoreNFT HODL to claim or this tokenid has been claimed')
   });
 
-  it.only("should pass Withdraw test", async function () {
+  it("should pass Withdraw test", async function () {
     const { base, admin, signer, u0, u1, prizeClaimer, scoreNFT } = await loadFixture(defaultFixture);
 
     // transfer Enough BNB to prizeClaimer
