@@ -26,7 +26,7 @@ contract BasicERC721C is
 {
     using Counters for Counters.Counter;
 
-    uint256 public constant VERSION_BasicERC721C = 20231019;
+    uint256 public constant VERSION_BasicERC721C = 20231126;
 
     Counters.Counter private _tokenIdCounter;
 
@@ -51,6 +51,20 @@ contract BasicERC721C is
         GatewayGuarded(gateway)
     {
         __baseURI = baseURI;
+        _tokenIdCounter.increment();
+    }
+
+    function incTokenIdCounter(uint256 limit) public returns (uint256) {
+        uint256 id = _tokenIdCounter.current();
+        limit = id + limit; // to avoid out of gas
+        while (id < limit) {
+            if (!_exists(id)) {
+                return id;
+            }
+            _tokenIdCounter.increment();
+            id = _tokenIdCounter.current();
+        }
+        return id;
     }
 
     /**
@@ -61,15 +75,7 @@ contract BasicERC721C is
         uint256 tokenId
     ) external override onlyGatewayOrOwner {
         if (tokenId == 0) {
-            uint256 id;
-            while (true) {
-                _tokenIdCounter.increment();
-                id = _tokenIdCounter.current();
-                if (!_exists(id)) {
-                    tokenId = id;
-                    break;
-                }
-            }
+            tokenId = incTokenIdCounter(4096);
         }
         _safeMint(to, tokenId);
     }
