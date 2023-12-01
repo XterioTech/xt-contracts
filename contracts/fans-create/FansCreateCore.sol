@@ -224,7 +224,7 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
     }
 
     // @note In order to support proxied trading (e.g. fiat payment purchase), the purchased tokens are transfered to `trader` instead of msg.sender
-    //      The trader can pass in his own address as the trader in the common case.
+    //      The trader can pass in his own address as `trader` in the common case.
     function buyKeys(
         address trader,
         uint256 workId,
@@ -312,7 +312,7 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
             true,
             amount,
             priceInfo.price,
-            supply + amount
+            supply - amount
         );
         // pay out fees
         payOut(priceInfo.creatorFee, creator);
