@@ -17,6 +17,8 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
     event SetProtocolFeeRecepient(address recepient);
     event SetProjectFeeRecepient(uint256 projectId, address recepient);
 
+    event Publish(address indexed creator, uint256 workId, uint256 projectId);
+
     event Trade(
         address indexed trader,
         address indexed creator,
@@ -220,6 +222,7 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         // Publish and record work info
         workCreator[workId] = creator;
         workProjectId[workId] = projectId;
+        emit Publish(creator, workId, projectId);
         buyKeys(creator, workId, amount, type(uint256).max);
     }
 

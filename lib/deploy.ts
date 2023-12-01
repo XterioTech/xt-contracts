@@ -74,3 +74,10 @@ export const deployCreatorTokenTransferValidator = async (defaultOwner: AddressL
   await contract.waitForDeployment();
   return contract;
 };
+
+export const deployFansCreate = async (admin: AddressLike, uri: string) => {
+  const Contract = await hre.ethers.getContractFactory("FansCreate");
+  const contract = await Contract.deploy(admin, uri);
+  await contract.waitForDeployment();
+  return contract;
+};
