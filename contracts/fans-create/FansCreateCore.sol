@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "hardhat/console.sol";
 
 abstract contract FansCreateCore is AccessControl, ERC1155Supply {
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
@@ -127,9 +128,9 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
             : ((supply - 1) * (supply) * (2 * (supply - 1) + 1)) / 6;
         uint256 sum2 = supply == 0 && amount == 1
             ? 0
-            : ((supply - 1 + amount) *
+            : ((supply + amount - 1) *
                 (supply + amount) *
-                (2 * (supply - 1 + amount) + 1)) / 6;
+                (2 * (supply + amount - 1) + 1)) / 6;
         uint256 summation = sum2 - sum1;
         return summation * priceCoefficient();
     }
@@ -202,6 +203,10 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         require(
             hasRole(SIGNER_ROLE, signer),
             "FansCreateCore: not a valid signer"
+        );
+        require(
+            block.timestamp <= deadline,
+            "FansCreateCore: deadline exceeded"
         );
         // Check signature validity
         bytes32 hash = keccak256(
