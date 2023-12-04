@@ -2,6 +2,7 @@ type NetworkAddressMap = { [network: string]: string };
 export enum ContractOrAddrName {
   TokenGateway = "TokenGateway",
   MarketplaceV2 = "MarketplaceV2",
+  FansCreate = "FansCreate",
   SafeManager = "SafeManager",
 }
 
@@ -30,6 +31,11 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
   opbnbTestnet: "0x1dDee87268F5AF34Ef2fBD128D0D8Dd21b67Bdb1",
 };
 
+export const fansCreateAddressMap: NetworkAddressMap = {
+  // Testnets
+  bscTestnet: "0x99209b34A57c843EC4B18E10e1bf543fB06242E6",
+};
+
 export const safeManagerAddressMap: NetworkAddressMap = {
   mainnet: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
   opbnb: "0x9b5D0Ccb7C95e448B742BA83D85282a38944b3E9", // Safe not available on opbnb, use XterAdmin1 address
@@ -46,6 +52,7 @@ export const safeManagerAddressMap: NetworkAddressMap = {
 const hyperMap = {
   [ContractOrAddrName.TokenGateway]: tokenGatewayAddressMap,
   [ContractOrAddrName.MarketplaceV2]: marketplaceV2AddressMap,
+  [ContractOrAddrName.FansCreate]: fansCreateAddressMap,
   [ContractOrAddrName.SafeManager]: safeManagerAddressMap,
 };
 

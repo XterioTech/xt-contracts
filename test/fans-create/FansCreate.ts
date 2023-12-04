@@ -4,28 +4,7 @@ import { expect } from "chai";
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { deployFansCreate } from "../../lib/deploy";
 import { AddressLike, BigNumberish } from "ethers";
-
-const signPublish = async (
-  signer: Signer,
-  creator: AddressLike,
-  workId: BigNumberish,
-  projectId: BigNumberish,
-  deadline: BigNumberish,
-  contractAddress: AddressLike
-) => {
-  const msgHash = hre.ethers.solidityPackedKeccak256(
-    [
-      "address", // creator
-      "uint256", // workId
-      "uint256", // projectId
-      "uint256", // deadline
-      "uint256", // chainid
-      "address", // contract address
-    ],
-    [creator, workId, projectId, deadline, hre.network.config.chainId, contractAddress]
-  );
-  return await signer.signMessage(hre.ethers.getBytes(msgHash));
-};
+import { signPublishFansCreate } from "../../lib/signature";
 
 const URI = "https://api.xter.io/xgc/meta/works/{id}";
 const WORK_ID = 123;
@@ -52,11 +31,11 @@ describe("Test FansCreate Contract", function () {
     const base = await loadFixture(basicFixture);
     const { fansCreate, signer, c1 } = base;
     const deadline = (await time.latest()) + 600;
-    const signature = await signPublish(signer, c1.address, WORK_ID, PROJECT_ID, deadline, fansCreate.target);
+    const signature = await signPublishFansCreate(signer, c1.address, WORK_ID, PROJECT_ID, deadline, fansCreate.target);
     await fansCreate
       .connect(c1)
       .publishAndBuyKeys(c1.address, WORK_ID, 1, PROJECT_ID, deadline, signer.address, signature);
-    const signature2 = await signPublish(signer, c1.address, WORK_ID2, 0, deadline, fansCreate.target);
+    const signature2 = await signPublishFansCreate(signer, c1.address, WORK_ID2, 0, deadline, fansCreate.target);
     await fansCreate.connect(c1).publishAndBuyKeys(c1.address, WORK_ID2, 1, 0, deadline, signer.address, signature2);
     return base;
   }
@@ -76,7 +55,7 @@ describe("Test FansCreate Contract", function () {
   it("Publish and buy", async function () {
     const { fansCreate, signer, c1 } = await loadFixture(basicFixture);
     const deadline = (await time.latest()) + 600;
-    const signature = await signPublish(signer, c1.address, WORK_ID, PROJECT_ID, deadline, fansCreate.target);
+    const signature = await signPublishFansCreate(signer, c1.address, WORK_ID, PROJECT_ID, deadline, fansCreate.target);
     await expect(
       fansCreate.connect(c1).publishAndBuyKeys(c1.address, WORK_ID, 1, PROJECT_ID, deadline, signer.address, signature)
     )
@@ -90,7 +69,7 @@ describe("Test FansCreate Contract", function () {
       fansCreate.connect(c1).publishAndBuyKeys(c1.address, WORK_ID2, 2, 0, deadline, signer.address, signature)
     ).revertedWith("FansCreateCore: invalid signature");
 
-    const signature2 = await signPublish(signer, c1.address, WORK_ID2, 0, deadline, fansCreate.target);
+    const signature2 = await signPublishFansCreate(signer, c1.address, WORK_ID2, 0, deadline, fansCreate.target);
     await expect(
       fansCreate.connect(c1).publishAndBuyKeys(c1.address, WORK_ID2, 2, 0, deadline, signer.address, signature2)
     ).revertedWith("FansCreate: insufficient payment");
