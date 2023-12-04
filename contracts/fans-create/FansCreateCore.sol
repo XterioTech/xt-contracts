@@ -344,6 +344,10 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
     }
 
     /****************** Admin Functions ******************/
+    function setURI(string calldata uri) external onlyRole(MANAGER_ROLE) {
+        _setURI(uri);
+    }
+
     function setTransferWhitelisted(
         address addr,
         bool whitelisted
