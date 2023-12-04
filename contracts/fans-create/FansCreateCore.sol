@@ -72,6 +72,7 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
     constructor(address admin, string memory uri) ERC1155(uri) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MANAGER_ROLE, admin);
+        protocolFeeRecepient = admin;
     }
 
     /**
