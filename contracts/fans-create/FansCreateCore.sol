@@ -52,9 +52,9 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
 
     // fee ratios
     uint256 public constant FEE_RATIO_DENOMINATOR = 10000;
-    uint256 public protocolFeeRatio;
-    uint256 public projectFeeRatio;
-    uint256 public creatorFeeRatio;
+    uint256 public protocolFeeRatio = 400;
+    uint256 public projectFeeRatio = 400;
+    uint256 public creatorFeeRatio = 400;
 
     // protocol fee recepient
     address public protocolFeeRecepient;
@@ -84,9 +84,9 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         address operator,
         address from,
         address to,
-        uint256[] memory /*ids*/,
-        uint256[] memory /*amounts*/,
-        bytes memory /*data*/
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
     ) internal virtual override {
         require(
             from == address(0) ||
@@ -96,6 +96,7 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
                 transferWhitelisted[operator],
             "FansCreateCore: transfer not allowed"
         );
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
     function supportsInterface(
@@ -309,19 +310,19 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
             priceInfo.priceAfterFee >= minPriceAfterFee,
             "FansCreateCore: price limit exceeded"
         );
-        // pay in price after fee
-        payIn(priceInfo.priceAfterFee);
-        // mint key tokens
-        _mint(msg.sender, workId, amount, "");
+        // burn key tokens
+        _burn(msg.sender, workId, amount);
         emit Trade(
             msg.sender,
             creator,
             workId,
-            true,
+            false,
             amount,
             priceInfo.price,
             supply - amount
         );
+        // pay out price
+        payOut(priceInfo.priceAfterFee, msg.sender);
         // pay out fees
         payOut(priceInfo.creatorFee, creator);
         payOut(priceInfo.protocolFee, protocolFeeRecepient);
