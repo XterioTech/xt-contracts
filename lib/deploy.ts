@@ -77,7 +77,7 @@ export const deployCreatorTokenTransferValidator = async (defaultOwner: AddressL
 
 export const deployFansCreate = async (admin: AddressLike, uri: string, txOverrides?: NonPayableOverrides & { from?: string }) => {
   const Contract = await hre.ethers.getContractFactory("FansCreate");
-  const contract = await Contract.deploy(admin, uri, txOverrides);
+  const contract = await Contract.deploy(admin, uri, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };

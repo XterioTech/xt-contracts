@@ -210,6 +210,7 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
             block.timestamp <= deadline,
             "FansCreateCore: deadline exceeded"
         );
+        require(workCreator[workId] == address(0), "FansCreateCore: already published");
         // Check signature validity
         bytes32 hash = keccak256(
             abi.encodePacked(
