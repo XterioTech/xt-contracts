@@ -15,8 +15,8 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         uint256 projectFeeRatio,
         uint256 creatorFeeRatio
     );
-    event SetProtocolFeeRecepient(address recepient);
-    event SetProjectFeeRecepient(uint256 projectId, address recepient);
+    event SetProtocolFeeRecipient(address recipient);
+    event SetProjectFeeRecipient(uint256 projectId, address recipient);
 
     event Publish(address indexed creator, uint256 workId, uint256 projectId);
 
@@ -35,9 +35,9 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         address indexed creator,
         uint256 indexed workId,
         uint256 creatorFeeAmount,
-        address projectFeeRecepient,
+        address projectFeeRecipient,
         uint256 projectFeeAmount,
-        address protocolFeeRecepient,
+        address protocolFeeRecipient,
         uint256 protocolFeeAmount
     );
 
@@ -56,10 +56,10 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
     uint256 public projectFeeRatio = 400;
     uint256 public creatorFeeRatio = 400;
 
-    // protocol fee recepient
-    address public protocolFeeRecepient;
-    // mapping from projectId to its fee recepient
-    mapping(uint256 => address) public projectFeeRecepient;
+    // protocol fee recipient
+    address public protocolFeeRecipient;
+    // mapping from projectId to its fee recipient
+    mapping(uint256 => address) public projectFeeRecipient;
 
     // only addresses in this whitelist can transfer tokens
     mapping(address => bool) public transferWhitelisted;
@@ -72,7 +72,7 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
     constructor(address admin, string memory uri) ERC1155(uri) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MANAGER_ROLE, admin);
-        protocolFeeRecepient = admin;
+        protocolFeeRecipient = admin;
     }
 
     /**
@@ -273,20 +273,20 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         );
         // pay out fees
         payOut(priceInfo.creatorFee, creator);
-        payOut(priceInfo.protocolFee, protocolFeeRecepient);
-        address _projectFeeRecepient;
+        payOut(priceInfo.protocolFee, protocolFeeRecipient);
+        address _projectFeeRecipient;
         if (priceInfo.projectFee > 0) {
-            _projectFeeRecepient = projectFeeRecepient[priceInfo.projectId];
-            payOut(priceInfo.projectFee, _projectFeeRecepient);
+            _projectFeeRecipient = projectFeeRecipient[priceInfo.projectId];
+            payOut(priceInfo.projectFee, _projectFeeRecipient);
         }
         emit DistributeFee(
             trader,
             creator,
             workId,
             priceInfo.creatorFee,
-            _projectFeeRecepient,
+            _projectFeeRecipient,
             priceInfo.projectFee,
-            protocolFeeRecepient,
+            protocolFeeRecipient,
             priceInfo.protocolFee
         );
     }
@@ -327,20 +327,20 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         payOut(priceInfo.priceAfterFee, msg.sender);
         // pay out fees
         payOut(priceInfo.creatorFee, creator);
-        payOut(priceInfo.protocolFee, protocolFeeRecepient);
-        address _projectFeeRecepient;
+        payOut(priceInfo.protocolFee, protocolFeeRecipient);
+        address _projectFeeRecipient;
         if (priceInfo.projectFee > 0) {
-            _projectFeeRecepient = projectFeeRecepient[priceInfo.projectId];
-            payOut(priceInfo.projectFee, _projectFeeRecepient);
+            _projectFeeRecipient = projectFeeRecipient[priceInfo.projectId];
+            payOut(priceInfo.projectFee, _projectFeeRecipient);
         }
         emit DistributeFee(
             msg.sender,
             creator,
             workId,
             priceInfo.creatorFee,
-            _projectFeeRecepient,
+            _projectFeeRecipient,
             priceInfo.projectFee,
-            protocolFeeRecepient,
+            protocolFeeRecipient,
             priceInfo.protocolFee
         );
     }
@@ -368,19 +368,19 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         emit SetFeeRatio(_protocolFeeRatio, _projectFeeRatio, _creatorFeeRatio);
     }
 
-    function setProtocolFeeRecepient(
-        address _protocolFeeRecepient
+    function setProtocolFeeRecipient(
+        address _protocolFeeRecipient
     ) external onlyRole(MANAGER_ROLE) {
-        protocolFeeRecepient = _protocolFeeRecepient;
-        emit SetProtocolFeeRecepient(_protocolFeeRecepient);
+        protocolFeeRecipient = _protocolFeeRecipient;
+        emit SetProtocolFeeRecipient(_protocolFeeRecipient);
     }
 
-    function setProjectFeeRecepient(
+    function setProjectFeeRecipient(
         uint256 projectId,
-        address _projectFeeRecepient
+        address _projectFeeRecipient
     ) external onlyRole(MANAGER_ROLE) {
-        projectFeeRecepient[projectId] = _projectFeeRecepient;
-        emit SetProjectFeeRecepient(projectId, _projectFeeRecepient);
+        projectFeeRecipient[projectId] = _projectFeeRecipient;
+        emit SetProjectFeeRecipient(projectId, _projectFeeRecipient);
     }
 
     function setWorkProjectId(
