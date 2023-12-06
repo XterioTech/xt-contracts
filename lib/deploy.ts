@@ -86,10 +86,11 @@ export const deployMinHeap = async (
 };
 
 export const deployMinHeapAuction = async (
+  maxCapacity: number,
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("MinHeapAuction");
-  const contract = await Contract.deploy();
+  const contract = await Contract.deploy(maxCapacity, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };

@@ -2,16 +2,22 @@
 pragma solidity ^0.8.0;
 
 struct AuctionInfo {
+    address bidder;
     uint256 price;
     uint256 timestamp;
 }
 
 contract MinHeapAuction {
-    uint256 private constant MAX_CAPACITY = 5;
+    uint256 public MAX_CAPACITY;
     AuctionInfo[] private heap;
 
     event AuctionInserted(AuctionInfo auction);
     event AuctionExtracted(AuctionInfo auction);
+
+    constructor(uint256 maxCapacity) {
+        require(maxCapacity > 0, "Max capacity must be greater than zero");
+        MAX_CAPACITY = maxCapacity;
+    }
 
     function insert(AuctionInfo calldata newAuction) external {
         require(newAuction.price > 0, "Price must be greater than zero");

@@ -1,19 +1,20 @@
-import { ethers } from "hardhat";
+import hre from "hardhat";
 import { expect } from "chai";
 import { deployMinHeapAuction } from "../../lib/deploy";
 import { MinHeapAuction } from "../../typechain-types";
 
 describe("MinHeapAuction", () => {
+  let bidder = "0x0000000000000000000000000000000000000000";
   let minHeapAuction: MinHeapAuction;
-
   beforeEach(async () => {
-    minHeapAuction = await deployMinHeapAuction()
+    const MAX_CAPACITY = 5;
+    minHeapAuction = await deployMinHeapAuction(MAX_CAPACITY)
   });
 
   it.only("should insert and retrieve the minimum auction", async function () {
-    const auction1 = { price: 100, timestamp: Math.floor(Date.now() / 1000) };
-    const auction2 = { price: 200, timestamp: Math.floor(Date.now() / 1000) };
-    const auction3 = { price: 50, timestamp: Math.floor(Date.now() / 1000) };
+    const auction1 = { bidder, price: 100, timestamp: Math.floor(Date.now() / 1000) };
+    const auction2 = { bidder, price: 200, timestamp: Math.floor(Date.now() / 1000) };
+    const auction3 = { bidder, price: 50, timestamp: Math.floor(Date.now() / 1000) };
 
     await minHeapAuction.insert(auction1);
     await minHeapAuction.insert(auction2);
@@ -24,11 +25,11 @@ describe("MinHeapAuction", () => {
   });
 
   it.only("should extract minimum auction", async function () {
-    const auction1 = { price: 100, timestamp: 1 };
-    const auction2 = { price: 200, timestamp: 2 };
-    const auction3 = { price: 50, timestamp: 3 };
-    const auction4 = { price: 300, timestamp: 4 };
-    const auction5 = { price: 150, timestamp: 5 };
+    const auction1 = { bidder, price: 100, timestamp: 1 };
+    const auction2 = { bidder, price: 200, timestamp: 2 };
+    const auction3 = { bidder, price: 50, timestamp: 3 };
+    const auction4 = { bidder, price: 300, timestamp: 4 };
+    const auction5 = { bidder, price: 150, timestamp: 5 };
 
     await minHeapAuction.insert(auction1);
     await minHeapAuction.insert(auction2);
@@ -46,32 +47,32 @@ describe("MinHeapAuction", () => {
   });
 
   it.only("should reject insertion when heap is full and value is larger", async function () {
-    const auction1 = { price: 100, timestamp: 1 };
-    const auction2 = { price: 200, timestamp: 2 };
-    const auction3 = { price: 50, timestamp: 3 };
-    const auction4 = { price: 300, timestamp: 4 };
-    const auction5 = { price: 150, timestamp: 5 };
+    const auction1 = { bidder, price: 100, timestamp: 1 };
+    const auction2 = { bidder, price: 200, timestamp: 2 };
+    const auction3 = { bidder, price: 50, timestamp: 3 };
+    const auction4 = { bidder, price: 300, timestamp: 4 };
+    const auction5 = { bidder, price: 150, timestamp: 5 };
     await minHeapAuction.insert(auction1);
     await minHeapAuction.insert(auction2);
     await minHeapAuction.insert(auction3);
     await minHeapAuction.insert(auction4);
     await minHeapAuction.insert(auction5);
 
-    const auction6 = { price: 10, timestamp: 6 };
+    const auction6 = { bidder, price: 10, timestamp: 6 };
     await expect(minHeapAuction.insert(auction6)).to.be.revertedWith("Heap is full, value to be inserted should be smaller");
   });
 
   it.only("should handle large number of auctions with same price", async function () {
-    const auction2 = { price: 200, timestamp: 2 };
-    const auction3 = { price: 50, timestamp: 3 };
-    const auction4 = { price: 300, timestamp: 4 };
+    const auction2 = { bidder, price: 200, timestamp: 2 };
+    const auction3 = { bidder, price: 50, timestamp: 3 };
+    const auction4 = { bidder, price: 300, timestamp: 4 };
     await minHeapAuction.insert(auction2);
     await minHeapAuction.insert(auction3);
     await minHeapAuction.insert(auction4);
     await minHeapAuction.insert(auction4);
     await minHeapAuction.insert(auction4);
 
-    const auction = { price: 100, timestamp: Math.floor(Date.now() / 1000) };
+    const auction = { bidder, price: 100, timestamp: Math.floor(Date.now() / 1000) };
     await minHeapAuction.insert(auction);
     for (let i = 0; i < 100; i++) {
       await expect(minHeapAuction.insert(auction)).to.be.revertedWith("Heap is full, value to be inserted should be smaller");
