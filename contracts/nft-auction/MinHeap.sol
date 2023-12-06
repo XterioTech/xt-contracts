@@ -2,9 +2,19 @@
 pragma solidity ^0.8.0;
 
 contract MinHeap {
+    uint private constant MAX_CAPACITY = 5;
     uint[] private heap;
 
     function insert(uint value) public {
+        if (heap.length >= MAX_CAPACITY) {
+            require(
+                value > heap[0],
+                "Heap is full, value to be inserted should larger than smallest"
+            );
+            heap[0] = value;
+            heapifyDown(0);
+        }
+
         heap.push(value);
         heapifyUp(heap.length - 1);
     }
