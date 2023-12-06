@@ -74,3 +74,14 @@ export const deployCreatorTokenTransferValidator = async (defaultOwner: AddressL
   await contract.waitForDeployment();
   return contract;
 };
+
+
+export const deployMinHeap = async (
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const MinHeap = await hre.ethers.getContractFactory("MinHeap");
+  const minHeap = await MinHeap.deploy();
+  await minHeap.waitForDeployment();
+  return minHeap;
+};
+
