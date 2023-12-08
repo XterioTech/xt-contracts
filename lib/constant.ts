@@ -33,7 +33,8 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
 
 export const fansCreateAddressMap: NetworkAddressMap = {
   // Testnets
-  bscTestnet: "0x99209b34A57c843EC4B18E10e1bf543fB06242E6",
+  // bscTestnet: "0x99209b34A57c843EC4B18E10e1bf543fB06242E6",
+  bscTestnet: "0xe0E63afFfab9Ef380CF1d057300C033734650252",
 };
 
 export const safeManagerAddressMap: NetworkAddressMap = {

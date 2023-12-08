@@ -278,6 +278,7 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         address _projectFeeRecipient;
         if (priceInfo.projectFee > 0) {
             _projectFeeRecipient = projectFeeRecipient[priceInfo.projectId];
+            require(_projectFeeRecipient != address(0), "FansCreateCore: projectFeeRecipient not set");
             payOut(priceInfo.projectFee, _projectFeeRecipient);
         }
         emit DistributeFee(
@@ -333,6 +334,7 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         address _projectFeeRecipient;
         if (priceInfo.projectFee > 0) {
             _projectFeeRecipient = projectFeeRecipient[priceInfo.projectId];
+            require(_projectFeeRecipient != address(0), "FansCreateCore: projectFeeRecipient not set");
             payOut(priceInfo.projectFee, _projectFeeRecipient);
         }
         emit DistributeFee(
