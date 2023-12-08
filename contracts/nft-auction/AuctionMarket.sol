@@ -16,7 +16,7 @@ contract AuctionMarket is AccessControl {
     uint256 public auctionStartTime;
 
     uint256 public constant AUCTION_DURATION = 72 hours;
-    uint256 public constant MAX_BID_PER_USER = 50;
+    uint256 public MAX_BID_PER_USER = 50;
 
     uint256 public MIN_PRICE = 0.25 ether;
     uint256 public MAX_PRICE = 0.75 ether;
@@ -59,6 +59,10 @@ contract AuctionMarket is AccessControl {
 
     function setNftAddress(address _addr) external onlyRole(MANAGER_ROLE) {
         nftAddress = _addr;
+    }
+
+    function setMaxBidPerUser(uint256 _max) external onlyRole(MANAGER_ROLE) {
+        MAX_BID_PER_USER = _max;
     }
 
     function setAuctionStartTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
@@ -148,5 +152,17 @@ contract AuctionMarket is AccessControl {
     /**************** View Functions ****************/
     function tvl() external view returns (uint256) {
         return address(this).balance;
+    }
+
+    function getUserAuctions(
+        address _address
+    ) external view returns (AuctionInfo[] memory) {
+        return userAuctions[_address];
+    }
+
+    function getUserInvalidAuctions(
+        address _address
+    ) external view returns (AuctionInfo[] memory) {
+        return userInvalidAuctions[_address];
     }
 }
