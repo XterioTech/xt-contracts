@@ -11,7 +11,7 @@ describe("MinHeapAuction", () => {
     minHeapAuction = await deployMinHeapAuction(MAX_CAPACITY)
   });
 
-  it.only("should insert and retrieve the minimum auction", async function () {
+  it("should insert and retrieve the minimum auction", async function () {
     const auction1 = { bidder, price: 100, timestamp: Math.floor(Date.now() / 1000) };
     const auction2 = { bidder, price: 200, timestamp: Math.floor(Date.now() / 1000) };
     const auction3 = { bidder, price: 50, timestamp: Math.floor(Date.now() / 1000) };
@@ -24,7 +24,7 @@ describe("MinHeapAuction", () => {
     expect(minAuction.price).to.equal(50);
   });
 
-  it.only("should extract minimum auction", async function () {
+  it("should extract minimum auction", async function () {
     const auction1 = { bidder, price: 100, timestamp: 1 };
     const auction2 = { bidder, price: 200, timestamp: 2 };
     const auction3 = { bidder, price: 50, timestamp: 3 };
@@ -46,7 +46,7 @@ describe("MinHeapAuction", () => {
     expect(minAuction.timestamp).to.equal(auction2.timestamp);
   });
 
-  it.only("should reject insertion when heap is full and value is larger", async function () {
+  it("should reject insertion when heap is full and value is larger", async function () {
     const auction1 = { bidder, price: 100, timestamp: 1 };
     const auction2 = { bidder, price: 200, timestamp: 2 };
     const auction3 = { bidder, price: 50, timestamp: 3 };
@@ -62,7 +62,7 @@ describe("MinHeapAuction", () => {
     await expect(minHeapAuction.insert(auction6)).to.be.revertedWith("Heap is full, value to be inserted should be smaller");
   });
 
-  it.only("should handle large number of auctions with same price", async function () {
+  it("should handle large number of auctions with same price", async function () {
     const auction2 = { bidder, price: 200, timestamp: 2 };
     const auction3 = { bidder, price: 50, timestamp: 3 };
     const auction4 = { bidder, price: 300, timestamp: 4 };

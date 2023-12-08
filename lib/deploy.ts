@@ -95,3 +95,16 @@ export const deployMinHeapAuction = async (
   return contract;
 };
 
+export const deployAuctionMarket = async (
+  gateway: AddressLike,
+  nftAddress: AddressLike,
+  maxCapacity: number,
+  auctionStartTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("AuctionMarket");
+  const contract = await Contract.deploy(gateway, nftAddress, maxCapacity, auctionStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+

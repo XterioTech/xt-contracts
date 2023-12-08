@@ -10,7 +10,7 @@ describe("MinHeap", () => {
     minHeap = await deployMinHeap()
   });
 
-  it.only("should replace top element when inserting a larger value", async () => {
+  it("should replace top element when inserting a larger value", async () => {
     await minHeap.insert(5);
     await minHeap.insert(3);
     await minHeap.insert(8);
@@ -22,11 +22,11 @@ describe("MinHeap", () => {
     expect(min).to.equal(2);
   });
 
-  it.only("should throw an error when trying to extract from an empty heap", async () => {
+  it("should throw an error when trying to extract from an empty heap", async () => {
     await expect(minHeap.extractMin()).to.be.revertedWith("Heap is empty");
   });
 
-  it.only("should extract the minimum value", async () => {
+  it("should extract the minimum value", async () => {
     await minHeap.insert(5);
     await minHeap.insert(3);
     await minHeap.insert(8);
