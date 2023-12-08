@@ -19,10 +19,32 @@ contract MinHeapAuction {
         MAX_CAPACITY = maxCapacity;
     }
 
+    function isFull() public view returns (bool) {
+        return heap.length >= MAX_CAPACITY;
+    }
+
+    function totalCnt() external view returns (uint256) {
+        return heap.length;
+    }
+
+    function getMin() external view returns (AuctionInfo memory) {
+        require(heap.length > 0, "Heap is empty");
+        return heap[0];
+    }
+
+    function canInsert(uint256 price) external view returns (bool) {
+        AuctionInfo memory newAuction = AuctionInfo(
+            msg.sender,
+            price,
+            block.timestamp
+        );
+        return !isFull() || isHigherBid(newAuction, heap[0]);
+    }
+
     function insert(AuctionInfo calldata newAuction) external {
         require(newAuction.price > 0, "Price must be greater than zero");
 
-        if (heap.length >= MAX_CAPACITY) {
+        if (isFull()) {
             require(
                 isHigherBid(newAuction, heap[0]),
                 "Heap is full, value to be inserted should be smaller"
@@ -35,11 +57,6 @@ contract MinHeapAuction {
         }
 
         emit AuctionInserted(newAuction);
-    }
-
-    function getMin() external view returns (AuctionInfo memory) {
-        require(heap.length > 0, "Heap is empty");
-        return heap[0];
     }
 
     function extractMin() external returns (AuctionInfo memory) {
