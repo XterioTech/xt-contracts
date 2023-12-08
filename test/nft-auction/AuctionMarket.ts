@@ -120,6 +120,8 @@ describe("AuctionMarket", function () {
   });
 
   it.only("should past 3000 maxCapacity with 5000+ bids", async function () {
+    this.timeout(5000 * 1000);
+
     const { auctionMarket, base, admin, b1, b2, b3, b4 } = await loadFixture(basicFixture);
     await auctionMarket.connect(admin).setMaxBidPerUser(3000);
     const maxBidsPerUser = await auctionMarket.MAX_BID_PER_USER();
