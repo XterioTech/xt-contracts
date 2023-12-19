@@ -1,74 +1,81 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-struct AuctionInfo {
-    address bidder;
-    uint256 price;
-    uint256 timestamp;
-}
+library MinHeapAuction {
+    struct AuctionInfo {
+        address bidder;
+        uint256 price;
+        uint256 timestamp;
+    }
 
-contract MinHeapAuction {
-    uint256 public MAX_CAPACITY;
-    AuctionInfo[] private heap;
+    struct Heap {
+        uint256 MAX_CAPACITY;
+        AuctionInfo[] tree;
+    }
 
     event AuctionInserted(AuctionInfo auction);
     event AuctionExtracted(AuctionInfo auction);
 
-    constructor(uint256 maxCapacity) {
-        require(maxCapacity > 0, "Max capacity must be greater than zero");
-        MAX_CAPACITY = maxCapacity;
+    function isFull(Heap storage heap) public view returns (bool) {
+        return heap.tree.length >= heap.MAX_CAPACITY;
     }
 
-    function isFull() public view returns (bool) {
-        return heap.length >= MAX_CAPACITY;
+    function totalCnt(Heap storage heap) external view returns (uint256) {
+        return heap.tree.length;
     }
 
-    function totalCnt() external view returns (uint256) {
-        return heap.length;
+    function getMin(
+        Heap storage heap
+    ) external view returns (AuctionInfo memory) {
+        require(heap.tree.length > 0, "Heap is empty");
+        return heap.tree[0];
     }
 
-    function getMin() external view returns (AuctionInfo memory) {
-        require(heap.length > 0, "Heap is empty");
-        return heap[0];
-    }
-
-    function canInsert(uint256 price) external view returns (bool) {
+    function canInsert(
+        Heap storage heap,
+        uint256 price
+    ) external view returns (bool) {
         AuctionInfo memory newAuction = AuctionInfo(
             msg.sender,
             price,
             block.timestamp
         );
-        return !isFull() || isHigherBid(newAuction, heap[0]);
+        return !isFull(heap) || isHigherBid(newAuction, heap.tree[0]);
     }
 
-    function insert(AuctionInfo calldata newAuction) external {
+    function insert(
+        Heap storage heap,
+        AuctionInfo calldata newAuction
+    ) external {
         require(newAuction.price > 0, "Price must be greater than zero");
 
-        if (isFull()) {
+        if (isFull(heap)) {
             require(
-                isHigherBid(newAuction, heap[0]),
+                isHigherBid(newAuction, heap.tree[0]),
                 "Heap is full, value to be inserted should be smaller"
             );
-            heap[0] = newAuction;
-            heapifyDown(0);
+            heap.tree[0] = newAuction;
+            heapifyDown(heap, 0);
         } else {
-            heap.push(newAuction);
-            heapifyUp(heap.length - 1);
+            heap.tree.push(newAuction);
+            heapifyUp(heap, heap.tree.length - 1);
         }
 
         emit AuctionInserted(newAuction);
     }
 
-    function extractMin() external returns (AuctionInfo memory) {
-        require(heap.length > 0, "Heap is empty");
+    function extractMin(
+        Heap storage heap
+    ) external returns (AuctionInfo memory) {
+        require(heap.tree.length > 0, "Heap is empty");
 
-        AuctionInfo memory root = heap[0];
-        AuctionInfo memory lastNode = heap[heap.length - 1];
-        heap.pop();
+        AuctionInfo memory root = heap.tree[0];
+        AuctionInfo memory lasttree = heap.tree[heap.tree.length - 1];
+        heap.tree.pop();
 
-        if (heap.length > 0) {
-            heap[0] = lastNode;
-            heapifyDown(0);
+        if (heap.tree.length > 0) {
+            heap.tree[0] = lasttree;
+            heapifyDown(heap, 0);
         }
 
         emit AuctionExtracted(root);
@@ -76,40 +83,40 @@ contract MinHeapAuction {
         return root;
     }
 
-    function heapifyUp(uint256 index) private {
+    function heapifyUp(Heap storage heap, uint256 index) private {
         while (index > 0) {
             uint256 parentIndex = (index - 1) / 2;
-            if (isHigherBid(heap[index], heap[parentIndex])) {
+            if (isHigherBid(heap.tree[index], heap.tree[parentIndex])) {
                 break;
             }
 
-            swap(index, parentIndex);
+            swap(heap, index, parentIndex);
             index = parentIndex;
         }
     }
 
-    function heapifyDown(uint256 index) private {
+    function heapifyDown(Heap storage heap, uint256 index) private {
         uint256 smallest = index;
         uint256 leftChild = 2 * index + 1;
         uint256 rightChild = 2 * index + 2;
 
         if (
-            leftChild < heap.length &&
-            isHigherBid(heap[smallest], heap[leftChild])
+            leftChild < heap.tree.length &&
+            isHigherBid(heap.tree[smallest], heap.tree[leftChild])
         ) {
             smallest = leftChild;
         }
 
         if (
-            rightChild < heap.length &&
-            isHigherBid(heap[smallest], heap[rightChild])
+            rightChild < heap.tree.length &&
+            isHigherBid(heap.tree[smallest], heap.tree[rightChild])
         ) {
             smallest = rightChild;
         }
 
         if (smallest != index) {
-            swap(smallest, index);
-            heapifyDown(smallest);
+            swap(heap, smallest, index);
+            heapifyDown(heap, smallest);
         }
     }
 
@@ -123,9 +130,9 @@ contract MinHeapAuction {
         return newAuction.timestamp < oldAuction.timestamp;
     }
 
-    function swap(uint256 index1, uint256 index2) private {
-        AuctionInfo memory temp = heap[index1];
-        heap[index1] = heap[index2];
-        heap[index2] = temp;
+    function swap(Heap storage heap, uint256 index1, uint256 index2) private {
+        AuctionInfo memory temp = heap.tree[index1];
+        heap.tree[index1] = heap.tree[index2];
+        heap.tree[index2] = temp;
     }
 }

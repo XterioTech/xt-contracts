@@ -37,7 +37,7 @@ describe("AuctionMarket", function () {
     time.setNextBlockTimestamp(startTime);
   });
 
-  it("should place a bid", async function () {
+  it.only("should place a bid", async function () {
     const { auctionMarket, b1 } = await loadFixture(basicFixture);
     const price = ethers.parseEther("0.5");
     await auctionMarket.connect(b1).placeBid(price, { value: price });
@@ -45,7 +45,7 @@ describe("AuctionMarket", function () {
     expect(userAuction[0]).to.equal(b1.address);
   });
 
-  it("should not place a bid if auction has not started or ended", async function () {
+  it.only("should not place a bid if auction has not started or ended", async function () {
     const { auctionMarket, admin, b1 } = await loadFixture(basicFixture);
     const price = ethers.parseEther("0.5");
     await auctionMarket.connect(admin).setAuctionStartTime(startTime + hour)
@@ -55,14 +55,14 @@ describe("AuctionMarket", function () {
     await expect(auctionMarket.placeBid(price, { value: price })).to.be.revertedWith("Auction has ended");
   });
 
-  it("should not place a bid with invalid price", async function () {
+  it.only("should not place a bid with invalid price", async function () {
     const { auctionMarket } = await loadFixture(basicFixture);
 
     const price = ethers.parseEther("0.1");
     await expect(auctionMarket.placeBid(price, { value: price })).to.be.revertedWith("Invalid bid price");
   });
 
-  it("should not place a bid if maximum bid per user is reached", async function () {
+  it.only("should not place a bid if maximum bid per user is reached", async function () {
     const { auctionMarket, b1 } = await loadFixture(basicFixture);
 
     const price = ethers.parseEther("0.5");
@@ -75,7 +75,7 @@ describe("AuctionMarket", function () {
     await expect(auctionMarket.connect(b1).placeBid(higher_price, { value: higher_price })).to.be.revertedWith("Maximum bid per user reached");
   });
 
-  it("should claim NFT after auction ends", async function () {
+  it.only("should claim NFT after auction ends", async function () {
     const { base, auctionMarket, b1, b2 } = await loadFixture(basicFixture);
     const price = ethers.parseEther("0.5");
     await auctionMarket.connect(b1).placeBid(price, { value: price });
@@ -88,7 +88,7 @@ describe("AuctionMarket", function () {
     expect(userActiveBidsCnt).to.equal(0);
   });
 
-  it("should claim refund after auction ends", async function () {
+  it.only("should claim refund after auction ends", async function () {
     const { auctionMarket, b1, b2, b3 } = await loadFixture(basicFixture);
 
     const price = ethers.parseEther("0.5");
@@ -110,7 +110,7 @@ describe("AuctionMarket", function () {
     expect(userRefunds).to.equal(0);
   });
 
-  it("should get total value locked (TVL)", async function () {
+  it.only("should get total value locked (TVL)", async function () {
     const { auctionMarket, b1 } = await loadFixture(basicFixture);
 
     const price = ethers.parseEther("0.5");
@@ -119,7 +119,7 @@ describe("AuctionMarket", function () {
     expect(tvl).to.equal(price);
   });
 
-  it.only("should past 3000 maxCapacity with 5000+ bids", async function () {
+  it("should past 3000 maxCapacity with 5000+ bids", async function () {
     this.timeout(5000 * 1000);
 
     const { auctionMarket, base, admin, b1, b2, b3, b4 } = await loadFixture(basicFixture);

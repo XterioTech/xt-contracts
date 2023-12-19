@@ -10,9 +10,12 @@ contract AuctionMarket is AccessControl {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     using SafeMath for uint256;
 
+    using MinHeapAuction for MinHeapAuction.Heap;
+
+    MinHeapAuction.Heap private _heap;
+
     address public gateway;
     address public nftAddress;
-    MinHeapAuction private minHeapAuction;
     uint256 public auctionStartTime;
 
     uint256 public constant AUCTION_DURATION = 72 hours;
@@ -21,8 +24,8 @@ contract AuctionMarket is AccessControl {
     uint256 public MIN_PRICE = 0.25 ether;
     uint256 public MAX_PRICE = 0.75 ether;
 
-    mapping(address => AuctionInfo[]) public userAuctions;
-    mapping(address => AuctionInfo[]) public userInvalidAuctions;
+    mapping(address => MinHeapAuction.AuctionInfo[]) public userAuctions;
+    mapping(address => MinHeapAuction.AuctionInfo[]) public userInvalidAuctions;
     mapping(address => uint256) public userActiveBidsCnt;
     mapping(address => uint256) public userRefunds;
 
@@ -40,8 +43,9 @@ contract AuctionMarket is AccessControl {
 
         gateway = _gateway;
         nftAddress = _nftAddress;
-        minHeapAuction = new MinHeapAuction(maxCapacity);
+        // _heap = new _heap(maxCapacity);
         auctionStartTime = _auctionStartTime;
+        _heap.MAX_CAPACITY = maxCapacity;
     }
 
     receive() external payable {}
@@ -93,7 +97,7 @@ contract AuctionMarket is AccessControl {
             "Maximum bid per user reached"
         );
         require(
-            minHeapAuction.canInsert(price),
+            _heap.canInsert(price),
             "Bid price must be higher than current minimum bid"
         );
 
@@ -101,19 +105,16 @@ contract AuctionMarket is AccessControl {
         (bool sent, ) = address(this).call{value: msg.value}("");
         require(sent, "AuctionMarket: failed to receive bid price");
 
-        AuctionInfo memory newAuction = AuctionInfo(
-            msg.sender,
-            price,
-            block.timestamp
-        );
-        if (minHeapAuction.isFull()) {
-            AuctionInfo memory min = minHeapAuction.getMin();
+        MinHeapAuction.AuctionInfo memory newAuction = MinHeapAuction
+            .AuctionInfo(msg.sender, price, block.timestamp);
+        if (_heap.isFull()) {
+            MinHeapAuction.AuctionInfo memory min = _heap.getMin();
             address _loser = min.bidder;
             userRefunds[_loser] += min.price;
             userInvalidAuctions[_loser].push(min);
             userActiveBidsCnt[_loser] -= 1;
         }
-        minHeapAuction.insert(newAuction);
+        _heap.insert(newAuction);
         userAuctions[msg.sender].push(newAuction);
         userActiveBidsCnt[msg.sender] += 1;
         totalBidsCnt += 1;
@@ -154,15 +155,19 @@ contract AuctionMarket is AccessControl {
         return address(this).balance;
     }
 
+    function getStartAndEndTimes() external view returns (uint256, uint256) {
+        return (auctionStartTime, auctionStartTime.add(AUCTION_DURATION));
+    }
+
     function getUserAuctions(
         address _address
-    ) external view returns (AuctionInfo[] memory) {
+    ) external view returns (MinHeapAuction.AuctionInfo[] memory) {
         return userAuctions[_address];
     }
 
     function getUserInvalidAuctions(
         address _address
-    ) external view returns (AuctionInfo[] memory) {
+    ) external view returns (MinHeapAuction.AuctionInfo[] memory) {
         return userInvalidAuctions[_address];
     }
 }
