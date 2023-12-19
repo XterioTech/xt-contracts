@@ -160,14 +160,29 @@ contract AuctionMarket is AccessControl {
     }
 
     function getUserAuctions(
-        address _address
-    ) external view returns (MinHeapAuction.AuctionInfo[] memory) {
-        return userAuctions[_address];
+        address[] calldata _addresses
+    ) external view returns (MinHeapAuction.AuctionInfo[][] memory) {
+        return createAuctionsArray(_addresses, userAuctions);
     }
 
     function getUserInvalidAuctions(
-        address _address
-    ) external view returns (MinHeapAuction.AuctionInfo[] memory) {
-        return userInvalidAuctions[_address];
+        address[] calldata _addresses
+    ) external view returns (MinHeapAuction.AuctionInfo[][] memory) {
+        return createAuctionsArray(_addresses, userInvalidAuctions);
+    }
+
+    function createAuctionsArray(
+        address[] calldata _addresses,
+        mapping(address => MinHeapAuction.AuctionInfo[])
+            storage _auctionsMapping
+    ) internal view returns (MinHeapAuction.AuctionInfo[][] memory) {
+        MinHeapAuction.AuctionInfo[][]
+            memory auctions = new MinHeapAuction.AuctionInfo[][](
+                _addresses.length
+            );
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            auctions[i] = _auctionsMapping[_addresses[i]];
+        }
+        return auctions;
     }
 }

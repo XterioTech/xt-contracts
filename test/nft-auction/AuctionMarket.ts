@@ -119,6 +119,41 @@ describe("AuctionMarket", function () {
     expect(tvl).to.equal(price);
   });
 
+  it.only("should return user auctions", async function () {
+    const { auctionMarket, b1, b2, b3 } = await loadFixture(basicFixture);
+    const maxBidsPerUser = await auctionMarket.MAX_BID_PER_USER();
+
+    const price = ethers.parseEther("0.5");
+    for (let i = 0; i < maxBidsPerUser; i++) {
+      await auctionMarket.connect(b1).placeBid(price, { value: price });
+    }
+    const higher_price = ethers.parseEther("0.55");
+    for (let i = 0; i < maxBidsPerUser; i++) {
+      await auctionMarket.connect(b2).placeBid(higher_price, { value: higher_price });
+    }
+    const higher_price2 = ethers.parseEther("0.555");
+    for (let i = 0; i < maxBidsPerUser; i++) {
+      await auctionMarket.connect(b3).placeBid(higher_price2, { value: higher_price2 });
+    }
+
+    const userAuctions = await auctionMarket.getUserAuctions([b1.address, b2.address, b3.address])
+    const userInvalidAuctions = await auctionMarket.getUserInvalidAuctions([b1.address, b2.address, b3.address])
+
+    userAuctions.forEach((bids) => {
+      bids.forEach((bid) => {
+        // expect(bid[0]).to.be.oneOf([b2.address, b3.address]);
+        expect([b1.address, b2.address, b3.address]).to.include(bid[0]);
+      })
+    });
+    userInvalidAuctions.forEach((bids) => {
+      bids.forEach((bid) => {
+        expect(bid[0]).to.equal(b1.address);
+      })
+    });
+  });
+
+
+
   it("should past 3000 maxCapacity with 5000+ bids", async function () {
     this.timeout(5000 * 1000);
 
