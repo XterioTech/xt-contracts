@@ -10,7 +10,6 @@ export const signPublishFansCreate = async (
   deadline: BigNumberish,
   contractAddress: AddressLike
 ) => {
-  console.log(hre.network.config.chainId)
   const msgHash = hre.ethers.solidityPackedKeccak256(
     [
       "address", // creator

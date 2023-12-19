@@ -46,6 +46,6 @@ contract FansCreateERC20 is FansCreateCore {
 
     /// @dev This virtual function should transfer the specified `amount` of the payment token to the `to` address
     function payOut(uint256 amount, address to) internal virtual override {
-        IERC20(paymentToken).safeTransferFrom(address(this), to, amount);
+        IERC20(paymentToken).safeTransfer(to, amount);
     }
 }

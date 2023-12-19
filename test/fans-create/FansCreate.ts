@@ -3,8 +3,9 @@ import hre from "hardhat";
 import { expect } from "chai";
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { deployFansCreate } from "../../lib/deploy";
-import { AddressLike, BigNumberish } from "ethers";
 import { signPublishFansCreate } from "../../lib/signature";
+import { IERC1155InterfaceID, getInterfaceID } from "../../lib/utils";
+import { IAccessControl__factory } from "../../typechain-types";
 
 const URI = "https://api.xter.io/xgc/meta/works/{id}";
 const WORK_ID = 123;
@@ -12,13 +13,14 @@ const WORK_ID2 = 456;
 const PROJECT_ID = 666;
 describe("Test FansCreate Contract", function () {
   async function basicFixture() {
-    const [admin, signer, c1, c2, u1, u2, u3] = await hre.ethers.getSigners();
+    const [admin, signer, p1, c1, c2, u1, u2, u3] = await hre.ethers.getSigners();
     const fansCreate = await deployFansCreate(admin.address, URI);
     await fansCreate.grantRole(await fansCreate.SIGNER_ROLE(), signer);
     return {
       fansCreate,
       admin,
       signer,
+      p1,
       c1,
       c2,
       u1,
@@ -29,9 +31,10 @@ describe("Test FansCreate Contract", function () {
 
   async function publishedWorkFixture() {
     const base = await loadFixture(basicFixture);
-    const { fansCreate, signer, c1 } = base;
+    const { fansCreate, signer, c1, p1 } = base;
     const deadline = (await time.latest()) + 600;
     const signature = await signPublishFansCreate(signer, c1.address, WORK_ID, PROJECT_ID, deadline, fansCreate.target);
+    await fansCreate.setProjectFeeRecipient(PROJECT_ID, p1.address);
     await fansCreate
       .connect(c1)
       .publishAndBuyKeys(c1.address, WORK_ID, 1, PROJECT_ID, deadline, signer.address, signature);
@@ -43,6 +46,9 @@ describe("Test FansCreate Contract", function () {
   it("Basic info", async function () {
     const { fansCreate } = await loadFixture(basicFixture);
     expect(await fansCreate.paymentToken()).equal(hre.ethers.ZeroAddress);
+    expect(await fansCreate.supportsInterface(IERC1155InterfaceID)).equal(true);
+    expect(await fansCreate.supportsInterface(getInterfaceID(IAccessControl__factory.createInterface()))).equal(true);
+
     const c = hre.ethers.parseEther("0.0008");
     expect(await fansCreate.calcPrice(0, 1)).equal(0);
     expect(await fansCreate.calcPrice(0, 2)).equal(c);
@@ -53,7 +59,7 @@ describe("Test FansCreate Contract", function () {
   });
 
   it("Publish and buy", async function () {
-    const { fansCreate, signer, c1 } = await loadFixture(basicFixture);
+    const { fansCreate, signer, c1, p1 } = await loadFixture(basicFixture);
     const deadline = (await time.latest()) + 600;
     const signature = await signPublishFansCreate(signer, c1.address, WORK_ID, PROJECT_ID, deadline, fansCreate.target);
     await expect(
@@ -66,22 +72,44 @@ describe("Test FansCreate Contract", function () {
     expect(await fansCreate.totalSupply(WORK_ID)).equal(1);
 
     expect(
-      fansCreate.connect(c1).publishAndBuyKeys(c1.address, WORK_ID2, 2, 0, deadline, signer.address, signature)
+      fansCreate.connect(c1).publishAndBuyKeys(c1.address, WORK_ID2, 1, 0, deadline, signer.address, signature)
     ).revertedWith("FansCreateCore: invalid signature");
 
-    const signature2 = await signPublishFansCreate(signer, c1.address, WORK_ID2, 0, deadline, fansCreate.target);
+    const signature2 = await signPublishFansCreate(
+      signer,
+      c1.address,
+      WORK_ID2,
+      PROJECT_ID,
+      deadline,
+      fansCreate.target
+    );
     await expect(
-      fansCreate.connect(c1).publishAndBuyKeys(c1.address, WORK_ID2, 2, 0, deadline, signer.address, signature2)
+      fansCreate
+        .connect(c1)
+        .publishAndBuyKeys(c1.address, WORK_ID2, 2, PROJECT_ID, deadline, signer.address, signature2)
     ).revertedWith("FansCreate: insufficient payment");
 
     const priceInfo = await fansCreate.getBuyPrice(WORK_ID2, 2);
-    await fansCreate.connect(c1).publishAndBuyKeys(c1.address, WORK_ID2, 2, 0, deadline, signer.address, signature2, {
-      value: priceInfo[1],
-    });
+    await expect(
+      fansCreate
+        .connect(c1)
+        .publishAndBuyKeys(c1.address, WORK_ID2, 2, PROJECT_ID, deadline, signer.address, signature2, {
+          value: priceInfo.priceAfterFee,
+        })
+    ).revertedWith("FansCreateCore: projectFeeRecipient not set");
+
+    await expect(fansCreate.setProjectFeeRecipient(PROJECT_ID, p1.address)).emit(fansCreate, "SetProjectFeeRecipient");
+    await fansCreate
+      .connect(c1)
+      .publishAndBuyKeys(c1.address, WORK_ID2, 2, PROJECT_ID, deadline, signer.address, signature2, {
+        value: priceInfo.priceAfterFee,
+      });
 
     await time.setNextBlockTimestamp(deadline + 60);
     await expect(
-      fansCreate.connect(c1).publishAndBuyKeys(c1.address, WORK_ID2, 2, 0, deadline, signer.address, signature2)
+      fansCreate
+        .connect(c1)
+        .publishAndBuyKeys(c1.address, WORK_ID2, 2, PROJECT_ID, deadline, signer.address, signature2)
     ).revertedWith("FansCreateCore: deadline exceeded");
   });
 
@@ -144,4 +172,33 @@ describe("Test FansCreate Contract", function () {
     await sellCase(c1, WORK_ID, PROJECT_ID, 1);
   });
 
+  it("Management operations", async function () {
+    const { fansCreate, c1, u1, u2, u3 } = await loadFixture(publishedWorkFixture);
+
+    await expect(fansCreate.connect(c1).setURI("abc")).reverted;
+    await fansCreate.setURI("abc");
+
+    await expect(fansCreate.connect(c1).safeTransferFrom(c1.address, u1.address, WORK_ID, 1, "0x")).revertedWith(
+      "FansCreateCore: transfer not allowed"
+    );
+    await expect(fansCreate.connect(c1).setTransferWhitelisted(c1.address, true)).reverted;
+    await fansCreate.setTransferWhitelisted(c1.address, true);
+    await fansCreate.connect(c1).safeTransferFrom(c1.address, u1.address, WORK_ID, 1, "0x");
+    await fansCreate.connect(u1).safeTransferFrom(u1.address, c1.address, WORK_ID, 1, "0x");
+
+    await expect(fansCreate.connect(c1).setFeeRatio(500, 500, 500)).reverted;
+    await expect(fansCreate.setFeeRatio(500, 500, 500)).emit(fansCreate, "SetFeeRatio");
+
+    await expect(fansCreate.connect(c1).setProjectFeeRecipient(PROJECT_ID, c1.address)).reverted;
+    await fansCreate.setProjectFeeRecipient(PROJECT_ID, c1.address);
+    expect(await fansCreate.projectFeeRecipient(PROJECT_ID)).equal(c1.address);
+
+    await expect(fansCreate.connect(c1).setProtocolFeeRecipient(c1.address)).reverted;
+    await fansCreate.setProtocolFeeRecipient(c1.address);
+    expect(await fansCreate.protocolFeeRecipient()).equal(c1.address);
+
+    await expect(fansCreate.connect(c1).setWorkProjectId(WORK_ID, 1)).reverted;
+    await fansCreate.setWorkProjectId(WORK_ID, 1);
+    expect(await fansCreate.workProjectId(WORK_ID)).equal(1);
+  });
 });
