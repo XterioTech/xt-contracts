@@ -139,17 +139,21 @@ describe("AuctionMarket", function () {
     const userAuctions = await auctionMarket.getUserAuctions([b1.address, b2.address, b3.address])
     const userInvalidAuctions = await auctionMarket.getUserInvalidAuctions([b1.address, b2.address, b3.address])
 
+    let totalCnt = 0, inValidCnt = 0
     userAuctions.forEach((bids) => {
       bids.forEach((bid) => {
+        totalCnt += 1
         // expect(bid[0]).to.be.oneOf([b2.address, b3.address]);
         expect([b1.address, b2.address, b3.address]).to.include(bid[0]);
       })
     });
     userInvalidAuctions.forEach((bids) => {
       bids.forEach((bid) => {
+        inValidCnt += 1
         expect(bid[0]).to.equal(b1.address);
       })
     });
+    expect(await auctionMarket.getUserValidCount([b1.address, b2.address, b3.address])).to.equal(totalCnt - inValidCnt)
   });
 
 
