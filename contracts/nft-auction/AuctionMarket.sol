@@ -139,29 +139,22 @@ contract AuctionMarket is AccessControl {
         userBids[msg.sender].push(newBid);
     }
 
-    function claim() external {
+    function claimAndRefund() external {
         require(
             block.timestamp >= auctionStartTime.add(AUCTION_DURATION),
-            "Refund only available after the auction ends"
+            "No claims or refunds allowed until auction ends"
         );
+        uint256 _refundAmt = userRefunds[msg.sender];
         uint256 _winCnt = userActiveBidsCnt[msg.sender];
-        require(_winCnt > 0, "No Win Auction NFT");
+        require(
+            _winCnt > 0 || _refundAmt > 0,
+            "No Win Auction NFT || No refund available"
+        );
         userActiveBidsCnt[msg.sender] = 0;
-
+        userRefunds[msg.sender] = 0;
         for (uint256 i = 0; i < _winCnt; i++) {
             IGateway(gateway).ERC721_mint(nftAddress, msg.sender, 0);
         }
-    }
-
-    function claimRefund() external {
-        require(
-            block.timestamp >= auctionStartTime.add(AUCTION_DURATION),
-            "Refunds cannot be made until the auction ends"
-        );
-        uint256 _refundAmt = userRefunds[msg.sender];
-        require(_refundAmt > 0, "No refund available");
-        userRefunds[msg.sender] = 0;
-
         (bool success, ) = msg.sender.call{value: _refundAmt}("");
         require(success, "AuctionMarket: failed to send refund");
     }

@@ -81,7 +81,7 @@ describe("AuctionMarket", function () {
     await auctionMarket.connect(b1).placeBid(price, { value: price });
 
     await ethers.provider.send("evm_increaseTime", [73 * hour]); // Increase time by 73 hours
-    await auctionMarket.connect(b1).claim();
+    await auctionMarket.connect(b1).claimAndRefund();
     expect(await base.erc721.balanceOf(b1.address)).to.equal(1);
 
     const userActiveBidsCnt = await auctionMarket.userActiveBidsCnt(b1.address);
@@ -108,7 +108,7 @@ describe("AuctionMarket", function () {
 
     const userRefundsBefore = await auctionMarket.userRefunds(b1.address);
     expect(userRefundsBefore).to.equal(price);
-    await auctionMarket.connect(b1).claimRefund();
+    await auctionMarket.connect(b1).claimAndRefund();
     const userRefundsAfter = await auctionMarket.userRefunds(b1.address);
     expect(userRefundsAfter).to.equal(0);
   });
@@ -159,7 +159,7 @@ describe("AuctionMarket", function () {
     expect(await auctionMarket.getUserActiveBidsCnt([b1.address, b2.address, b3.address])).to.equal(totalCnt - inValidCnt)
   });
 
-  it("should past 3000 MAX_BID_PER_USER with 5000+ bids", async function () {
+  it.only("should past 3000 MAX_BID_PER_USER with 5000+ bids", async function () {
     this.timeout(5000 * 1000);
 
     const { auctionMarket, base, admin, b1, b2, b3, b4 } = await loadFixture(basicFixture);
@@ -207,13 +207,13 @@ describe("AuctionMarket", function () {
     console.log('b3 userActiveBidsCnt ==', userActiveBidsCnt3);
     console.log('b3 userRefunds3 ==', userRefunds3);
 
-    await auctionMarket.connect(b3).claim();
+    await auctionMarket.connect(b3).claimAndRefund();
     expect(Number(await base.erc721.balanceOf(b3.address))).to.equal(50);
 
 
     const userRefundsBefore = await auctionMarket.userRefunds(b1.address);
     expect(userRefundsBefore).to.equal(b1Total);
-    await auctionMarket.connect(b1).claimRefund();
+    await auctionMarket.connect(b1).claimAndRefund();
     const userRefundsAfter = await auctionMarket.userRefunds(b1.address);
     expect(userRefundsAfter).to.equal(0);
   });

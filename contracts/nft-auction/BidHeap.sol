@@ -115,8 +115,10 @@ library BidHeap {
     ) private pure returns (bool) {
         if (newBid.price != oldBid.price) {
             return newBid.price > oldBid.price;
+        } else if (newBid.timestamp != oldBid.timestamp) {
+            return newBid.timestamp < oldBid.timestamp;
         }
-        return newBid.timestamp < oldBid.timestamp;
+        return newBid.id < oldBid.id;
     }
 
     function swap(Heap storage heap, uint256 index1, uint256 index2) private {
