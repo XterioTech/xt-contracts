@@ -41,8 +41,8 @@ describe("AuctionMarket", function () {
     const { auctionMarket, b1 } = await loadFixture(basicFixture);
     const price = ethers.parseEther("0.5");
     await auctionMarket.connect(b1).placeBid(price, { value: price });
-    const userAuction = await auctionMarket.userBids(b1.address, 0);
-    expect(userAuction[0]).to.equal(b1.address);
+    const userBid = await auctionMarket.userBids(b1.address, 0);
+    expect(userBid[1]).to.equal(b1.address);
   });
 
   it.only("should not place a bid if auction has not started or ended", async function () {
@@ -105,9 +105,12 @@ describe("AuctionMarket", function () {
     }
 
     await ethers.provider.send("evm_increaseTime", [73 * 60 * 60]); // Increase time by 73 hours
+
+    const userRefundsBefore = await auctionMarket.userRefunds(b1.address);
+    expect(userRefundsBefore).to.equal(price);
     await auctionMarket.connect(b1).claimRefund();
-    const userRefunds = await auctionMarket.userRefunds(b1.address);
-    expect(userRefunds).to.equal(0);
+    const userRefundsAfter = await auctionMarket.userRefunds(b1.address);
+    expect(userRefundsAfter).to.equal(0);
   });
 
   it.only("should get total value locked (TVL)", async function () {
@@ -119,7 +122,7 @@ describe("AuctionMarket", function () {
     expect(tvl).to.equal(price);
   });
 
-  it.only("should return user auctions", async function () {
+  it.only("should return user bids", async function () {
     const { auctionMarket, b1, b2, b3 } = await loadFixture(basicFixture);
     const maxBidsPerUser = await auctionMarket.MAX_BID_PER_USER();
 
@@ -144,31 +147,31 @@ describe("AuctionMarket", function () {
       bids.forEach((bid) => {
         totalCnt += 1
         // expect(bid[0]).to.be.oneOf([b2.address, b3.address]);
-        expect([b1.address, b2.address, b3.address]).to.include(bid[0]);
+        expect([b1.address, b2.address, b3.address]).to.include(bid[1]);
       })
     });
     userInvalidBids.forEach((bids) => {
       bids.forEach((bid) => {
         inValidCnt += 1
-        expect(bid[0]).to.equal(b1.address);
+        expect(bid[1]).to.equal(b1.address);
       })
     });
-    expect(await auctionMarket.getUserValidCount([b1.address, b2.address, b3.address])).to.equal(totalCnt - inValidCnt)
+    expect(await auctionMarket.getUserActiveBidsCnt([b1.address, b2.address, b3.address])).to.equal(totalCnt - inValidCnt)
   });
 
-
-
-  it("should past 3000 maxCapacity with 5000+ bids", async function () {
+  it.only("should past 3000 maxCapacity with 5000+ bids", async function () {
     this.timeout(5000 * 1000);
 
     const { auctionMarket, base, admin, b1, b2, b3, b4 } = await loadFixture(basicFixture);
     await auctionMarket.connect(admin).setMaxBidPerUser(3000);
     const maxBidsPerUser = await auctionMarket.MAX_BID_PER_USER();
 
+    let b1Total = BigInt(0)
     for (let i = 0; i < maxBidsPerUser; i++) {
       const price = ethers.parseEther(`${0.25 + 0.00001 * i}`);
       console.log('b1 price ----', price);
       await auctionMarket.connect(b1).placeBid(price, { value: price });
+      b1Total += price
     }
 
     for (let i = 0; i < maxBidsPerUser; i++) {
@@ -184,20 +187,35 @@ describe("AuctionMarket", function () {
     }
 
     await ethers.provider.send("evm_increaseTime", [73 * 60 * 60]); // Increase time by 73 hours
-    const totalBidsCnt = await auctionMarket.totalBidsCnt();
+    const totalBidsCnt = await auctionMarket.getTotalBidsCnt();
     expect(totalBidsCnt).to.equal(2 * Number(maxBidsPerUser) + 50);
     console.log('totalBidsCnt ==', totalBidsCnt);
 
 
     const userActiveBidsCnt1 = await auctionMarket.userActiveBidsCnt(b1.address);
+    const userRefunds1 = await auctionMarket.userRefunds(b1.address);
     console.log('b1 userActiveBidsCnt ==', userActiveBidsCnt1);
+    console.log('b1 userRefunds1 ==', userRefunds1);
+
     const userActiveBidsCnt2 = await auctionMarket.userActiveBidsCnt(b2.address);
+    const userRefunds2 = await auctionMarket.userRefunds(b2.address);
     console.log('b2 userActiveBidsCnt ==', userActiveBidsCnt2);
+    console.log('b2 userRefunds2 ==', userRefunds2);
+
     const userActiveBidsCnt3 = await auctionMarket.userActiveBidsCnt(b3.address);
+    const userRefunds3 = await auctionMarket.userRefunds(b3.address);
     console.log('b3 userActiveBidsCnt ==', userActiveBidsCnt3);
+    console.log('b3 userRefunds3 ==', userRefunds3);
 
     await auctionMarket.connect(b3).claim();
     expect(Number(await base.erc721.balanceOf(b3.address))).to.equal(50);
+
+
+    const userRefundsBefore = await auctionMarket.userRefunds(b1.address);
+    expect(userRefundsBefore).to.equal(b1Total);
+    await auctionMarket.connect(b1).claimRefund();
+    const userRefundsAfter = await auctionMarket.userRefunds(b1.address);
+    expect(userRefundsAfter).to.equal(0);
   });
 });
 

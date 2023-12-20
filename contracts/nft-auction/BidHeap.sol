@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 library BidHeap {
     struct Bid {
+        uint256 id;
         address bidder;
         uint256 price;
         uint256 timestamp;
@@ -31,9 +32,8 @@ library BidHeap {
 
     function canInsert(
         Heap storage heap,
-        uint256 price
+        Bid calldata newBid
     ) external view returns (bool) {
-        Bid memory newBid = Bid(msg.sender, price, block.timestamp);
         return !isFull(heap) || isHigherBid(newBid, heap.tree[0]);
     }
 

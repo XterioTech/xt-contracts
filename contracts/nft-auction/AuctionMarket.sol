@@ -5,14 +5,17 @@ import "./BidHeap.sol";
 import "../basic-tokens/interfaces/IGateway.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract AuctionMarket is AccessControl {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
-    using SafeMath for uint256;
 
+    using SafeMath for uint256;
+    using Counters for Counters.Counter;
     using BidHeap for BidHeap.Heap;
 
     BidHeap.Heap private _heap;
+    Counters.Counter private _idCounter;
 
     address public gateway;
     address public nftAddress;
@@ -29,7 +32,6 @@ contract AuctionMarket is AccessControl {
     mapping(address => uint256) public userActiveBidsCnt;
     mapping(address => uint256) public userRefunds;
 
-    uint256 public totalBidsCnt;
     uint256 public highestBidPrice;
 
     constructor(
@@ -96,34 +98,42 @@ contract AuctionMarket is AccessControl {
             userBids[msg.sender].length < MAX_BID_PER_USER,
             "Maximum bid per user reached"
         );
-        require(
-            _heap.canInsert(price),
-            "Bid price must be higher than current minimum bid"
-        );
+        // require(
+        //     _heap.canInsert(price),
+        //     "Bid price must be higher than current minimum bid"
+        // );
 
         require(msg.value >= price, "AuctionMarket: insufficient payment");
         (bool sent, ) = address(this).call{value: msg.value}("");
         require(sent, "AuctionMarket: failed to receive bid price");
 
+        _idCounter.increment();
         BidHeap.Bid memory newBid = BidHeap.Bid(
+            _idCounter.current(),
             msg.sender,
             price,
             block.timestamp
         );
-        if (_heap.isFull()) {
-            BidHeap.Bid memory min = _heap.getMin();
-            address _loser = min.bidder;
-            userRefunds[_loser] += min.price;
-            userInvalidBids[_loser].push(min);
-            userActiveBidsCnt[_loser] -= 1;
+
+        if (_heap.canInsert(newBid)) {
+            if (_heap.isFull()) {
+                BidHeap.Bid memory min = _heap.getMin();
+                address _loser = min.bidder;
+                userRefunds[_loser] += min.price;
+                userInvalidBids[_loser].push(min);
+                userActiveBidsCnt[_loser] -= 1;
+            }
+            _heap.insert(newBid);
+            userActiveBidsCnt[msg.sender] += 1;
+            if (price > highestBidPrice) {
+                highestBidPrice = price;
+            }
+        } else {
+            userRefunds[msg.sender] += newBid.price;
+            userInvalidBids[msg.sender].push(newBid);
         }
-        _heap.insert(newBid);
+
         userBids[msg.sender].push(newBid);
-        userActiveBidsCnt[msg.sender] += 1;
-        totalBidsCnt += 1;
-        if (price > highestBidPrice) {
-            highestBidPrice = price;
-        }
     }
 
     function claim() external {
@@ -185,17 +195,17 @@ contract AuctionMarket is AccessControl {
         return bids;
     }
 
-    function getUserValidCount(
+    function getTotalBidsCnt() external view returns (uint256) {
+        return _idCounter.current();
+    }
+
+    function getUserActiveBidsCnt(
         address[] calldata _addresses
     ) external view returns (uint256) {
-        uint256 validCount = 0;
+        uint256 total = 0;
         for (uint256 i = 0; i < _addresses.length; i++) {
-            uint256 total = userBids[_addresses[i]].length;
-            uint256 invalid = userInvalidBids[_addresses[i]].length;
-            if (total > 0 && invalid >= 0 && total > invalid) {
-                validCount += total - invalid;
-            }
+            total += userActiveBidsCnt[_addresses[i]];
         }
-        return validCount;
+        return total;
     }
 }
