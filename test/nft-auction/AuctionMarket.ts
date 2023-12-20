@@ -159,7 +159,7 @@ describe("AuctionMarket", function () {
     expect(await auctionMarket.getUserActiveBidsCnt([b1.address, b2.address, b3.address])).to.equal(totalCnt - inValidCnt)
   });
 
-  it.only("should past 3000 maxCapacity with 5000+ bids", async function () {
+  it("should past 3000 MAX_BID_PER_USER with 5000+ bids", async function () {
     this.timeout(5000 * 1000);
 
     const { auctionMarket, base, admin, b1, b2, b3, b4 } = await loadFixture(basicFixture);

@@ -21,7 +21,7 @@ contract AuctionMarket is AccessControl {
     address public nftAddress;
     uint256 public auctionStartTime;
 
-    uint256 public constant AUCTION_DURATION = 72 hours;
+    uint256 public AUCTION_DURATION = 72 hours;
     uint256 public MAX_BID_PER_USER = 50;
 
     uint256 public MIN_PRICE = 0.25 ether;
@@ -45,7 +45,6 @@ contract AuctionMarket is AccessControl {
 
         gateway = _gateway;
         nftAddress = _nftAddress;
-        // _heap = new _heap(maxCapacity);
         auctionStartTime = _auctionStartTime;
         _heap.MAX_CAPACITY = maxCapacity;
     }
@@ -73,6 +72,10 @@ contract AuctionMarket is AccessControl {
 
     function setAuctionStartTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
         auctionStartTime = _t;
+    }
+
+    function setAuctionDuration(uint256 _t) external onlyRole(MANAGER_ROLE) {
+        AUCTION_DURATION = _t;
     }
 
     function setMinPrice(uint256 _p) external onlyRole(MANAGER_ROLE) {
