@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./MinHeapAuction.sol";
+import "./BidHeap.sol";
 import "../basic-tokens/interfaces/IGateway.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -10,9 +10,9 @@ contract AuctionMarket is AccessControl {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     using SafeMath for uint256;
 
-    using MinHeapAuction for MinHeapAuction.Heap;
+    using BidHeap for BidHeap.Heap;
 
-    MinHeapAuction.Heap private _heap;
+    BidHeap.Heap private _heap;
 
     address public gateway;
     address public nftAddress;
@@ -24,8 +24,8 @@ contract AuctionMarket is AccessControl {
     uint256 public MIN_PRICE = 0.25 ether;
     uint256 public MAX_PRICE = 0.75 ether;
 
-    mapping(address => MinHeapAuction.AuctionInfo[]) public userAuctions;
-    mapping(address => MinHeapAuction.AuctionInfo[]) public userInvalidAuctions;
+    mapping(address => BidHeap.Bid[]) public userBids;
+    mapping(address => BidHeap.Bid[]) public userInvalidBids;
     mapping(address => uint256) public userActiveBidsCnt;
     mapping(address => uint256) public userRefunds;
 
@@ -93,7 +93,7 @@ contract AuctionMarket is AccessControl {
         );
         require(price >= MIN_PRICE && price <= MAX_PRICE, "Invalid bid price");
         require(
-            userAuctions[msg.sender].length < MAX_BID_PER_USER,
+            userBids[msg.sender].length < MAX_BID_PER_USER,
             "Maximum bid per user reached"
         );
         require(
@@ -105,17 +105,20 @@ contract AuctionMarket is AccessControl {
         (bool sent, ) = address(this).call{value: msg.value}("");
         require(sent, "AuctionMarket: failed to receive bid price");
 
-        MinHeapAuction.AuctionInfo memory newAuction = MinHeapAuction
-            .AuctionInfo(msg.sender, price, block.timestamp);
+        BidHeap.Bid memory newBid = BidHeap.Bid(
+            msg.sender,
+            price,
+            block.timestamp
+        );
         if (_heap.isFull()) {
-            MinHeapAuction.AuctionInfo memory min = _heap.getMin();
+            BidHeap.Bid memory min = _heap.getMin();
             address _loser = min.bidder;
             userRefunds[_loser] += min.price;
-            userInvalidAuctions[_loser].push(min);
+            userInvalidBids[_loser].push(min);
             userActiveBidsCnt[_loser] -= 1;
         }
-        _heap.insert(newAuction);
-        userAuctions[msg.sender].push(newAuction);
+        _heap.insert(newBid);
+        userBids[msg.sender].push(newBid);
         userActiveBidsCnt[msg.sender] += 1;
         totalBidsCnt += 1;
         if (price > highestBidPrice) {
@@ -159,31 +162,27 @@ contract AuctionMarket is AccessControl {
         return (auctionStartTime, auctionStartTime.add(AUCTION_DURATION));
     }
 
-    function getUserAuctions(
+    function getUserBids(
         address[] calldata _addresses
-    ) external view returns (MinHeapAuction.AuctionInfo[][] memory) {
-        return _createAuctionsArray(_addresses, userAuctions);
+    ) external view returns (BidHeap.Bid[][] memory) {
+        return _createBidsArray(_addresses, userBids);
     }
 
-    function getUserInvalidAuctions(
+    function getUserInvalidBids(
         address[] calldata _addresses
-    ) external view returns (MinHeapAuction.AuctionInfo[][] memory) {
-        return _createAuctionsArray(_addresses, userInvalidAuctions);
+    ) external view returns (BidHeap.Bid[][] memory) {
+        return _createBidsArray(_addresses, userInvalidBids);
     }
 
-    function _createAuctionsArray(
+    function _createBidsArray(
         address[] calldata _addresses,
-        mapping(address => MinHeapAuction.AuctionInfo[])
-            storage _auctionsMapping
-    ) internal view returns (MinHeapAuction.AuctionInfo[][] memory) {
-        MinHeapAuction.AuctionInfo[][]
-            memory auctions = new MinHeapAuction.AuctionInfo[][](
-                _addresses.length
-            );
+        mapping(address => BidHeap.Bid[]) storage _bidsMapping
+    ) internal view returns (BidHeap.Bid[][] memory) {
+        BidHeap.Bid[][] memory bids = new BidHeap.Bid[][](_addresses.length);
         for (uint256 i = 0; i < _addresses.length; i++) {
-            auctions[i] = _auctionsMapping[_addresses[i]];
+            bids[i] = _bidsMapping[_addresses[i]];
         }
-        return auctions;
+        return bids;
     }
 
     function getUserValidCount(
@@ -191,8 +190,8 @@ contract AuctionMarket is AccessControl {
     ) external view returns (uint256) {
         uint256 validCount = 0;
         for (uint256 i = 0; i < _addresses.length; i++) {
-            uint256 total = userAuctions[_addresses[i]].length;
-            uint256 invalid = userInvalidAuctions[_addresses[i]].length;
+            uint256 total = userBids[_addresses[i]].length;
+            uint256 invalid = userInvalidBids[_addresses[i]].length;
             if (total > 0 && invalid >= 0 && total > invalid) {
                 validCount += total - invalid;
             }

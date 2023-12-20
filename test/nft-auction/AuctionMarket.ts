@@ -41,7 +41,7 @@ describe("AuctionMarket", function () {
     const { auctionMarket, b1 } = await loadFixture(basicFixture);
     const price = ethers.parseEther("0.5");
     await auctionMarket.connect(b1).placeBid(price, { value: price });
-    const userAuction = await auctionMarket.userAuctions(b1.address, 0);
+    const userAuction = await auctionMarket.userBids(b1.address, 0);
     expect(userAuction[0]).to.equal(b1.address);
   });
 
@@ -136,18 +136,18 @@ describe("AuctionMarket", function () {
       await auctionMarket.connect(b3).placeBid(higher_price2, { value: higher_price2 });
     }
 
-    const userAuctions = await auctionMarket.getUserAuctions([b1.address, b2.address, b3.address])
-    const userInvalidAuctions = await auctionMarket.getUserInvalidAuctions([b1.address, b2.address, b3.address])
+    const userBids = await auctionMarket.getUserBids([b1.address, b2.address, b3.address])
+    const userInvalidBids = await auctionMarket.getUserInvalidBids([b1.address, b2.address, b3.address])
 
     let totalCnt = 0, inValidCnt = 0
-    userAuctions.forEach((bids) => {
+    userBids.forEach((bids) => {
       bids.forEach((bid) => {
         totalCnt += 1
         // expect(bid[0]).to.be.oneOf([b2.address, b3.address]);
         expect([b1.address, b2.address, b3.address]).to.include(bid[0]);
       })
     });
-    userInvalidAuctions.forEach((bids) => {
+    userInvalidBids.forEach((bids) => {
       bids.forEach((bid) => {
         inValidCnt += 1
         expect(bid[0]).to.equal(b1.address);

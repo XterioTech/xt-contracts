@@ -103,16 +103,16 @@ export const deployAuctionMarket = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   // Deploy libraries for AuctionMarket
-  const MinHeapAuctionLibrary = await hre.ethers.getContractFactory(
-    "MinHeapAuction"
+  const BidHeapLibrary = await hre.ethers.getContractFactory(
+    "BidHeap"
   );
-  const minHeapAuctionLibrary = await MinHeapAuctionLibrary.deploy();
-  await minHeapAuctionLibrary.waitForDeployment();
+  const bidHeapLibrary = await BidHeapLibrary.deploy();
+  await bidHeapLibrary.waitForDeployment();
 
 
   const Contract = await hre.ethers.getContractFactory("AuctionMarket", {
     libraries: {
-      MinHeapAuction: await minHeapAuctionLibrary.getAddress(),
+      BidHeap: await bidHeapLibrary.getAddress(),
     },
   });
 

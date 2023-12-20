@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-library MinHeapAuction {
-    struct AuctionInfo {
+library BidHeap {
+    struct Bid {
         address bidder;
         uint256 price;
         uint256 timestamp;
@@ -10,11 +10,11 @@ library MinHeapAuction {
 
     struct Heap {
         uint256 MAX_CAPACITY;
-        AuctionInfo[] tree;
+        Bid[] tree;
     }
 
-    event AuctionInserted(AuctionInfo auction);
-    event AuctionExtracted(AuctionInfo auction);
+    event BidInserted(Bid bid);
+    event BidExtracted(Bid bid);
 
     function isFull(Heap storage heap) public view returns (bool) {
         return heap.tree.length >= heap.MAX_CAPACITY;
@@ -24,9 +24,7 @@ library MinHeapAuction {
         return heap.tree.length;
     }
 
-    function getMin(
-        Heap storage heap
-    ) external view returns (AuctionInfo memory) {
+    function getMin(Heap storage heap) external view returns (Bid memory) {
         require(heap.tree.length > 0, "Heap is empty");
         return heap.tree[0];
     }
@@ -35,42 +33,33 @@ library MinHeapAuction {
         Heap storage heap,
         uint256 price
     ) external view returns (bool) {
-        AuctionInfo memory newAuction = AuctionInfo(
-            msg.sender,
-            price,
-            block.timestamp
-        );
-        return !isFull(heap) || isHigherBid(newAuction, heap.tree[0]);
+        Bid memory newBid = Bid(msg.sender, price, block.timestamp);
+        return !isFull(heap) || isHigherBid(newBid, heap.tree[0]);
     }
 
-    function insert(
-        Heap storage heap,
-        AuctionInfo calldata newAuction
-    ) external {
-        require(newAuction.price > 0, "Price must be greater than zero");
+    function insert(Heap storage heap, Bid calldata newBid) external {
+        require(newBid.price > 0, "Price must be greater than zero");
 
         if (isFull(heap)) {
             require(
-                isHigherBid(newAuction, heap.tree[0]),
+                isHigherBid(newBid, heap.tree[0]),
                 "Heap is full, value to be inserted should be smaller"
             );
-            heap.tree[0] = newAuction;
+            heap.tree[0] = newBid;
             heapifyDown(heap, 0);
         } else {
-            heap.tree.push(newAuction);
+            heap.tree.push(newBid);
             heapifyUp(heap, heap.tree.length - 1);
         }
 
-        emit AuctionInserted(newAuction);
+        emit BidInserted(newBid);
     }
 
-    function extractMin(
-        Heap storage heap
-    ) external returns (AuctionInfo memory) {
+    function extractMin(Heap storage heap) external returns (Bid memory) {
         require(heap.tree.length > 0, "Heap is empty");
 
-        AuctionInfo memory root = heap.tree[0];
-        AuctionInfo memory lasttree = heap.tree[heap.tree.length - 1];
+        Bid memory root = heap.tree[0];
+        Bid memory lasttree = heap.tree[heap.tree.length - 1];
         heap.tree.pop();
 
         if (heap.tree.length > 0) {
@@ -78,7 +67,7 @@ library MinHeapAuction {
             heapifyDown(heap, 0);
         }
 
-        emit AuctionExtracted(root);
+        emit BidExtracted(root);
 
         return root;
     }
@@ -121,17 +110,17 @@ library MinHeapAuction {
     }
 
     function isHigherBid(
-        AuctionInfo memory newAuction,
-        AuctionInfo memory oldAuction
+        Bid memory newBid,
+        Bid memory oldBid
     ) private pure returns (bool) {
-        if (newAuction.price != oldAuction.price) {
-            return newAuction.price > oldAuction.price;
+        if (newBid.price != oldBid.price) {
+            return newBid.price > oldBid.price;
         }
-        return newAuction.timestamp < oldAuction.timestamp;
+        return newBid.timestamp < oldBid.timestamp;
     }
 
     function swap(Heap storage heap, uint256 index1, uint256 index2) private {
-        AuctionInfo memory temp = heap.tree[index1];
+        Bid memory temp = heap.tree[index1];
         heap.tree[index1] = heap.tree[index2];
         heap.tree[index2] = temp;
     }
