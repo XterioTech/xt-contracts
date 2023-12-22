@@ -53,14 +53,6 @@ library BidHeap {
         return true;
     }
 
-    function isInHeap(
-        Heap storage heap,
-        Bid memory _b
-    ) internal view returns (bool) {
-        if (heap._tree.length == 0) return false;
-        return isHigherOrEqualBid(_b, heap._tree[0]);
-    }
-
     function heapifyUp(Heap storage heap, uint256 index) private {
         while (index > 0) {
             uint256 parentIndex = (index - 1) / 2;
@@ -104,7 +96,7 @@ library BidHeap {
     function isHigherOrEqualBid(
         Bid memory _b1,
         Bid memory _b2
-    ) private pure returns (bool) {
+    ) internal pure returns (bool) {
         return
             _b1.price > _b2.price ||
             (_b1.price == _b2.price && _b1.id <= _b2.id);

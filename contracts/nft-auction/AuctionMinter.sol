@@ -134,7 +134,7 @@ contract AuctionMinter is AccessControl {
         );
 
         _heap.tryInsert(newBid);
-        
+
         userBids[msg.sender].push(newBid);
         buyerBidCount[msg.sender][limitForBuyerID] += 1;
         emit Bid(msg.sender, bidPrice);
@@ -144,12 +144,11 @@ contract AuctionMinter is AccessControl {
         info.hasClaimed = hasClaimed[_a];
         info.refundAmount = 0;
         info.nftCount = 0;
+        BidHeap.Bid memory _floorBid = _heap.minBid();
         for (uint256 i = 0; i < userBids[_a].length; i++) {
-            if (_heap.isInHeap(userBids[_a][i])) {
+            if (BidHeap.isHigherOrEqualBid(userBids[_a][i], _floorBid)) {
                 info.nftCount += 1;
-                info.refundAmount +=
-                    userBids[_a][i].price -
-                    _heap.minBid().price;
+                info.refundAmount += userBids[_a][i].price - _floorBid.price;
             } else {
                 info.refundAmount += userBids[_a][i].price;
             }
