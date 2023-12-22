@@ -54,7 +54,7 @@ contract AuctionMinter is AccessControl {
         nftAddress = _nftAddress;
         paymentRecipient = _paymentRecipient;
         auctionEndTime = _auctionEndTime;
-        _heap.MAX_CAPACITY = _nftAmount;
+        _heap.initialize(_nftAmount);
     }
 
     receive() external payable {}
@@ -65,7 +65,7 @@ contract AuctionMinter is AccessControl {
             block.timestamp > auctionEndTime,
             "AuctionMinter: payment can only be made after the auction has ended"
         );
-        uint256 value = _heap.tree.length * _heap.getMin().price;
+        uint256 value = _heap.size() * _heap.minBid().price;
         (success, ) = paymentRecipient.call{value: value}("");
         require(success, "AuctionMinter: failed to send payment");
     }
@@ -133,12 +133,7 @@ contract AuctionMinter is AccessControl {
             block.timestamp
         );
 
-        if (_heap.canInsert(newBid)) {
-            _heap.insert(newBid);
-            highestBidPrice = bidPrice > highestBidPrice
-                ? bidPrice
-                : highestBidPrice;
-        }
+        _heap.tryInsert(newBid);
         
         userBids[msg.sender].push(newBid);
         buyerBidCount[msg.sender][limitForBuyerID] += 1;
@@ -154,7 +149,7 @@ contract AuctionMinter is AccessControl {
                 info.nftCount += 1;
                 info.refundAmount +=
                     userBids[_a][i].price -
-                    _heap.getMin().price;
+                    _heap.minBid().price;
             } else {
                 info.refundAmount += userBids[_a][i].price;
             }
@@ -189,7 +184,7 @@ contract AuctionMinter is AccessControl {
     }
 
     function floorBid() external view returns (BidHeap.Bid memory) {
-        return _heap.getMin();
+        return _heap.minBid();
     }
 
     function getUserClaimInfos(

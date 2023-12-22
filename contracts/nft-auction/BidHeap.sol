@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 library BidHeap {
+    
     struct Bid {
         uint256 id;
         address bidder;
@@ -10,80 +11,61 @@ library BidHeap {
     }
 
     struct Heap {
-        uint256 MAX_CAPACITY;
-        Bid[] tree;
+        // These variables should never be directly accessed by users of the library: interactions must be restricted to
+        // the library's function. As of Solidity v0.5.2, this cannot be enforced, though there is a proposal to add
+        // this feature: see https://github.com/ethereum/solidity/issues/4637
+
+        uint256 _maxCapacity;
+        Bid[] _tree;
     }
 
-    event BidInserted(Bid bid);
-    event BidExtracted(Bid bid);
-
-    function isFull(Heap storage heap) public view returns (bool) {
-        return heap.tree.length >= heap.MAX_CAPACITY;
+    function initialize(Heap storage heap, uint256 cap) internal {
+        require(heap._maxCapacity == 0, "BidHeap: duplicated initialize");
+        heap._maxCapacity = cap;
     }
 
-    function totalCnt(Heap storage heap) external view returns (uint256) {
-        return heap.tree.length;
+    function isFull(Heap storage heap) internal view returns (bool) {
+        return heap._tree.length >= heap._maxCapacity;
     }
 
-    function getMin(Heap storage heap) external view returns (Bid memory) {
-        require(heap.tree.length > 0, "Heap is empty");
-        return heap.tree[0];
+    function size(Heap storage heap) internal view returns (uint256) {
+        return heap._tree.length;
     }
 
-    function canInsert(
+    function minBid(Heap storage heap) internal view returns (Bid memory) {
+        require(heap._tree.length > 0, "BidHeap: heap is empty");
+        return heap._tree[0];
+    }
+
+    function tryInsert(
         Heap storage heap,
-        Bid calldata newBid
-    ) external view returns (bool) {
-        return !isFull(heap) || isHigherBid(newBid, heap.tree[0]);
+        Bid memory newBid
+    ) internal returns (bool) {
+        if (isFull(heap)) {
+            if (!isHigherOrEqualBid(newBid, heap._tree[0])) {
+                return false;
+            }
+            heap._tree[0] = newBid;
+            heapifyDown(heap, 0);
+        } else {
+            heap._tree.push(newBid);
+            heapifyUp(heap, heap._tree.length - 1);
+        }
+        return true;
     }
 
     function isInHeap(
         Heap storage heap,
         Bid memory _b
-    ) external view returns (bool) {
-        require(heap.tree.length > 0, "Heap is empty");
-        return isHigherBid(_b, heap.tree[0]) || isEqualBid(_b, heap.tree[0]);
-    }
-
-    function insert(Heap storage heap, Bid calldata newBid) external {
-        require(newBid.price > 0, "Price must be greater than zero");
-
-        if (isFull(heap)) {
-            require(
-                isHigherBid(newBid, heap.tree[0]),
-                "Heap is full, value to be inserted should be smaller"
-            );
-            heap.tree[0] = newBid;
-            heapifyDown(heap, 0);
-        } else {
-            heap.tree.push(newBid);
-            heapifyUp(heap, heap.tree.length - 1);
-        }
-
-        emit BidInserted(newBid);
-    }
-
-    function extractMin(Heap storage heap) external returns (Bid memory) {
-        require(heap.tree.length > 0, "Heap is empty");
-
-        Bid memory root = heap.tree[0];
-        Bid memory lasttree = heap.tree[heap.tree.length - 1];
-        heap.tree.pop();
-
-        if (heap.tree.length > 0) {
-            heap.tree[0] = lasttree;
-            heapifyDown(heap, 0);
-        }
-
-        emit BidExtracted(root);
-
-        return root;
+    ) internal view returns (bool) {
+        if (heap._tree.length == 0) return false;
+        return isHigherOrEqualBid(_b, heap._tree[0]);
     }
 
     function heapifyUp(Heap storage heap, uint256 index) private {
         while (index > 0) {
             uint256 parentIndex = (index - 1) / 2;
-            if (isHigherBid(heap.tree[index], heap.tree[parentIndex])) {
+            if (isHigherOrEqualBid(heap._tree[index], heap._tree[parentIndex])) {
                 break;
             }
 
@@ -98,15 +80,15 @@ library BidHeap {
         uint256 rightChild = 2 * index + 2;
 
         if (
-            leftChild < heap.tree.length &&
-            isHigherBid(heap.tree[smallest], heap.tree[leftChild])
+            leftChild < heap._tree.length &&
+            isHigherOrEqualBid(heap._tree[smallest], heap._tree[leftChild])
         ) {
             smallest = leftChild;
         }
 
         if (
-            rightChild < heap.tree.length &&
-            isHigherBid(heap.tree[smallest], heap.tree[rightChild])
+            rightChild < heap._tree.length &&
+            isHigherOrEqualBid(heap._tree[smallest], heap._tree[rightChild])
         ) {
             smallest = rightChild;
         }
@@ -117,30 +99,18 @@ library BidHeap {
         }
     }
 
-    function isHigherBid(
+    function isHigherOrEqualBid(
         Bid memory _b1,
         Bid memory _b2
     ) private pure returns (bool) {
         return
-            (_b1.price > _b2.price) ||
-            (_b1.price == _b2.price &&
-                (_b1.timestamp < _b2.timestamp ||
-                    (_b1.timestamp == _b2.timestamp && _b1.id < _b2.id)));
-    }
-
-    function isEqualBid(
-        Bid memory _b1,
-        Bid memory _b2
-    ) private pure returns (bool) {
-        return
-            _b1.price == _b2.price &&
-            _b1.timestamp == _b2.timestamp &&
-            _b1.id == _b2.id;
+            _b1.price > _b2.price ||
+            (_b1.price == _b2.price && _b1.id <= _b2.id);
     }
 
     function swap(Heap storage heap, uint256 index1, uint256 index2) private {
-        Bid memory temp = heap.tree[index1];
-        heap.tree[index1] = heap.tree[index2];
-        heap.tree[index2] = temp;
+        Bid memory temp = heap._tree[index1];
+        heap._tree[index1] = heap._tree[index2];
+        heap._tree[index2] = temp;
     }
 }
