@@ -25,13 +25,10 @@ contract AuctionMarket is AccessControl {
 
     address public gateway;
     address public nftAddress;
-    uint256 public auctionStartTime;
+    address public paymentRecipient;
+    uint256 public auctionEndTime;
 
-    uint256 public AUCTION_DURATION = 72 hours;
     uint256 public MAX_BID_PER_USER = 50;
-
-    uint256 public MIN_PRICE = 0.25 ether;
-    uint256 public MAX_PRICE = 0.75 ether;
 
     mapping(address => BidHeap.Bid[]) public userBids;
     mapping(address => uint256) public userActiveBidsCnt;
@@ -42,66 +39,55 @@ contract AuctionMarket is AccessControl {
     constructor(
         address _gateway,
         address _nftAddress,
+        address _paymentRecipient,
         uint256 maxCapacity,
-        uint256 _auctionStartTime
+        uint256 _auctionEndTime
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, msg.sender);
 
         gateway = _gateway;
         nftAddress = _nftAddress;
-        auctionStartTime = _auctionStartTime;
+        paymentRecipient = _paymentRecipient;
+        auctionEndTime = _auctionEndTime;
         _heap.MAX_CAPACITY = maxCapacity;
     }
 
     receive() external payable {}
 
     /**************** Management Functions ****************/
-    function withdrawTo(
-        address _to
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bool sent) {
-        (sent, ) = _to.call{value: address(this).balance}("");
+    function sendPayment() external returns (bool success) {
+        require(
+            block.timestamp > auctionEndTime,
+            "payment can only be made after the auction has ended"
+        );
+        uint256 value = _heap.tree.length * _heap.getMin().price;
+        (success, ) = paymentRecipient.call{value: value}("");
+        require(success, "AuctionMarket: failed to send payment");
     }
 
-    function setGateway(address _newGateway) external onlyRole(MANAGER_ROLE) {
-        gateway = _newGateway;
+    function setGateway(address _g) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        gateway = _g;
+    }
+
+    function setRecipient(address _r) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        paymentRecipient = _r;
     }
 
     function setNftAddress(address _addr) external onlyRole(MANAGER_ROLE) {
         nftAddress = _addr;
     }
 
+    function setAuctionEndTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
+        auctionEndTime = _t;
+    }
+
     function setMaxBidPerUser(uint256 _max) external onlyRole(MANAGER_ROLE) {
         MAX_BID_PER_USER = _max;
     }
 
-    function setAuctionStartTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
-        auctionStartTime = _t;
-    }
-
-    function setAuctionDuration(uint256 _t) external onlyRole(MANAGER_ROLE) {
-        AUCTION_DURATION = _t;
-    }
-
-    function setMinPrice(uint256 _p) external onlyRole(MANAGER_ROLE) {
-        MIN_PRICE = _p;
-    }
-
-    function setMaxPrice(uint256 _p) external onlyRole(MANAGER_ROLE) {
-        MAX_PRICE = _p;
-    }
-
     /**************** Core Functions ****************/
     function placeBid(uint256 price) external payable {
-        require(
-            block.timestamp >= auctionStartTime,
-            "Auction has not started yet"
-        );
-        require(
-            block.timestamp < auctionStartTime.add(AUCTION_DURATION),
-            "Auction has ended"
-        );
-        require(price >= MIN_PRICE && price <= MAX_PRICE, "Invalid bid price");
         require(
             userBids[msg.sender].length < MAX_BID_PER_USER,
             "Maximum bid per user reached"
@@ -154,7 +140,7 @@ contract AuctionMarket is AccessControl {
 
     function claimAndRefund() external {
         require(
-            block.timestamp >= auctionStartTime.add(AUCTION_DURATION),
+            block.timestamp > auctionEndTime,
             "No claims or refunds allowed until auction ends"
         );
         (bool _hasclaimed, uint256 _refundAmt, uint256 _winCnt) = isEligible(
@@ -180,8 +166,8 @@ contract AuctionMarket is AccessControl {
         return address(this).balance;
     }
 
-    function getStartAndEndTimes() external view returns (uint256, uint256) {
-        return (auctionStartTime, auctionStartTime.add(AUCTION_DURATION));
+    function topBid() external view returns (BidHeap.Bid memory) {
+        return _heap.getMin();
     }
 
     function getUserEligible(
