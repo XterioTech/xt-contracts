@@ -10,6 +10,12 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 contract AuctionMarket is AccessControl {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
+    struct Eligibility {
+        bool hasClaimed;
+        uint256 refundAmt;
+        uint256 winCnt;
+    }
+
     using SafeMath for uint256;
     using Counters for Counters.Counter;
     using BidHeap for BidHeap.Heap;
@@ -28,9 +34,8 @@ contract AuctionMarket is AccessControl {
     uint256 public MAX_PRICE = 0.75 ether;
 
     mapping(address => BidHeap.Bid[]) public userBids;
-    mapping(address => BidHeap.Bid[]) public userInvalidBids;
     mapping(address => uint256) public userActiveBidsCnt;
-    mapping(address => uint256) public userRefunds;
+    mapping(address => bool) public hasClaimed;
 
     uint256 public highestBidPrice;
 
@@ -101,10 +106,6 @@ contract AuctionMarket is AccessControl {
             userBids[msg.sender].length < MAX_BID_PER_USER,
             "Maximum bid per user reached"
         );
-        // require(
-        //     _heap.canInsert(price),
-        //     "Bid price must be higher than current minimum bid"
-        // );
 
         require(msg.value >= price, "AuctionMarket: insufficient payment");
         (bool sent, ) = address(this).call{value: msg.value}("");
@@ -120,10 +121,7 @@ contract AuctionMarket is AccessControl {
 
         if (_heap.canInsert(newBid)) {
             if (_heap.isFull()) {
-                BidHeap.Bid memory min = _heap.getMin();
-                address _loser = min.bidder;
-                userRefunds[_loser] += min.price;
-                userInvalidBids[_loser].push(min);
+                address _loser = _heap.getMin().bidder;
                 userActiveBidsCnt[_loser] -= 1;
             }
             _heap.insert(newBid);
@@ -131,12 +129,27 @@ contract AuctionMarket is AccessControl {
             if (price > highestBidPrice) {
                 highestBidPrice = price;
             }
-        } else {
-            userRefunds[msg.sender] += newBid.price;
-            userInvalidBids[msg.sender].push(newBid);
         }
-
         userBids[msg.sender].push(newBid);
+    }
+
+    function isEligible(
+        address _a
+    )
+        public
+        view
+        returns (bool hasclaimed, uint256 _refundAmt, uint256 _winCnt)
+    {
+        hasclaimed = hasClaimed[_a];
+        _refundAmt = 0;
+        for (uint256 i = 0; i < userBids[_a].length; i++) {
+            if (_heap.isInHeap(userBids[_a][i])) {
+                _refundAmt += userBids[_a][i].price - _heap.getMin().price;
+            } else {
+                _refundAmt += userBids[_a][i].price;
+            }
+        }
+        _winCnt = userActiveBidsCnt[_a];
     }
 
     function claimAndRefund() external {
@@ -144,19 +157,22 @@ contract AuctionMarket is AccessControl {
             block.timestamp >= auctionStartTime.add(AUCTION_DURATION),
             "No claims or refunds allowed until auction ends"
         );
-        uint256 _refundAmt = userRefunds[msg.sender];
-        uint256 _winCnt = userActiveBidsCnt[msg.sender];
-        require(
-            _winCnt > 0 || _refundAmt > 0,
-            "No Win Auction NFT || No refund available"
+        (bool _hasclaimed, uint256 _refundAmt, uint256 _winCnt) = isEligible(
+            _msgSender()
         );
-        userActiveBidsCnt[msg.sender] = 0;
-        userRefunds[msg.sender] = 0;
+
+        require(
+            !_hasclaimed && (_winCnt > 0 || _refundAmt > 0),
+            "has claimed || No Win Auction NFT || No refund available"
+        );
+
         for (uint256 i = 0; i < _winCnt; i++) {
             IGateway(gateway).ERC721_mint(nftAddress, msg.sender, 0);
         }
         (bool success, ) = msg.sender.call{value: _refundAmt}("");
         require(success, "AuctionMarket: failed to send refund");
+
+        hasClaimed[msg.sender] = true;
     }
 
     /**************** View Functions ****************/
@@ -168,16 +184,23 @@ contract AuctionMarket is AccessControl {
         return (auctionStartTime, auctionStartTime.add(AUCTION_DURATION));
     }
 
+    function getUserEligible(
+        address[] calldata _addresses
+    ) external view returns (Eligibility[] memory results) {
+        results = new Eligibility[](_addresses.length);
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            (
+                results[i].hasClaimed,
+                results[i].refundAmt,
+                results[i].winCnt
+            ) = isEligible(_addresses[i]);
+        }
+    }
+
     function getUserBids(
         address[] calldata _addresses
     ) external view returns (BidHeap.Bid[][] memory) {
         return _createBidsArray(_addresses, userBids);
-    }
-
-    function getUserInvalidBids(
-        address[] calldata _addresses
-    ) external view returns (BidHeap.Bid[][] memory) {
-        return _createBidsArray(_addresses, userInvalidBids);
     }
 
     function _createBidsArray(

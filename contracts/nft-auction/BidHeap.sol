@@ -37,6 +37,14 @@ library BidHeap {
         return !isFull(heap) || isHigherBid(newBid, heap.tree[0]);
     }
 
+    function isInHeap(
+        Heap storage heap,
+        Bid memory _b
+    ) external view returns (bool) {
+        require(heap.tree.length > 0, "Heap is empty");
+        return isHigherBid(_b, heap.tree[0]) || isEqualBid(_b, heap.tree[0]);
+    }
+
     function insert(Heap storage heap, Bid calldata newBid) external {
         require(newBid.price > 0, "Price must be greater than zero");
 
@@ -110,15 +118,24 @@ library BidHeap {
     }
 
     function isHigherBid(
-        Bid memory newBid,
-        Bid memory oldBid
+        Bid memory _b1,
+        Bid memory _b2
     ) private pure returns (bool) {
-        if (newBid.price != oldBid.price) {
-            return newBid.price > oldBid.price;
-        } else if (newBid.timestamp != oldBid.timestamp) {
-            return newBid.timestamp < oldBid.timestamp;
-        }
-        return newBid.id < oldBid.id;
+        return
+            (_b1.price > _b2.price) ||
+            (_b1.price == _b2.price &&
+                (_b1.timestamp < _b2.timestamp ||
+                    (_b1.timestamp == _b2.timestamp && _b1.id < _b2.id)));
+    }
+
+    function isEqualBid(
+        Bid memory _b1,
+        Bid memory _b2
+    ) private pure returns (bool) {
+        return
+            _b1.price == _b2.price &&
+            _b1.timestamp == _b2.timestamp &&
+            _b1.id == _b2.id;
     }
 
     function swap(Heap storage heap, uint256 index1, uint256 index2) private {

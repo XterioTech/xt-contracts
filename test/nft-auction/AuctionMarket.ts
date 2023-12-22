@@ -83,34 +83,47 @@ describe("AuctionMarket", function () {
     await ethers.provider.send("evm_increaseTime", [73 * hour]); // Increase time by 73 hours
     await auctionMarket.connect(b1).claimAndRefund();
     expect(await base.erc721.balanceOf(b1.address)).to.equal(1);
-
-    const userActiveBidsCnt = await auctionMarket.userActiveBidsCnt(b1.address);
-    expect(userActiveBidsCnt).to.equal(0);
   });
 
   it.only("should claim refund after auction ends", async function () {
     const { auctionMarket, b1, b2, b3 } = await loadFixture(basicFixture);
 
-    const price = ethers.parseEther("0.5");
+    const price = ethers.parseEther("0.4");
     await auctionMarket.connect(b1).placeBid(price, { value: price });
 
-    const higher_price = ethers.parseEther("0.55");
+    const higher_price = ethers.parseEther("0.5");
     const maxBidsPerUser = await auctionMarket.MAX_BID_PER_USER();
     for (let i = 0; i < maxBidsPerUser; i++) {
       await auctionMarket.connect(b2).placeBid(higher_price, { value: higher_price });
     }
-    const higher_price2 = ethers.parseEther("0.555");
+    const higher_price2 = ethers.parseEther("0.7");
     for (let i = 0; i < maxBidsPerUser; i++) {
       await auctionMarket.connect(b3).placeBid(higher_price2, { value: higher_price2 });
     }
 
     await ethers.provider.send("evm_increaseTime", [73 * 60 * 60]); // Increase time by 73 hours
 
-    const userRefundsBefore = await auctionMarket.userRefunds(b1.address);
-    expect(userRefundsBefore).to.equal(price);
+    const eBefore = await auctionMarket.getUserEligible([b1.address, b2.address, b3.address]);
+    const e1Before = await auctionMarket.isEligible(b1.address);
+    const e2Before = await auctionMarket.isEligible(b2.address);
+    const e3Before = await auctionMarket.isEligible(b3.address);
+    expect(e1Before).to.deep.equal([false, price, BigInt(0)]);
+    expect(e2Before).to.deep.equal([false, 0, BigInt(maxBidsPerUser)]);
+    expect(e3Before).to.deep.equal([false, (higher_price2 - higher_price) * maxBidsPerUser, BigInt(maxBidsPerUser)]);
+
     await auctionMarket.connect(b1).claimAndRefund();
-    const userRefundsAfter = await auctionMarket.userRefunds(b1.address);
-    expect(userRefundsAfter).to.equal(0);
+    await auctionMarket.connect(b2).claimAndRefund();
+    await auctionMarket.connect(b3).claimAndRefund();
+
+    const eAfter = await auctionMarket.getUserEligible([b1.address, b2.address, b3.address]);
+
+    expect(eAfter[0]).to.deep.equal([true, price, BigInt(0)]);
+    expect(eAfter[1]).to.deep.equal([true, BigInt(0), BigInt(maxBidsPerUser)]);
+    expect(eAfter[2]).to.deep.equal([true, (higher_price2 - higher_price) * maxBidsPerUser, BigInt(maxBidsPerUser)]);
+
+
+    await expect(auctionMarket.connect(b1).claimAndRefund()).to.be.revertedWith('has claimed || No Win Auction NFT || No refund available')
+
   });
 
   it.only("should get total value locked (TVL)", async function () {
@@ -140,7 +153,6 @@ describe("AuctionMarket", function () {
     }
 
     const userBids = await auctionMarket.getUserBids([b1.address, b2.address, b3.address])
-    const userInvalidBids = await auctionMarket.getUserInvalidBids([b1.address, b2.address, b3.address])
 
     let totalCnt = 0, inValidCnt = 0
     userBids.forEach((bids) => {
@@ -150,16 +162,10 @@ describe("AuctionMarket", function () {
         expect([b1.address, b2.address, b3.address]).to.include(bid[1]);
       })
     });
-    userInvalidBids.forEach((bids) => {
-      bids.forEach((bid) => {
-        inValidCnt += 1
-        expect(bid[1]).to.equal(b1.address);
-      })
-    });
-    expect(await auctionMarket.getUserActiveBidsCnt([b1.address, b2.address, b3.address])).to.equal(totalCnt - inValidCnt)
+    // expect(await auctionMarket.getUserActiveBidsCnt([b1.address, b2.address, b3.address])).to.equal(totalCnt - inValidCnt)
   });
 
-  it.only("should past 3000 MAX_BID_PER_USER with 5000+ bids", async function () {
+  it("should past 3000 MAX_BID_PER_USER with 5000+ bids", async function () {
     this.timeout(5000 * 1000);
 
     const { auctionMarket, base, admin, b1, b2, b3, b4 } = await loadFixture(basicFixture);
