@@ -188,7 +188,7 @@ contract AuctionMinter is AccessControl {
         return address(this).balance;
     }
 
-    function topBid() external view returns (BidHeap.Bid memory) {
+    function floorBid() external view returns (BidHeap.Bid memory) {
         return _heap.getMin();
     }
 
