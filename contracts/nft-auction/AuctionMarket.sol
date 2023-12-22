@@ -6,11 +6,12 @@ import "../basic-tokens/interfaces/IGateway.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract AuctionMarket is AccessControl {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
-    struct Eligibility {
+    struct ClaimInfo {
         bool hasClaimed;
         uint256 refundAmt;
         uint256 winCnt;
@@ -31,8 +32,9 @@ contract AuctionMarket is AccessControl {
     uint256 public MAX_BID_PER_USER = 50;
 
     mapping(address => BidHeap.Bid[]) public userBids;
-    mapping(address => uint256) public userActiveBidsCnt;
     mapping(address => bool) public hasClaimed;
+    // bidder => limitForBuyerID => bidAmount
+    mapping(address => mapping(uint256 => uint256)) bidBuyerId;
 
     uint256 public highestBidPrice;
 
@@ -87,13 +89,36 @@ contract AuctionMarket is AccessControl {
     }
 
     /**************** Core Functions ****************/
-    function placeBid(uint256 price) external payable {
+    function placeBid(
+        uint256 bid_price,
+        uint256 limit_for_buyer_id,
+        uint256 limit_for_buyer_amount,
+        uint256 expire_time,
+        bytes calldata _sig
+    ) external payable {
+        // Check signature validity
+        bytes32 inputHash = _getInputHash(
+            bid_price,
+            limit_for_buyer_id,
+            limit_for_buyer_amount,
+            expire_time
+        );
+        address signer = IGateway(gateway).nftManager(nftAddress);
+        _checkSigValidity(inputHash, _sig, signer);
+
+        require(block.timestamp <= expire_time, "AuctionMarket: too late");
+
         require(
             userBids[msg.sender].length < MAX_BID_PER_USER,
-            "Maximum bid per user reached"
+            "AuctionMarket: Maximum bid per user reached"
+        );
+        require(
+            bidBuyerId[msg.sender][limit_for_buyer_id] < limit_for_buyer_amount,
+            "AuctionMarket: buyer limit exceeded"
         );
 
-        require(msg.value >= price, "AuctionMarket: insufficient payment");
+        require(msg.value >= bid_price, "AuctionMarket: insufficient payment");
+
         (bool sent, ) = address(this).call{value: msg.value}("");
         require(sent, "AuctionMarket: failed to receive bid price");
 
@@ -101,25 +126,21 @@ contract AuctionMarket is AccessControl {
         BidHeap.Bid memory newBid = BidHeap.Bid(
             _idCounter.current(),
             msg.sender,
-            price,
+            bid_price,
             block.timestamp
         );
 
         if (_heap.canInsert(newBid)) {
-            if (_heap.isFull()) {
-                address _loser = _heap.getMin().bidder;
-                userActiveBidsCnt[_loser] -= 1;
-            }
             _heap.insert(newBid);
-            userActiveBidsCnt[msg.sender] += 1;
-            if (price > highestBidPrice) {
-                highestBidPrice = price;
-            }
+            highestBidPrice = bid_price > highestBidPrice
+                ? bid_price
+                : highestBidPrice;
         }
         userBids[msg.sender].push(newBid);
+        bidBuyerId[msg.sender][limit_for_buyer_id] += 1;
     }
 
-    function isEligible(
+    function claimInfo(
         address _a
     )
         public
@@ -128,14 +149,15 @@ contract AuctionMarket is AccessControl {
     {
         hasclaimed = hasClaimed[_a];
         _refundAmt = 0;
+        _winCnt = 0;
         for (uint256 i = 0; i < userBids[_a].length; i++) {
             if (_heap.isInHeap(userBids[_a][i])) {
+                _winCnt += 1;
                 _refundAmt += userBids[_a][i].price - _heap.getMin().price;
             } else {
                 _refundAmt += userBids[_a][i].price;
             }
         }
-        _winCnt = userActiveBidsCnt[_a];
     }
 
     function claimAndRefund() external {
@@ -143,7 +165,7 @@ contract AuctionMarket is AccessControl {
             block.timestamp > auctionEndTime,
             "No claims or refunds allowed until auction ends"
         );
-        (bool _hasclaimed, uint256 _refundAmt, uint256 _winCnt) = isEligible(
+        (bool _hasclaimed, uint256 _refundAmt, uint256 _winCnt) = claimInfo(
             _msgSender()
         );
 
@@ -170,47 +192,66 @@ contract AuctionMarket is AccessControl {
         return _heap.getMin();
     }
 
-    function getUserEligible(
+    function getUserClaimInfos(
         address[] calldata _addresses
-    ) external view returns (Eligibility[] memory results) {
-        results = new Eligibility[](_addresses.length);
+    ) external view returns (ClaimInfo[] memory results) {
+        results = new ClaimInfo[](_addresses.length);
         for (uint256 i = 0; i < _addresses.length; i++) {
             (
                 results[i].hasClaimed,
                 results[i].refundAmt,
                 results[i].winCnt
-            ) = isEligible(_addresses[i]);
+            ) = claimInfo(_addresses[i]);
         }
     }
 
     function getUserBids(
         address[] calldata _addresses
-    ) external view returns (BidHeap.Bid[][] memory) {
-        return _createBidsArray(_addresses, userBids);
-    }
-
-    function _createBidsArray(
-        address[] calldata _addresses,
-        mapping(address => BidHeap.Bid[]) storage _bidsMapping
-    ) internal view returns (BidHeap.Bid[][] memory) {
-        BidHeap.Bid[][] memory bids = new BidHeap.Bid[][](_addresses.length);
+    ) external view returns (BidHeap.Bid[][] memory bids) {
+        bids = new BidHeap.Bid[][](_addresses.length);
         for (uint256 i = 0; i < _addresses.length; i++) {
-            bids[i] = _bidsMapping[_addresses[i]];
+            bids[i] = userBids[_addresses[i]];
         }
-        return bids;
     }
 
     function getTotalBidsCnt() external view returns (uint256) {
         return _idCounter.current();
     }
 
-    function getUserActiveBidsCnt(
-        address[] calldata _addresses
-    ) external view returns (uint256) {
-        uint256 total = 0;
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            total += userActiveBidsCnt[_addresses[i]];
-        }
-        return total;
+    function _getInputHash(
+        uint256 bid_price,
+        uint256 limit_for_buyer_id,
+        uint256 limit_for_buyer_amount,
+        uint256 expire_time
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    msg.sender,
+                    bid_price,
+                    limit_for_buyer_id,
+                    limit_for_buyer_amount,
+                    expire_time,
+                    block.chainid,
+                    address(this)
+                )
+            );
+    }
+
+    function _checkSigValidity(
+        bytes32 hash,
+        bytes memory sig,
+        address signer
+    ) internal pure {
+        require(
+            signer == ECDSA.recover(_getEthSignedMessageHash(hash), sig),
+            "AuctionMarket: invalid signature"
+        );
+    }
+
+    function _getEthSignedMessageHash(
+        bytes32 criteriaMessageHash
+    ) internal pure returns (bytes32) {
+        return ECDSA.toEthSignedMessageHash(criteriaMessageHash);
     }
 }
