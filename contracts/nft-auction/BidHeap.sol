@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 library BidHeap {
-    
     struct Bid {
         uint256 id;
         address bidder;
@@ -65,7 +64,9 @@ library BidHeap {
     function heapifyUp(Heap storage heap, uint256 index) private {
         while (index > 0) {
             uint256 parentIndex = (index - 1) / 2;
-            if (isHigherOrEqualBid(heap._tree[index], heap._tree[parentIndex])) {
+            if (
+                isHigherOrEqualBid(heap._tree[index], heap._tree[parentIndex])
+            ) {
                 break;
             }
 
@@ -76,26 +77,27 @@ library BidHeap {
 
     function heapifyDown(Heap storage heap, uint256 index) private {
         uint256 smallest = index;
-        uint256 leftChild = 2 * index + 1;
-        uint256 rightChild = 2 * index + 2;
 
-        if (
-            leftChild < heap._tree.length &&
-            isHigherOrEqualBid(heap._tree[smallest], heap._tree[leftChild])
-        ) {
-            smallest = leftChild;
-        }
-
-        if (
-            rightChild < heap._tree.length &&
-            isHigherOrEqualBid(heap._tree[smallest], heap._tree[rightChild])
-        ) {
-            smallest = rightChild;
-        }
-
-        if (smallest != index) {
+        while (true) {
+            uint256 leftChild = 2 * index + 1;
+            uint256 rightChild = 2 * index + 2;
+            if (
+                leftChild < heap._tree.length &&
+                isHigherOrEqualBid(heap._tree[smallest], heap._tree[leftChild])
+            ) {
+                smallest = leftChild;
+            }
+            if (
+                rightChild < heap._tree.length &&
+                isHigherOrEqualBid(heap._tree[smallest], heap._tree[rightChild])
+            ) {
+                smallest = rightChild;
+            }
+            if (smallest == index) {
+                break;
+            }
             swap(heap, smallest, index);
-            heapifyDown(heap, smallest);
+            index = smallest;
         }
     }
 
