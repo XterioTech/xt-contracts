@@ -15,8 +15,11 @@ contract AuctionMinter is AccessControl {
     struct ClaimInfo {
         bool hasClaimed;
         uint256 refundAmount;
-        uint256 winCnt;
+        uint256 nftCount;
     }
+
+    event Bid(address indexed buyer, uint256 bidPrice);
+    event Claim(address indexed buyer, uint256 refundAmount, uint256 nftCount);
 
     using SafeMath for uint256;
     using Counters for Counters.Counter;
@@ -80,10 +83,7 @@ contract AuctionMinter is AccessControl {
     }
 
     function setAuctionEndTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
-        require(
-            _heap.tree.length == 0,
-            "AuctionMinter: auction already starts"
-        );
+        require(_t > block.timestamp, "AuctionMinter: invalid timestamp");
         auctionEndTime = _t;
     }
 
@@ -105,8 +105,14 @@ contract AuctionMinter is AccessControl {
         address signer = IGateway(gateway).nftManager(nftAddress);
         _checkSigValidity(inputHash, _sig, signer);
 
-        require(block.timestamp <= expireTime, "AuctionMinter: signature expired");
-        require(block.timestamp <= auctionEndTime, "AuctionMinter: auction ended");
+        require(
+            block.timestamp <= expireTime,
+            "AuctionMinter: signature expired"
+        );
+        require(
+            block.timestamp <= auctionEndTime,
+            "AuctionMinter: auction ended"
+        );
 
         require(
             userBids[msg.sender].length < MAX_BID_PER_USER,
@@ -133,17 +139,19 @@ contract AuctionMinter is AccessControl {
                 ? bidPrice
                 : highestBidPrice;
         }
+        
         userBids[msg.sender].push(newBid);
         buyerBidCount[msg.sender][limitForBuyerID] += 1;
+        emit Bid(msg.sender, bidPrice);
     }
 
     function claimInfo(address _a) public view returns (ClaimInfo memory info) {
         info.hasClaimed = hasClaimed[_a];
         info.refundAmount = 0;
-        info.winCnt = 0;
+        info.nftCount = 0;
         for (uint256 i = 0; i < userBids[_a].length; i++) {
             if (_heap.isInHeap(userBids[_a][i])) {
-                info.winCnt += 1;
+                info.nftCount += 1;
                 info.refundAmount +=
                     userBids[_a][i].price -
                     _heap.getMin().price;
@@ -161,17 +169,18 @@ contract AuctionMinter is AccessControl {
         ClaimInfo memory info = claimInfo(_msgSender());
 
         require(
-            !info.hasClaimed && (info.winCnt > 0 || info.refundAmount > 0),
+            !info.hasClaimed && (info.nftCount > 0 || info.refundAmount > 0),
             "AuctionMinter: has claimed || No Win Auction NFT || No refund available"
         );
 
-        for (uint256 i = 0; i < info.winCnt; i++) {
+        for (uint256 i = 0; i < info.nftCount; i++) {
             IGateway(gateway).ERC721_mint(nftAddress, msg.sender, 0);
         }
         (bool success, ) = msg.sender.call{value: info.refundAmount}("");
         require(success, "AuctionMinter: failed to send refund");
 
         hasClaimed[msg.sender] = true;
+        emit Claim(msg.sender, info.refundAmount, info.nftCount);
     }
 
     /**************** View Functions ****************/
