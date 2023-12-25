@@ -106,7 +106,7 @@ contract AuctionMinter is AccessControl {
         );
         address signer = IGateway(gateway).nftManager(nftAddress);
         _checkSigValidity(inputHash, _sig, signer);
-    
+
         require(
             block.timestamp <= expireTime,
             "AuctionMinter: signature expired"
@@ -164,9 +164,10 @@ contract AuctionMinter is AccessControl {
         );
         ClaimInfo memory info = claimInfo(_msgSender());
 
+        require(!info.hasClaimed, "AuctionMinter: has claimed");
         require(
-            !info.hasClaimed && (info.nftCount > 0 || info.refundAmount > 0),
-            "AuctionMinter: has claimed || No Win Auction NFT || No refund available"
+            info.nftCount > 0 || info.refundAmount > 0,
+            "AuctionMinter: nothing to claim"
         );
 
         for (uint256 i = 0; i < info.nftCount; i++) {
