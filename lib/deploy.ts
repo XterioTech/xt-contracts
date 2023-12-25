@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { MarketplaceV2, TokenGateway } from "../typechain-types";
-import { AddressLike, Overrides } from "ethers";
+import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
 
 export const deployMajorToken = async (wallet: AddressLike) => {
@@ -71,6 +71,20 @@ export const deployLootboxUnwrapper = async (gateway: AddressLike) => {
 export const deployCreatorTokenTransferValidator = async (defaultOwner: AddressLike) => {
   const Contract = await hre.ethers.getContractFactory("CreatorTokenTransferValidator");
   const contract = await Contract.deploy(defaultOwner);
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployFansCreate = async (admin: AddressLike, uri: string, txOverrides?: NonPayableOverrides & { from?: string }) => {
+  const Contract = await hre.ethers.getContractFactory("FansCreate");
+  const contract = await Contract.deploy(admin, uri, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployFansCreateERC20 = async (admin: AddressLike, uri: string, paymentToken: AddressLike, priceCoef: BigNumberish, txOverrides?: NonPayableOverrides & { from?: string }) => {
+  const Contract = await hre.ethers.getContractFactory("FansCreateERC20");
+  const contract = await Contract.deploy(admin, uri, paymentToken, priceCoef, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
