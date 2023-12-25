@@ -36,6 +36,7 @@ const config: HardhatUserConfig = {
       accounts: privateKey != "" ? [privateKey] : [],
     },
     bscTestnet: {
+      chainId: 97,
       url: "https://data-seed-prebsc-2-s1.binance.org:8545",
       accounts: privateKey != "" ? [privateKey] : [],
     },
