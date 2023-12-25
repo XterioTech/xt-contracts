@@ -211,6 +211,13 @@ contract AuctionMinter is AccessControl {
         return _idCounter.current();
     }
 
+    function getBidAmtByBuyerId(
+        address _buyer,
+        uint256 _limitForBuyerID
+    ) external view returns (uint256) {
+        return buyerBidCount[_buyer][_limitForBuyerID];
+    }
+
     function _getInputHash(
         uint256 bidPrice,
         uint256 limitForBuyerID,
