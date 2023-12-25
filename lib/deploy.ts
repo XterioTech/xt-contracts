@@ -85,24 +85,15 @@ export const deployMinHeap = async (
   return contract;
 };
 
-// export const deployMinHeapAuction = async (
-//   maxCapacity: number,
-//   txOverrides?: NonPayableOverrides & { from?: string }
-// ) => {
-//   const Contract = await hre.ethers.getContractFactory("MinHeapAuction");
-//   const contract = await Contract.deploy(maxCapacity, txOverrides || {});
-//   await contract.waitForDeployment();
-//   return contract;
-// };
-
-export const deployAuctionMarket = async (
+export const deployAuctionMinter = async (
   gateway: AddressLike,
   nftAddress: AddressLike,
-  maxCapacity: number,
-  auctionStartTime: number,
+  paymentRecipient: AddressLike,
+  nftAmount: number, // heap maxCapacity
+  auctionEndTime: number,
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
-  // Deploy libraries for AuctionMarket
+  // Deploy libraries for AuctionMinter
   const BidHeapLibrary = await hre.ethers.getContractFactory(
     "BidHeap"
   );
@@ -110,13 +101,13 @@ export const deployAuctionMarket = async (
   await bidHeapLibrary.waitForDeployment();
 
 
-  const Contract = await hre.ethers.getContractFactory("AuctionMarket", {
+  const Contract = await hre.ethers.getContractFactory("AuctionMinter", {
     libraries: {
       BidHeap: await bidHeapLibrary.getAddress(),
     },
   });
 
-  const contract = await Contract.deploy(gateway, nftAddress, maxCapacity, auctionStartTime, txOverrides || {});
+  const contract = await Contract.deploy(gateway, nftAddress, paymentRecipient, nftAmount, auctionEndTime, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
