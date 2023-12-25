@@ -41,13 +41,15 @@ contract AuctionMinter is AccessControl {
     uint256 public highestBidPrice;
 
     constructor(
+        address _admin,
         address _gateway,
         address _nftAddress,
         address _paymentRecipient,
         uint256 _nftAmount,
         uint256 _auctionEndTime
     ) {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+        _setupRole(MANAGER_ROLE, _admin);
         _setupRole(MANAGER_ROLE, msg.sender);
 
         gateway = _gateway;
@@ -104,7 +106,7 @@ contract AuctionMinter is AccessControl {
         );
         address signer = IGateway(gateway).nftManager(nftAddress);
         _checkSigValidity(inputHash, _sig, signer);
-
+    
         require(
             block.timestamp <= expireTime,
             "AuctionMinter: signature expired"

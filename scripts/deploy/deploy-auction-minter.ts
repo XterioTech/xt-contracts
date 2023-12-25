@@ -6,18 +6,20 @@ import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork, isT
 
 const nftAddress = '0x27C33D7AC334781000b840d4b5E2AAd8b5158dde'
 const nftAmount = 5
+const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
 const paymentRecipient = '0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26'
 const auctionEndTime = 1803058000 // time in s, UTC
 
 const main = async () => {
-  const [admin] = await hre.ethers.getSigners();
+  const [deployer] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
 
   const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
   if (!address) {
     console.info(colorize(Color.blue, `Deploy AuctionMinter`));
-    console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
+    console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
+    console.info(colorize(Color.yellow, `Admin: ${admin}`));
     console.info(colorize(Color.yellow, `TokenGateway: ${gatewayAddress}`));
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
@@ -27,7 +29,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`===================== Deploy AuctionMinter =================`);
     console.info(`============================================================`);
-    const AuctionMinter = await deployAuctionMinter(gatewayAddress, nftAddress, paymentRecipient, nftAmount, auctionEndTime, getTxOverridesForNetwork(hre.network.name));
+    const AuctionMinter = await deployAuctionMinter(admin, gatewayAddress, nftAddress, paymentRecipient, nftAmount, auctionEndTime, getTxOverridesForNetwork(hre.network.name));
     address = await AuctionMinter.getAddress();
     console.info(`AuctionMinter @ ${address}`);
 
@@ -48,7 +50,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/nft-auction/AuctionMinter.sol:AuctionMinter",
-        constructorArguments: [gatewayAddress, nftAddress, paymentRecipient, nftAmount, auctionEndTime],
+        constructorArguments: [admin, gatewayAddress, nftAddress, paymentRecipient, nftAmount, auctionEndTime],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);
