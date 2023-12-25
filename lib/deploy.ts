@@ -93,20 +93,7 @@ export const deployAuctionMinter = async (
   auctionEndTime: number,
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
-  // Deploy libraries for AuctionMinter
-  const BidHeapLibrary = await hre.ethers.getContractFactory(
-    "BidHeap"
-  );
-  const bidHeapLibrary = await BidHeapLibrary.deploy();
-  await bidHeapLibrary.waitForDeployment();
-
-
-  const Contract = await hre.ethers.getContractFactory("AuctionMinter", {
-    libraries: {
-      BidHeap: await bidHeapLibrary.getAddress(),
-    },
-  });
-
+  const Contract = await hre.ethers.getContractFactory("AuctionMinter");
   const contract = await Contract.deploy(gateway, nftAddress, paymentRecipient, nftAmount, auctionEndTime, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
