@@ -3,9 +3,9 @@ import { MarketplaceV2, TokenGateway } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
 
-export const deployMajorToken = async (admin: AddressLike, wallet: AddressLike) => {
+export const deployMajorToken = async (admin: AddressLike, wallet: AddressLike, txOverrides?: NonPayableOverrides & { from?: string }) => {
   const Token = await hre.ethers.getContractFactory("XterToken");
-  const token = await Token.deploy(admin, wallet);
+  const token = await Token.deploy(admin, wallet, txOverrides || {});
   await token.waitForDeployment();
   return token;
 };
