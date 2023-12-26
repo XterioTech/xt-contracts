@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { deployAuctionMinter } from "../../lib/deploy";
 import { AuctionMinter } from "../../typechain-types";
 import { nftTradingTestFixture } from "../common_fixtures";
-import { loadFixture, setBalance, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { loadFixture, mine, setBalance, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { signAuctionMinterBid } from "../../lib/signature";
 
 const initialEndTime = 1903490000;
@@ -333,11 +333,11 @@ describe("AuctionMinter Claim", function () {
     await time.increase(duration + 600);
 
     // final target price: prices[nftCount]
-    const finalPrice = prices[nftCount];
+    const finalPrice = prices[users.length - nftCount];
     const floorBid = await auctionMinter.floorBid();
     expect(floorBid.price).equal(finalPrice, "floor bid price not correct");
 
-    for (let i = 0; i < nftCount * 2; i++) {
+    for (let i = 0; i < users.length; i++) {
       const claimInfo = await auctionMinter.claimInfo(users[i].address);
       expect(claimInfo.hasClaimed).equal(false);
       if (shuffledPrices[i] >= finalPrice) {
@@ -357,60 +357,6 @@ describe("AuctionMinter Claim", function () {
     await auctionMinter.sendPayment();
     const newBalance = await hre.ethers.provider.getBalance(paymentReceiver.address);
     expect(newBalance - oldBalance).equal(finalPrice * BigInt(nftCount));
-  });
-
-  it.skip("large number of bids", async function () {
-    const { auctionMinter, admin, erc721, nftManager, paymentReceiver } = await loadFixture(largeFixture);
-    await auctionMinter.connect(admin).setAuctionEndTime((await time.latest()) + duration);
-
-    // place bid
-    const users = [];
-    const prices = [];
-    for (let i = 0; i < nftCountLarge * 2; i++) {
-      const u = await randomUser();
-      const price = ((i + 1) / 1000.0).toFixed(3);
-      users.push(u);
-      prices.push(hre.ethers.parseEther(price));
-    }
-    const shuffledPrices = shuffleArray(prices);
-
-    for (let i = 0; i < nftCountLarge * 2; i++) {
-      await placeBid({
-        auctionMinter,
-        signer: nftManager,
-        user: users[i],
-        bidPrice: shuffledPrices[i],
-      });
-    }
-
-    // increase timestamp to auction ended
-    await time.increase(duration + 600);
-
-    // final target price: prices[nftCountLarge]
-    const finalPrice = prices[nftCountLarge];
-    const floorBid = await auctionMinter.floorBid();
-    expect(floorBid.price).equal(finalPrice, "floor bid price not correct");
-
-    for (let i = 0; i < nftCountLarge * 2; i++) {
-      const claimInfo = await auctionMinter.claimInfo(users[i].address);
-      expect(claimInfo.hasClaimed).equal(false);
-      if (shuffledPrices[i] >= finalPrice) {
-        expect(claimInfo.refundAmount).equal(shuffledPrices[i] - finalPrice);
-        expect(claimInfo.nftCount).equal(1);
-        await auctionMinter.connect(users[i]).claimAndRefund();
-        expect(await erc721.balanceOf(users[i])).equal(1);
-      } else {
-        expect(claimInfo.refundAmount).equal(shuffledPrices[i]);
-        expect(claimInfo.nftCount).equal(0);
-        await auctionMinter.connect(users[i]).claimAndRefund();
-        expect(await erc721.balanceOf(users[i])).equal(0);
-      }
-    }
-
-    const oldBalance = await hre.ethers.provider.getBalance(paymentReceiver.address);
-    await auctionMinter.sendPayment();
-    const newBalance = await hre.ethers.provider.getBalance(paymentReceiver.address);
-    expect(newBalance - oldBalance).equal(finalPrice * BigInt(nftCountLarge));
   });
 });
 
@@ -434,5 +380,95 @@ describe("AuctionMinter Management", function () {
       "AuctionMinter: invalid timestamp"
     );
     await auctionMinter.connect(u1).setAuctionEndTime((await time.latest()) + 600);
+  });
+});
+
+describe("AuctionMinter Large Dataset", function () {
+  this.timeout(7200000);
+
+  it.skip("large number of bids", async function () {
+    const { auctionMinter, admin, erc721, nftManager, paymentReceiver } = await loadFixture(largeFixture);
+    await auctionMinter.connect(admin).setAuctionEndTime((await time.latest()) + duration * 1000);
+
+    // place bid
+    const users = [];
+    const prices = [];
+    const totalBids = Math.floor(nftCountLarge * 1.1);
+    for (let i = 0; i < totalBids; i++) {
+      const u = await randomUser();
+      const price = ((i + 1) / 1000.0).toFixed(3);
+      users.push(u);
+      prices.push(hre.ethers.parseEther(price));
+      if (i % 100 === 99 || i == totalBids - 1) {
+        console.log(`generating users and prices ${i + 1} / ${totalBids}`);
+      }
+    }
+    const shuffledPrices = shuffleArray(prices);
+
+    console.log("users and prices generated");
+
+    // refer to https://stackoverflow.com/questions/72497597/how-to-make-local-hardhat-network-run-faster
+    // enable manual mining
+    await hre.network.provider.send("evm_setAutomine", [false]);
+    await hre.network.provider.send("evm_setIntervalMining", [0]);
+
+    console.log("place bids now");
+    let numPlaced = 0;
+    const afterBidPlaced = async () => {
+      numPlaced++;
+      if (numPlaced % 10 == 0 || numPlaced == totalBids) {
+        console.log(`placing bids ${numPlaced} / ${totalBids}`);
+        await mine(1);
+      }
+    };
+
+    for (let i=0; i<totalBids; i++) {
+      await placeBid({
+        auctionMinter,
+        signer: nftManager,
+        user: users[i],
+        bidPrice: shuffledPrices[i],
+      });
+      await afterBidPlaced();
+    }
+
+    while (await auctionMinter.getTotalBidsCnt() < totalBids) {
+      await mine(10);
+      console.log(`minted: ${await auctionMinter.getTotalBidsCnt()}`)
+    }
+
+    // re-enable automining when you are done, so you dont need to manually mine future blocks
+    await hre.network.provider.send("evm_setAutomine", [true]);
+
+    console.log("all bids placed");
+    // increase timestamp to auction ended
+    await time.increase(duration * 1000 + 600);
+
+    expect(await auctionMinter.getTotalBidsCnt()).equal(totalBids);
+    // final target price: prices[nftCountLarge]
+    const finalPrice = prices[totalBids - nftCountLarge];
+    const floorBid = await auctionMinter.floorBid();
+    expect(floorBid.price).equal(finalPrice, "floor bid price not correct");
+
+    for (let i = 0; i < totalBids; i++) {
+      const claimInfo = await auctionMinter.claimInfo(users[i].address);
+      expect(claimInfo.hasClaimed).equal(false);
+      if (shuffledPrices[i] >= finalPrice) {
+        expect(claimInfo.refundAmount).equal(shuffledPrices[i] - finalPrice);
+        expect(claimInfo.nftCount).equal(1);
+        await auctionMinter.connect(users[i]).claimAndRefund();
+        expect(await erc721.balanceOf(users[i])).equal(1);
+      } else {
+        expect(claimInfo.refundAmount).equal(shuffledPrices[i]);
+        expect(claimInfo.nftCount).equal(0);
+        await auctionMinter.connect(users[i]).claimAndRefund();
+        expect(await erc721.balanceOf(users[i])).equal(0);
+      }
+    }
+
+    const oldBalance = await hre.ethers.provider.getBalance(paymentReceiver.address);
+    await auctionMinter.sendPayment();
+    const newBalance = await hre.ethers.provider.getBalance(paymentReceiver.address);
+    expect(newBalance - oldBalance).equal(finalPrice * BigInt(nftCountLarge));
   });
 });
