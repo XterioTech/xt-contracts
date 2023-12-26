@@ -16,7 +16,7 @@ const PRICE_COEF = hre.ethers.parseEther("0.00001");
 describe("Test FansCreate Contract", function () {
   async function basicFixture() {
     const [admin, signer, p1, c1, c2, u1, u2, u3] = await hre.ethers.getSigners();
-    const paymentToken = await deployMajorToken(admin.address);
+    const paymentToken = await deployMajorToken(admin.address, admin.address);
     const fansCreate = await deployFansCreateERC20(admin.address, URI, paymentToken, PRICE_COEF);
     await fansCreate.grantRole(await fansCreate.SIGNER_ROLE(), signer);
     return {

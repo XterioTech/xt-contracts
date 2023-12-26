@@ -64,7 +64,7 @@ export const nftTradingTestFixture = async () => {
   // await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc721, nftManager.address);
   // await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc1155, nftManager.address);
 
-  const paymentToken = await deployMajorToken(base.owner.address);
+  const paymentToken = await deployMajorToken(base.owner.address, base.owner.address);
 
   return { ...base, paymentToken, erc721, erc1155, nftManager };
 };
