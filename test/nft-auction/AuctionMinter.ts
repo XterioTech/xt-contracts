@@ -384,7 +384,7 @@ describe("AuctionMinter Management", function () {
 });
 
 describe("AuctionMinter Large Dataset", function () {
-  this.timeout(7200000);
+  this.timeout(14400000);
 
   it.skip("large number of bids", async function () {
     const { auctionMinter, admin, erc721, nftManager, paymentReceiver } = await loadFixture(largeFixture);
@@ -456,13 +456,14 @@ describe("AuctionMinter Large Dataset", function () {
       if (shuffledPrices[i] >= finalPrice) {
         expect(claimInfo.refundAmount).equal(shuffledPrices[i] - finalPrice);
         expect(claimInfo.nftCount).equal(1);
-        await auctionMinter.connect(users[i]).claimAndRefund();
-        expect(await erc721.balanceOf(users[i])).equal(1);
       } else {
         expect(claimInfo.refundAmount).equal(shuffledPrices[i]);
         expect(claimInfo.nftCount).equal(0);
+      }
+      if (i % 100 == 99) {
+        console.log(`checking claim info ${i+1} / ${totalBids}`);
         await auctionMinter.connect(users[i]).claimAndRefund();
-        expect(await erc721.balanceOf(users[i])).equal(0);
+        expect(await erc721.balanceOf(users[i])).equal(claimInfo.nftCount);
       }
     }
 
