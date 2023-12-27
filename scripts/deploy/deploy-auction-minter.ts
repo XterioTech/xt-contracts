@@ -4,23 +4,40 @@ import { inputConfirm } from "../../lib/input";
 import { deployAuctionMinter } from "../../lib/deploy";
 import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork, isTestnet } from "../../lib/constant";
 
-const nftAddress = '0x27C33D7AC334781000b840d4b5E2AAd8b5158dde'
-const nftAmount = 5
-const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
-const paymentRecipient = '0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26'
-const auctionEndTime = 1803058000 // time in s, UTC
-
 const main = async () => {
   const [deployer] = await hre.ethers.getSigners();
-  let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
+  const skipVerify = process.env.skipVerify || false;
+  const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
+  const nftAddress = process.env.nftAddress;
+  const nftAmount = Number.parseInt(process.env.nftAmount || "0")
+  const auctionEndTime = Number.parseInt(process.env.auctionEndTime || "0")
+  const paymentRecipient = process.env.paymentRecipient;
 
+  if (!nftAddress) {
+    throw new Error("nftAddress not set");
+  }
+  if (nftAmount == 0) {
+    throw new Error("nftAmount not set");
+  }
+  if (auctionEndTime == 0) {
+    throw new Error("auctionEndTime not set");
+  }
+  if (!paymentRecipient) {
+    throw new Error("paymentRecipient not set");
+  }
+  
   const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
   if (!address) {
     console.info(colorize(Color.blue, `Deploy AuctionMinter`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
     console.info(colorize(Color.yellow, `Admin: ${admin}`));
     console.info(colorize(Color.yellow, `TokenGateway: ${gatewayAddress}`));
+    console.info(colorize(Color.yellow, `NFT Address: ${nftAddress}`));
+    console.info(colorize(Color.yellow, `NFT Amount: ${nftAmount}`));
+    console.info(colorize(Color.yellow, `Auction End Time: ${new Date(auctionEndTime * 1000)}`));
+    console.info(colorize(Color.yellow, `Payment Recipient: ${paymentRecipient}`));
+    
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
@@ -34,7 +51,7 @@ const main = async () => {
     console.info(`AuctionMinter @ ${address}`);
 
     if (isTestnet(hre.network.name)) {
-      // console.info("Add operator whitelist in TokenGateway...");
+      console.info("Add AuctionMinter address to TokenGateway's operator whitelist ...");
       const gateway = await hre.ethers.getContractAt("TokenGateway", gatewayAddress);
       await gateway.addOperatorWhitelist(address, getTxOverridesForNetwork(hre.network.name));
     } else {
