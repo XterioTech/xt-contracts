@@ -88,3 +88,20 @@ export const deployFansCreateERC20 = async (admin: AddressLike, uri: string, pay
   await contract.waitForDeployment();
   return contract;
 };
+
+export const deployAuctionMinter = async (
+  admin: AddressLike,
+  gateway: AddressLike,
+  nftAddress: AddressLike,
+  paymentRecipient: AddressLike,
+  nftAmount: number, // heap maxCapacity
+  auctionEndTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("AuctionMinter");
+  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, nftAmount, auctionEndTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+
