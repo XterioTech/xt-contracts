@@ -42,7 +42,7 @@ const main = async () => {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/basic-tokens/WhitelistMinter.sol:WhitelistMinter",
+        contract: "contracts/launchpad/WhitelistMinter.sol:WhitelistMinter",
         constructorArguments: [gatewayAddress],
       });
     } catch (e) {
