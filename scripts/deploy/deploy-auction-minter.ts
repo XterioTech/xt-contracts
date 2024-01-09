@@ -66,7 +66,7 @@ const main = async () => {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/nft-auction/AuctionMinter.sol:AuctionMinter",
+        contract: "contracts/launchpad/auction/AuctionMinter.sol:AuctionMinter",
         constructorArguments: [admin, gatewayAddress, nftAddress, paymentRecipient, nftAmount, auctionEndTime],
       });
     } catch (e) {
