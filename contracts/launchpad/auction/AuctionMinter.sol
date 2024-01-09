@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./BidHeap.sol";
-import "../basic-tokens/interfaces/IGateway.sol";
+import "../../basic-tokens/interfaces/IGateway.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
