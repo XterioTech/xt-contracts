@@ -136,6 +136,8 @@ contract AuctionMinter is AccessControl {
 
         require(msg.value == bidPrice, "AuctionMinter: payment mismatch");
 
+        buyerBidCount[msg.sender][limitForBuyerID] += 1;
+
         _idCounter.increment();
         BidHeap.Bid memory newBid = BidHeap.Bid(
             _idCounter.current(),
@@ -144,10 +146,9 @@ contract AuctionMinter is AccessControl {
             block.timestamp
         );
 
+        userBids[msg.sender].push(newBid);
         _heap.tryInsert(newBid);
 
-        userBids[msg.sender].push(newBid);
-        buyerBidCount[msg.sender][limitForBuyerID] += 1;
         emit Bid(msg.sender, bidPrice);
     }
 
@@ -179,13 +180,14 @@ contract AuctionMinter is AccessControl {
             "AuctionMinter: nothing to claim"
         );
 
+        hasClaimed[msg.sender] = true;
+
         for (uint256 i = 0; i < info.nftCount; i++) {
             IGateway(gateway).ERC721_mint(nftAddress, msg.sender, 0);
         }
         (bool success, ) = msg.sender.call{value: info.refundAmount}("");
         require(success, "AuctionMinter: failed to send refund");
 
-        hasClaimed[msg.sender] = true;
         emit Claim(msg.sender, info.refundAmount, info.nftCount);
     }
 
