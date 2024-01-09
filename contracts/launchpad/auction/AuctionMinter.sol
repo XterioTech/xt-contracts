@@ -39,6 +39,7 @@ contract AuctionMinter is AccessControl {
     mapping(address => mapping(uint256 => uint256)) buyerBidCount;
 
     uint256 public highestBidPrice;
+    bool public paymentSent;
 
     constructor(
         address _admin,
@@ -67,9 +68,11 @@ contract AuctionMinter is AccessControl {
             block.timestamp > auctionEndTime,
             "AuctionMinter: payment can only be made after the auction has ended"
         );
+        require(!paymentSent, "AuctionMinter: payment already sent");
         uint256 value = _heap.size() * _heap.minBid().price;
         (success, ) = paymentRecipient.call{value: value}("");
         require(success, "AuctionMinter: failed to send payment");
+        paymentSent = true;
     }
 
     function setGateway(address _g) external onlyRole(DEFAULT_ADMIN_ROLE) {
