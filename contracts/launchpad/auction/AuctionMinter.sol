@@ -63,16 +63,21 @@ contract AuctionMinter is AccessControl {
     receive() external payable {}
 
     /**************** Management Functions ****************/
-    function sendPayment() external returns (bool success) {
+    function sendPayment() external {
         require(
             block.timestamp > auctionEndTime,
             "AuctionMinter: payment can only be made after the auction has ended"
         );
         require(!paymentSent, "AuctionMinter: payment already sent");
         uint256 value = _heap.size() * _heap.minBid().price;
-        (success, ) = paymentRecipient.call{value: value}("");
+        (bool success, ) = paymentRecipient.call{value: value}("");
         require(success, "AuctionMinter: failed to send payment");
         paymentSent = true;
+    }
+
+    function emergencyWithdraw(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        (bool success, )  = recipient.call{value: address(this).balance}("");
+        require(success, "AuctionMinter: failed to withdraw");
     }
 
     function setGateway(address _g) external onlyRole(DEFAULT_ADMIN_ROLE) {
