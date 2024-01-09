@@ -94,7 +94,7 @@ contract AuctionMinter is AccessControl {
 
     function setAuctionEndTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
         require(_t > block.timestamp, "AuctionMinter: invalid timestamp");
-        require(block.timestamp < auctionEndTime, "AuctionMinter: already ended");
+        require(block.timestamp <= auctionEndTime, "AuctionMinter: already ended");
         auctionEndTime = _t;
     }
 
