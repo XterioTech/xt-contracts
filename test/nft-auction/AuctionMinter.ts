@@ -362,7 +362,10 @@ describe("AuctionMinter Claim", function () {
 
 describe("AuctionMinter Management", function () {
   it("should have valid access control", async function () {
-    const { auctionMinter, gateway, admin, u1, erc721 } = await loadFixture(basicFixture);
+    const { auctionMinter, gateway, admin, u1, u2, erc721 } = await loadFixture(basicFixture);
+    // emergency withdraw
+    expect(auctionMinter.emergencyWithdraw(u1.address)).to.be.reverted;
+    await auctionMinter.connect(admin).emergencyWithdraw(u1.address);
     // set gateway
     expect(auctionMinter.setGateway(gateway.target)).to.be.reverted;
     await auctionMinter.connect(admin).setGateway(gateway.target);
@@ -370,16 +373,20 @@ describe("AuctionMinter Management", function () {
     expect(auctionMinter.setRecipient(u1.address)).to.be.reverted;
     await auctionMinter.connect(admin).setRecipient(u1.address);
 
-    await auctionMinter.connect(admin).grantRole(await auctionMinter.MANAGER_ROLE(), u1.address);
+    await auctionMinter.connect(admin).grantRole(await auctionMinter.MANAGER_ROLE(), u2.address);
     // set nft address
     expect(auctionMinter.setNftAddress(erc721.target)).to.be.reverted;
-    await auctionMinter.connect(u1).setNftAddress(erc721.target);
+    await auctionMinter.connect(u2).setNftAddress(erc721.target);
     // set auction end time
     expect(auctionMinter.setAuctionEndTime((await time.latest()) + 600)).to.be.reverted;
-    expect(auctionMinter.connect(u1).setAuctionEndTime((await time.latest()) - 600)).to.be.revertedWith(
+    expect(auctionMinter.connect(u2).setAuctionEndTime((await time.latest()) - 600)).to.be.revertedWith(
       "AuctionMinter: invalid timestamp"
     );
-    await auctionMinter.connect(u1).setAuctionEndTime((await time.latest()) + 600);
+    await auctionMinter.connect(u2).setAuctionEndTime((await time.latest()) + 600);
+    time.setNextBlockTimestamp((await time.latest()) + 600);
+    expect(auctionMinter.connect(u2).setAuctionEndTime((await time.latest()) + 600)).to.be.revertedWith(
+      "AuctionMinter: already ended"
+    );
   });
 });
 
