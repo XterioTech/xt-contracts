@@ -17,10 +17,10 @@ contract Refund is Ownable {
         require(recipients.length == amounts.length, "Arrays length mismatch");
 
         for (uint256 i = 0; i < recipients.length; i++) {
-            require(
-                address(this).balance >= amounts[i],
-                "Insufficient contract balance"
-            );
+            // require(
+            //     address(this).balance >= amounts[i],
+            //     "Insufficient contract balance"
+            // );
 
             require(!isContract(recipients[i]), "Invalid recipient");
 
