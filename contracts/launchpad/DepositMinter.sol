@@ -211,4 +211,10 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
     function getTotalBidsCnt() external view returns (uint256) {
         return _idCounter.current();
     }
+
+    function getDepositAmtByBuyerId(
+        address _buyer
+    ) external view returns (uint256) {
+        return buyerBidCount[_buyer];
+    }
 }
