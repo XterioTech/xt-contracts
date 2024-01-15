@@ -24,7 +24,7 @@ const main = async () => {
     throw new Error("paymentRecipient not set");
   }
   if (!unitPrice) {
-    throw new Error("nftAmount not set");
+    throw new Error("unitPrice not set");
   }
 
   const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
