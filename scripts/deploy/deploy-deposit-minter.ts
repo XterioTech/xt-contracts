@@ -36,7 +36,7 @@ const main = async () => {
     console.info(colorize(Color.yellow, `NFT Address: ${nftAddress}`));
     console.info(colorize(Color.yellow, `Auction End Time: ${new Date(auctionEndTime * 1000)}`));
     console.info(colorize(Color.yellow, `Payment Recipient: ${paymentRecipient}`));
-    console.info(colorize(Color.yellow, `unitPrice in ether: ${ethers.parseEther(unitPrice)}`));
+    console.info(colorize(Color.yellow, `unitPrice in ether: ${ethers.formatEther(unitPrice)}`));
 
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
