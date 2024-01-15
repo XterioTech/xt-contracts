@@ -10,9 +10,6 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
-    uint256 public constant MAX_BID_PER_USER = 50;
-    uint256 public constant UNIT_PRICE = 0.1 ether;
-
     struct Bid {
         uint256 id;
         address bidder;
@@ -37,6 +34,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
     address public nftAddress;
     address public paymentRecipient;
     uint256 public auctionEndTime;
+    uint256 public unitPrice = 0.01 ether; // ToDo ... for test
     bool public paymentSent;
 
     uint256 public nftAmount; //set after wl round
@@ -51,7 +49,6 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         address _gateway,
         address _nftAddress,
         address _paymentRecipient,
-        uint256 _nftAmount,
         uint256 _auctionEndTime
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
@@ -62,7 +59,6 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         nftAddress = _nftAddress;
         paymentRecipient = _paymentRecipient;
         auctionEndTime = _auctionEndTime;
-        nftAmount = _nftAmount;
     }
 
     receive() external payable {}
@@ -75,7 +71,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         );
         require(!paymentSent, "DepositMinter: payment already sent");
 
-        uint256 value = UNIT_PRICE * nftAmount;
+        uint256 value = unitPrice * nftAmount;
         (bool success, ) = paymentRecipient.call{value: value}("");
         require(success, "DepositMinter: failed to send payment");
         paymentSent = true;
@@ -101,6 +97,10 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         nftAmount = _amt;
     }
 
+    function setUnitPrice(uint256 _price) external onlyRole(MANAGER_ROLE) {
+        unitPrice = _price;
+    }
+
     function setlimitForBuyerAmount(
         uint256 _amt
     ) external onlyRole(MANAGER_ROLE) {
@@ -122,17 +122,12 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
             block.timestamp <= auctionEndTime,
             "DepositMinter: auction ended"
         );
-
-        require(
-            userBids[msg.sender].length < MAX_BID_PER_USER,
-            "DepositMinter: maximum bid per user reached"
-        );
         require(
             buyerBidCount[msg.sender] < limitForBuyerAmount,
             "DepositMinter: buyer limit exceeded"
         );
 
-        require(msg.value == UNIT_PRICE, "DepositMinter: payment mismatch");
+        require(msg.value == unitPrice, "DepositMinter: payment mismatch");
 
         buyerBidCount[msg.sender] += 1;
 
@@ -140,7 +135,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         Bid memory newBid = Bid(
             _idCounter.current(),
             msg.sender,
-            UNIT_PRICE,
+            unitPrice,
             block.timestamp
         );
 
@@ -163,8 +158,8 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
 
     function claimAndRefund() external nonReentrant {
         require(
-            block.timestamp > auctionEndTime,
-            "DepositMinter: No claims or refunds allowed until auction ends"
+            block.timestamp > auctionEndTime && nftAmount > 0,
+            "DepositMinter: No claims or refunds allowed until auction ends & nftAmount has been set"
         );
         ClaimInfo memory info = claimInfo(_msgSender());
 
@@ -212,7 +207,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         return _idCounter.current();
     }
 
-    function getDepositAmtByBuyerId(
+    function getBidAmtByBuyerId(
         address _buyer
     ) external view returns (uint256) {
         return buyerBidCount[_buyer];
