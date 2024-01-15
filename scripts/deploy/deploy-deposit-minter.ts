@@ -1,4 +1,4 @@
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployDepositMinter } from "../../lib/deploy";
@@ -10,21 +10,21 @@ const main = async () => {
   const skipVerify = process.env.skipVerify || false;
   const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
   const nftAddress = process.env.nftAddress;
-  // const nftAmount = Number.parseInt(process.env.nftAmount || "0")
   const auctionEndTime = Number.parseInt(process.env.auctionEndTime || "0")
   const paymentRecipient = process.env.paymentRecipient;
+  const unitPrice = process.env.unitPrice
 
   if (!nftAddress) {
     throw new Error("nftAddress not set");
   }
-  // if (nftAmount == 0) {
-  //   throw new Error("nftAmount not set");
-  // }
   if (auctionEndTime == 0) {
     throw new Error("auctionEndTime not set");
   }
   if (!paymentRecipient) {
     throw new Error("paymentRecipient not set");
+  }
+  if (!unitPrice) {
+    throw new Error("nftAmount not set");
   }
 
   const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
@@ -34,9 +34,9 @@ const main = async () => {
     console.info(colorize(Color.yellow, `Admin: ${admin}`));
     console.info(colorize(Color.yellow, `TokenGateway: ${gatewayAddress}`));
     console.info(colorize(Color.yellow, `NFT Address: ${nftAddress}`));
-    // console.info(colorize(Color.yellow, `NFT Amount: ${nftAmount}`));
     console.info(colorize(Color.yellow, `Auction End Time: ${new Date(auctionEndTime * 1000)}`));
     console.info(colorize(Color.yellow, `Payment Recipient: ${paymentRecipient}`));
+    console.info(colorize(Color.yellow, `unitPrice in ether: ${ethers.parseEther(unitPrice)}`));
 
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
@@ -46,7 +46,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`===================== Deploy DepositMinter =================`);
     console.info(`============================================================`);
-    const DepositMinter = await deployDepositMinter(admin, gatewayAddress, nftAddress, paymentRecipient, auctionEndTime, getTxOverridesForNetwork(hre.network.name));
+    const DepositMinter = await deployDepositMinter(admin, gatewayAddress, nftAddress, paymentRecipient, auctionEndTime, unitPrice, getTxOverridesForNetwork(hre.network.name));
     address = await DepositMinter.getAddress();
     console.info(`DepositMinter @ ${address}`);
 
@@ -67,7 +67,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/launchpad/DepositMinter.sol:DepositMinter",
-        constructorArguments: [admin, gatewayAddress, nftAddress, paymentRecipient, auctionEndTime],
+        constructorArguments: [admin, gatewayAddress, nftAddress, paymentRecipient, auctionEndTime, unitPrice],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);

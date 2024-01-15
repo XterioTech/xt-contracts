@@ -34,7 +34,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
     address public nftAddress;
     address public paymentRecipient;
     uint256 public auctionEndTime;
-    uint256 public unitPrice = 0.01 ether; // ToDo ... for test
+    uint256 public unitPrice;
     bool public paymentSent;
 
     uint256 public nftAmount; //set after wl round
@@ -49,7 +49,8 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         address _gateway,
         address _nftAddress,
         address _paymentRecipient,
-        uint256 _auctionEndTime
+        uint256 _auctionEndTime,
+        uint256 _unitPrice
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setupRole(MANAGER_ROLE, _admin);
@@ -59,6 +60,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         nftAddress = _nftAddress;
         paymentRecipient = _paymentRecipient;
         auctionEndTime = _auctionEndTime;
+        unitPrice = _unitPrice;
     }
 
     receive() external payable {}
@@ -66,8 +68,8 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
     /**************** Management Functions ****************/
     function sendPayment() external nonReentrant {
         require(
-            block.timestamp > auctionEndTime,
-            "DepositMinter: payment can only be made after the auction has ended"
+            block.timestamp > auctionEndTime && nftAmount > 0,
+            "DepositMinter: payment can only be made after the auction has ended & nftAmount has been set"
         );
         require(!paymentSent, "DepositMinter: payment already sent");
 
@@ -97,11 +99,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         nftAmount = _amt;
     }
 
-    function setUnitPrice(uint256 _price) external onlyRole(MANAGER_ROLE) {
-        unitPrice = _price;
-    }
-
-    function setlimitForBuyerAmount(
+    function setLimitForBuyerAmount(
         uint256 _amt
     ) external onlyRole(MANAGER_ROLE) {
         require(
@@ -161,7 +159,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
             block.timestamp > auctionEndTime && nftAmount > 0,
             "DepositMinter: No claims or refunds allowed until auction ends & nftAmount has been set"
         );
-        ClaimInfo memory info = claimInfo(_msgSender());
+        ClaimInfo memory info = claimInfo(msg.sender);
 
         require(!info.hasClaimed, "DepositMinter: has claimed");
         require(
@@ -174,9 +172,10 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         for (uint256 i = 0; i < info.nftCount; i++) {
             IGateway(gateway).ERC721_mint(nftAddress, msg.sender, 0);
         }
-        (bool success, ) = msg.sender.call{value: info.refundAmount}("");
-        require(success, "DepositMinter: failed to send refund");
-
+        if (info.refundAmount > 0) {
+            (bool success, ) = msg.sender.call{value: info.refundAmount}("");
+            require(success, "DepositMinter: failed to send refund");
+        }
         emit Claim(msg.sender, info.refundAmount, info.nftCount);
     }
 

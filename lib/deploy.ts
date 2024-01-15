@@ -109,12 +109,12 @@ export const deployDepositMinter = async (
   gateway: AddressLike,
   nftAddress: AddressLike,
   paymentRecipient: AddressLike,
-  // nftAmount: number, // heap maxCapacity
   auctionEndTime: number,
+  unitPrice: string,
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("DepositMinter");
-  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, auctionEndTime, txOverrides || {});
+  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, auctionEndTime, unitPrice, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
