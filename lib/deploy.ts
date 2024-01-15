@@ -104,6 +104,13 @@ export const deployAuctionMinter = async (
   return contract;
 };
 
+export const deployRefund = async (defaultOwner: AddressLike) => {
+  const Contract = await hre.ethers.getContractFactory("Refund");
+  const contract = await Contract.deploy(defaultOwner);
+  await contract.waitForDeployment();
+  return contract;
+};
+
 export const deployDepositMinter = async (
   admin: AddressLike,
   gateway: AddressLike,
