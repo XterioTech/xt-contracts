@@ -75,11 +75,6 @@ contract AuctionMinter is AccessControl {
         paymentSent = true;
     }
 
-    function emergencyWithdraw(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        (bool success, )  = recipient.call{value: address(this).balance}("");
-        require(success, "AuctionMinter: failed to withdraw");
-    }
-
     function setGateway(address _g) external onlyRole(DEFAULT_ADMIN_ROLE) {
         gateway = _g;
     }
@@ -172,7 +167,7 @@ contract AuctionMinter is AccessControl {
             block.timestamp > auctionEndTime,
             "AuctionMinter: No claims or refunds allowed until auction ends"
         );
-        ClaimInfo memory info = claimInfo(_msgSender());
+        ClaimInfo memory info = claimInfo(msg.sender);
 
         require(!info.hasClaimed, "AuctionMinter: has claimed");
         require(
