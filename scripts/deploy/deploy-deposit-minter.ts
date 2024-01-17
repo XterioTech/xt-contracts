@@ -26,8 +26,9 @@ const main = async () => {
   if (!unitPrice) {
     throw new Error("unitPrice not set");
   }
-
+  const unitPriceRaw = ethers.parseEther(unitPrice);
   const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
+
   if (!address) {
     console.info(colorize(Color.blue, `Deploy DepositMinter`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
@@ -36,7 +37,7 @@ const main = async () => {
     console.info(colorize(Color.yellow, `NFT Address: ${nftAddress}`));
     console.info(colorize(Color.yellow, `Auction End Time: ${new Date(auctionEndTime * 1000)}`));
     console.info(colorize(Color.yellow, `Payment Recipient: ${paymentRecipient}`));
-    console.info(colorize(Color.yellow, `unitPrice in ether: ${ethers.formatEther(unitPrice)}`));
+    console.info(colorize(Color.yellow, `unitPrice in ether: ${unitPrice}`));
 
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
@@ -46,7 +47,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`===================== Deploy DepositMinter =================`);
     console.info(`============================================================`);
-    const DepositMinter = await deployDepositMinter(admin, gatewayAddress, nftAddress, paymentRecipient, auctionEndTime, unitPrice, getTxOverridesForNetwork(hre.network.name));
+    const DepositMinter = await deployDepositMinter(admin, gatewayAddress, nftAddress, paymentRecipient, auctionEndTime, unitPriceRaw, getTxOverridesForNetwork(hre.network.name));
     address = await DepositMinter.getAddress();
     console.info(`DepositMinter @ ${address}`);
 
@@ -67,7 +68,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/launchpad/DepositMinter.sol:DepositMinter",
-        constructorArguments: [admin, gatewayAddress, nftAddress, paymentRecipient, auctionEndTime, unitPrice],
+        constructorArguments: [admin, gatewayAddress, nftAddress, paymentRecipient, auctionEndTime, unitPriceRaw],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);
