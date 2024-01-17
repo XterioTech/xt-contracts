@@ -33,6 +33,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
     address public gateway;
     address public nftAddress;
     address public paymentRecipient;
+    uint256 public auctionStartTime;
     uint256 public auctionEndTime;
     uint256 public unitPrice;
     bool public paymentSent;
@@ -49,6 +50,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         address _gateway,
         address _nftAddress,
         address _paymentRecipient,
+        uint256 _auctionStartTime,
         uint256 _auctionEndTime,
         uint256 _unitPrice
     ) {
@@ -59,6 +61,7 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         gateway = _gateway;
         nftAddress = _nftAddress;
         paymentRecipient = _paymentRecipient;
+        auctionStartTime = _auctionStartTime;
         auctionEndTime = _auctionEndTime;
         unitPrice = _unitPrice;
     }
@@ -114,11 +117,16 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         auctionEndTime = _t;
     }
 
+    function setAuctionStartTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
+        auctionStartTime = _t;
+    }
+
     /**************** Core Functions ****************/
     function deposit() external payable nonReentrant {
         require(
-            block.timestamp <= auctionEndTime,
-            "DepositMinter: auction ended"
+            block.timestamp >= auctionStartTime &&
+                block.timestamp <= auctionEndTime,
+            "DepositMinter: deposit time invalid"
         );
         require(
             buyerBidCount[msg.sender] < limitForBuyerAmount,
