@@ -18,7 +18,7 @@ describe("Refund", function () {
     refund = await deployRefund(await owner.getAddress());
   });
 
-  it.only("should receive and store ETH", async function () {
+  it("should receive and store ETH", async function () {
     const amount = hre.ethers.parseEther("50");
 
     await recipient1.sendTransaction({
@@ -30,7 +30,7 @@ describe("Refund", function () {
     expect(balance).to.equal(amount);
   });
 
-  it.only("should not refund ETH to a contract address", async function () {
+  it("should not refund ETH to a contract address", async function () {
     const DummyContract = await hre.ethers.getContractFactory("XterToken");
     const dummyContract = await DummyContract.deploy(admin, admin);
     await dummyContract.waitForDeployment();
@@ -41,7 +41,7 @@ describe("Refund", function () {
     await expect(refund.connect(owner).refund(recipients, [amount])).to.be.revertedWith("Invalid recipient");
   });
 
-  it.only("should refund ETH to recipients", async function () {
+  it("should refund ETH to recipients", async function () {
     const amounts = [hre.ethers.parseEther("0.0120182991288433"), hre.ethers.parseEther("0.032768252202011")];
     const recipients = [await recipient1.getAddress(), await recipient2.getAddress()];
 
@@ -57,7 +57,7 @@ describe("Refund", function () {
     expect(_b2 - b2).to.equal(amounts[1]);
   });
 
-  it.only("should allow the owner to withdraw ETH", async function () {
+  it("should allow the owner to withdraw ETH", async function () {
     const init = await hre.ethers.provider.getBalance(await refund.getAddress())
     expect(init).not.to.equal(0);
     await refund.connect(owner).withdraw();
@@ -65,7 +65,7 @@ describe("Refund", function () {
     expect(remain).to.equal(0);
   });
 
-  it.only("should refund ETH to recipients", async function () {
+  it("should refund ETH to recipients", async function () {
     const amount = hre.ethers.parseEther("50");
     await recipient1.sendTransaction({
       to: await refund.getAddress(),
