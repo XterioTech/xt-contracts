@@ -15,6 +15,7 @@ const main = async () => {
     console.info(colorize(Color.blue, `Deploy FansCreate`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
     console.info(colorize(Color.yellow, `Admin: ${admin}`));
+    console.info(colorize(Color.yellow, `Meta URI: ${uri}`));
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
