@@ -81,6 +81,7 @@ async function largeFixture() {
 describe("DepositMinter Deposit", function () {
   it("should deposit", async function () {
     const { depositMinter, admin, nftManager, u1 } = await loadFixture(basicFixture);
+    expect(await depositMinter.getBidAmtByBuyerId(u1.address)).to.equal(0);
 
     await deposit({ depositMinter, user: u1 })
 
@@ -93,6 +94,19 @@ describe("DepositMinter Deposit", function () {
     expect(depositMinter.sendPayment()).to.be.revertedWith(
       "DepositMinter: payment can only be made after the auction has ended"
     );
+    expect(await depositMinter.getBidAmtByBuyerId(u1.address)).to.equal(1);
+    const bids = await depositMinter.getUserBids([u1.address])
+    expect(bids.length).equal(1);
+    expect(bids[0][0][1]).equal(u1.address);
+  });
+
+  it("should not deposit if auction has not started", async function () {
+    const { depositMinter, admin, nftManager, u1 } = await loadFixture(basicFixture);
+
+    await depositMinter.connect(admin).setAuctionStartTime((await time.latest()) + duration);
+    await expect(
+      deposit({ depositMinter, user: u1 })
+    ).to.be.revertedWith("DepositMinter: deposit time invalid");
   });
 
   it("should not deposit if auction has ended", async function () {
@@ -183,6 +197,8 @@ describe("DepositMinter Management", function () {
     expect(depositMinter.connect(u2).setAuctionEndTime((await time.latest()) + 600)).to.be.revertedWith(
       "DepositMinter: already ended"
     );
+    expect(depositMinter.setLimitForBuyerAmount(2)).to.be.reverted;
+    await depositMinter.connect(admin).setLimitForBuyerAmount(2);
   });
 });
 
