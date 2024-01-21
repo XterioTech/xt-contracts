@@ -187,6 +187,11 @@ describe("DepositMinter Management", function () {
     // set nft address
     expect(depositMinter.setNftAddress(erc721.target)).to.be.reverted;
     await depositMinter.connect(u2).setNftAddress(erc721.target);
+
+    // set limit for buyer amount
+    expect(depositMinter.setLimitForBuyerAmount(2)).to.be.reverted;
+    await depositMinter.connect(admin).setLimitForBuyerAmount(2);
+
     // set auction end time
     expect(depositMinter.setAuctionEndTime((await time.latest()) + 600)).to.be.reverted;
     expect(depositMinter.connect(u2).setAuctionEndTime((await time.latest()) - 600)).to.be.revertedWith(
@@ -197,8 +202,6 @@ describe("DepositMinter Management", function () {
     expect(depositMinter.connect(u2).setAuctionEndTime((await time.latest()) + 600)).to.be.revertedWith(
       "DepositMinter: already ended"
     );
-    expect(depositMinter.setLimitForBuyerAmount(2)).to.be.reverted;
-    await depositMinter.connect(admin).setLimitForBuyerAmount(2);
   });
 });
 

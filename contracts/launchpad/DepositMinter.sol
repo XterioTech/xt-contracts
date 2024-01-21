@@ -96,8 +96,8 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
 
     function setNftAmount(uint256 _amt) external onlyRole(MANAGER_ROLE) {
         require(
-            block.timestamp < auctionEndTime,
-            "DepositMinter: nftAmount can only be set before the auction end"
+            nftAmount == 0 || block.timestamp < auctionEndTime,
+            "DepositMinter: nftAmount can not be changed after the auction ended"
         );
         nftAmount = _amt;
     }
