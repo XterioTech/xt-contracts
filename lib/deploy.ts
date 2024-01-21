@@ -111,3 +111,20 @@ export const deployRefund = async (defaultOwner: AddressLike) => {
   return contract;
 };
 
+export const deployDepositMinter = async (
+  admin: AddressLike,
+  gateway: AddressLike,
+  nftAddress: AddressLike,
+  paymentRecipient: AddressLike,
+  auctionStartTime: number,
+  auctionEndTime: number,
+  unitPrice: BigNumberish,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("DepositMinter");
+  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, auctionStartTime, auctionEndTime, unitPrice, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+

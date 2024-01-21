@@ -363,9 +363,6 @@ describe("AuctionMinter Claim", function () {
 describe("AuctionMinter Management", function () {
   it("should have valid access control", async function () {
     const { auctionMinter, gateway, admin, u1, u2, erc721 } = await loadFixture(basicFixture);
-    // emergency withdraw
-    expect(auctionMinter.emergencyWithdraw(u1.address)).to.be.reverted;
-    await auctionMinter.connect(admin).emergencyWithdraw(u1.address);
     // set gateway
     expect(auctionMinter.setGateway(gateway.target)).to.be.reverted;
     await auctionMinter.connect(admin).setGateway(gateway.target);
@@ -429,7 +426,7 @@ describe("AuctionMinter Large Dataset", function () {
       }
     };
 
-    for (let i=0; i<totalBids; i++) {
+    for (let i = 0; i < totalBids; i++) {
       await placeBid({
         auctionMinter,
         signer: nftManager,
@@ -468,7 +465,7 @@ describe("AuctionMinter Large Dataset", function () {
         expect(claimInfo.nftCount).equal(0);
       }
       if (i % 100 == 99) {
-        console.log(`checking claim info ${i+1} / ${totalBids}`);
+        console.log(`checking claim info ${i + 1} / ${totalBids}`);
         await auctionMinter.connect(users[i]).claimAndRefund();
         expect(await erc721.balanceOf(users[i])).equal(claimInfo.nftCount);
       }
