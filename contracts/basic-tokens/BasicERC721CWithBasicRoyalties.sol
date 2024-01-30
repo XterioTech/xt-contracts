@@ -20,7 +20,7 @@ contract BasicERC721CWithBasicRoyalties is BasicERC721C, BasicRoyalties {
         address trustedForwarder,
         address royaltyReceiver,
         uint96 royaltyFeeNumerator,
-        uint256 _maxTokenID
+        uint256 _maxTokenId
     )
         BasicERC721C(
             name,
@@ -28,7 +28,7 @@ contract BasicERC721CWithBasicRoyalties is BasicERC721C, BasicRoyalties {
             baseURI,
             gateway,
             trustedForwarder,
-            _maxTokenID
+            _maxTokenId
         )
         BasicRoyalties(royaltyReceiver, royaltyFeeNumerator)
     {}

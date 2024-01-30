@@ -32,7 +32,7 @@ contract BasicERC721C is
 
     string private __baseURI;
 
-    uint256 public maxTokenID;
+    uint256 public maxTokenId;
 
     /**
      * @param name the NFT contract name
@@ -47,7 +47,7 @@ contract BasicERC721C is
         string memory baseURI,
         address gateway,
         address trustedForwarder,
-        uint256 _maxTokenID
+        uint256 _maxTokenId
     )
         ERC2771Context(trustedForwarder)
         ERC721OpenZeppelin(name, symbol)
@@ -55,7 +55,7 @@ contract BasicERC721C is
     {
         __baseURI = baseURI;
         _tokenIdCounter.increment();
-        maxTokenID = _maxTokenID;
+        maxTokenId = _maxTokenId;
     }
 
     function incTokenIdCounter(uint256 limit) public returns (uint256) {
@@ -82,8 +82,8 @@ contract BasicERC721C is
             tokenId = incTokenIdCounter(4096);
         }
         require(
-            maxTokenID == 0 || tokenId <= maxTokenID,
-            "ERC721: invalid, tokenId > maxTokenID"
+            maxTokenId == 0 || tokenId <= maxTokenId,
+            "ERC721: invalid, tokenId > maxTokenId"
         );
 
         _safeMint(to, tokenId);
@@ -98,8 +98,8 @@ contract BasicERC721C is
     ) external override onlyGatewayOrOwner {
         for (uint256 i = 0; i < tokenId.length; i++) {
             require(
-                maxTokenID == 0 || tokenId[i] <= maxTokenID,
-                "ERC721: invalid, tokenId > maxTokenID"
+                maxTokenId == 0 || tokenId[i] <= maxTokenId,
+                "ERC721: invalid, tokenId > maxTokenId"
             );
 
             _safeMint(to, tokenId[i]);
@@ -147,8 +147,8 @@ contract BasicERC721C is
             );
     }
 
-    function setMaxTokenID(uint256 _maxTokenID) external onlyGatewayOrOwner {
-        maxTokenID = _maxTokenID;
+    function setMaxTokenID(uint256 _maxTokenId) external onlyGatewayOrOwner {
+        maxTokenId = _maxTokenId;
     }
 
     function setURI(

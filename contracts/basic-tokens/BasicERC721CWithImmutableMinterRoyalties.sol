@@ -24,7 +24,7 @@ contract BasicERC721CWithImmutableMinterRoyalties is
         address gateway,
         address trustedForwarder,
         uint96 royaltyFeeNumerator,
-        uint256 _maxTokenID
+        uint256 maxTokenId
     )
         BasicERC721C(
             name,
@@ -32,7 +32,7 @@ contract BasicERC721CWithImmutableMinterRoyalties is
             baseURI,
             gateway,
             trustedForwarder,
-            _maxTokenID
+            maxTokenId
         )
         ImmutableMinterRoyalties(royaltyFeeNumerator)
     {}
