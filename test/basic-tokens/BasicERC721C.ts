@@ -17,7 +17,7 @@ describe("Test BasicERC721C Contract", function () {
     const [, , u0, u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
 
     const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
-    const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder);
+    const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder, 10000);
     await erc721.waitForDeployment();
 
     return { ...base, erc721, u0, u1, u2, u3, u4, u5 };

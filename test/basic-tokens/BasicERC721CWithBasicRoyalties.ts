@@ -24,7 +24,8 @@ describe("Test BasicERC721CWithBasicRoyalties Contract", function () {
       base.gateway,
       base.forwarder,
       royaltyReceiver.address,
-      royaltyFeeNumerator
+      royaltyFeeNumerator,
+      10000
     );
     await erc721.waitForDeployment();
 

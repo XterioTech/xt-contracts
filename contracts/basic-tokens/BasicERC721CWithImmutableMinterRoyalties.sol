@@ -14,7 +14,8 @@ contract BasicERC721CWithImmutableMinterRoyalties is
     BasicERC721C,
     ImmutableMinterRoyalties
 {
-    uint256 public constant VERSION_BasicERC721CWithImmutableMinterRoyalties = 20231019;
+    uint256 public constant VERSION_BasicERC721CWithImmutableMinterRoyalties =
+        20240129;
 
     constructor(
         string memory name,
@@ -22,9 +23,17 @@ contract BasicERC721CWithImmutableMinterRoyalties is
         string memory baseURI,
         address gateway,
         address trustedForwarder,
-        uint96 royaltyFeeNumerator
+        uint96 royaltyFeeNumerator,
+        uint256 _maxTokenID
     )
-        BasicERC721C(name, symbol, baseURI, gateway, trustedForwarder)
+        BasicERC721C(
+            name,
+            symbol,
+            baseURI,
+            gateway,
+            trustedForwarder,
+            _maxTokenID
+        )
         ImmutableMinterRoyalties(royaltyFeeNumerator)
     {}
 
