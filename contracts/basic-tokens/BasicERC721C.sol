@@ -81,11 +81,6 @@ contract BasicERC721C is
         if (tokenId == 0) {
             tokenId = incTokenIdCounter(4096);
         }
-        require(
-            maxTokenId == 0 || tokenId <= maxTokenId,
-            "ERC721: invalid, tokenId > maxTokenId"
-        );
-
         _safeMint(to, tokenId);
     }
 
@@ -97,13 +92,16 @@ contract BasicERC721C is
         uint256[] calldata tokenId
     ) external override onlyGatewayOrOwner {
         for (uint256 i = 0; i < tokenId.length; i++) {
-            require(
-                maxTokenId == 0 || tokenId[i] <= maxTokenId,
-                "ERC721: invalid, tokenId > maxTokenId"
-            );
-
             _safeMint(to, tokenId[i]);
         }
+    }
+
+    function _safeMint(address to, uint256 tokenId) internal virtual override {
+        require(
+            maxTokenId == 0 || tokenId <= maxTokenId,
+            "ERC721: invalid, tokenId > maxTokenId"
+        );
+        _safeMint(to, tokenId, "");
     }
 
     /**
