@@ -23,7 +23,8 @@ describe("Test BasicERC721CWithImmutableMinterRoyalties Contract", function () {
       baseURI,
       base.gateway,
       base.forwarder,
-      royaltyFeeNumerator
+      royaltyFeeNumerator,
+      10000
     );
     await erc721.waitForDeployment();
 

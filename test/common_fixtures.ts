@@ -52,7 +52,8 @@ export const nftTradingTestFixture = async () => {
     tokenSymbol,
     baseURI,
     base.gateway,
-    base.forwarder
+    base.forwarder,
+    10000
   );
   await erc721.waitForDeployment();
 

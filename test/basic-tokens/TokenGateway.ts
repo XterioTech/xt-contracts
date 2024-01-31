@@ -56,7 +56,7 @@ describe("Test TokenGateway Contract", function () {
     const tokenSymbol = "TE721";
     const baseURI = "https://api.test/meta/goerli";
     const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
-    const erc721 = await BasicERC721C.connect(u1).deploy(tokenName, tokenSymbol, baseURI, gateway, forwarder);
+    const erc721 = await BasicERC721C.connect(u1).deploy(tokenName, tokenSymbol, baseURI, gateway, forwarder, 10000);
     await erc721.waitForDeployment();
 
     /***************** Basic Checks ****************/

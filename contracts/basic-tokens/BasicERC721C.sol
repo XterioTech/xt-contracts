@@ -26,11 +26,13 @@ contract BasicERC721C is
 {
     using Counters for Counters.Counter;
 
-    uint256 public constant VERSION_BasicERC721C = 20231126;
+    uint256 public constant VERSION_BasicERC721C = 20240129;
 
     Counters.Counter private _tokenIdCounter;
 
     string private __baseURI;
+
+    uint256 public maxTokenId;
 
     /**
      * @param name the NFT contract name
@@ -44,7 +46,8 @@ contract BasicERC721C is
         string memory symbol,
         string memory baseURI,
         address gateway,
-        address trustedForwarder
+        address trustedForwarder,
+        uint256 _maxTokenId
     )
         ERC2771Context(trustedForwarder)
         ERC721OpenZeppelin(name, symbol)
@@ -52,6 +55,7 @@ contract BasicERC721C is
     {
         __baseURI = baseURI;
         _tokenIdCounter.increment();
+        maxTokenId = _maxTokenId;
     }
 
     function incTokenIdCounter(uint256 limit) public returns (uint256) {
@@ -90,6 +94,14 @@ contract BasicERC721C is
         for (uint256 i = 0; i < tokenId.length; i++) {
             _safeMint(to, tokenId[i]);
         }
+    }
+
+    function _safeMint(address to, uint256 tokenId) internal virtual override {
+        require(
+            maxTokenId == 0 || tokenId <= maxTokenId,
+            "ERC721: invalid, tokenId > maxTokenId"
+        );
+        _safeMint(to, tokenId, "");
     }
 
     /**
@@ -131,6 +143,10 @@ contract BasicERC721C is
                     Strings.toHexString(uint160(address(this)), 20)
                 )
             );
+    }
+
+    function setMaxTokenID(uint256 _maxTokenId) external onlyGatewayOrOwner {
+        maxTokenId = _maxTokenId;
     }
 
     function setURI(

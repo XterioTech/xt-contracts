@@ -7,7 +7,7 @@ import { nftTradingTestFixture } from "../common_fixtures";
 import { loadFixture, mine, setBalance, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { signAuctionMinterBid } from "../../lib/signature";
 
-const initialEndTime = 1903490000;
+const initialEndTime = 2903490000;
 const duration = 3600;
 const nftCount = 10;
 const nftCountLarge = 3000;

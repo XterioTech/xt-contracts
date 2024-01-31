@@ -33,7 +33,8 @@ async function defaultFixture() {
     base.gateway,
     base.forwarder,
     royaltyReceiver.address,
-    royaltyFeeNumerator
+    royaltyFeeNumerator,
+    10000
   );
   await erc721WithBasicRoyalties.waitForDeployment();
   await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc721WithBasicRoyalties, base.nftManager.address);
