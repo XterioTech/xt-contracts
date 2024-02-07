@@ -104,6 +104,21 @@ export const deployAuctionMinter = async (
   return contract;
 };
 
+export const deployRaffleAuctionMinter = async (
+  admin: AddressLike,
+  gateway: AddressLike,
+  nftAddress: AddressLike,
+  paymentRecipient: AddressLike,
+  nftAmount: number, // heap maxCapacity
+  auctionEndTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("RaffleAuctionMinter");
+  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, nftAmount, auctionEndTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
 export const deployRefund = async (defaultOwner: AddressLike) => {
   const Contract = await hre.ethers.getContractFactory("Refund");
   const contract = await Contract.deploy(defaultOwner);
