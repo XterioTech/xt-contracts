@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
-import { deployAuctionMinter } from "../../lib/deploy";
+import { deployRaffleAuctionMinter } from "../../lib/deploy";
 import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork, isTestnet } from "../../lib/constant";
 
 const main = async () => {
@@ -26,7 +26,7 @@ const main = async () => {
   if (!paymentRecipient) {
     throw new Error("paymentRecipient not set");
   }
-  
+
   const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
   if (!address) {
     console.info(colorize(Color.blue, `Deploy RaffleAuctionMinter`));
@@ -37,7 +37,7 @@ const main = async () => {
     console.info(colorize(Color.yellow, `NFT Amount: ${nftAmount}`));
     console.info(colorize(Color.yellow, `Auction End Time: ${new Date(auctionEndTime * 1000)}`));
     console.info(colorize(Color.yellow, `Payment Recipient: ${paymentRecipient}`));
-    
+
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
@@ -46,7 +46,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`================== Deploy RaffleAuctionMinter ==============`);
     console.info(`============================================================`);
-    const RaffleAuctionMinter = await deployAuctionMinter(admin, gatewayAddress, nftAddress, paymentRecipient, nftAmount, auctionEndTime, getTxOverridesForNetwork(hre.network.name));
+    const RaffleAuctionMinter = await deployRaffleAuctionMinter(admin, gatewayAddress, nftAddress, paymentRecipient, nftAmount, auctionEndTime, getTxOverridesForNetwork(hre.network.name));
     address = await RaffleAuctionMinter.getAddress();
     console.info(`RaffleAuctionMinter @ ${address}`);
 
@@ -66,7 +66,7 @@ const main = async () => {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/launchpad/auction/RaffleAuctionMinter.sol:RaffleAuctionMinter",
+        contract: "contracts/launchpad/raffle_auction/RaffleAuctionMinter.sol:RaffleAuctionMinter",
         constructorArguments: [admin, gatewayAddress, nftAddress, paymentRecipient, nftAmount, auctionEndTime],
       });
     } catch (e) {
