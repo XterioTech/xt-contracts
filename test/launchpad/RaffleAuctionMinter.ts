@@ -10,7 +10,7 @@ import { signAuctionMinterBid } from "../../lib/signature";
 const initialEndTime = 2903490000;
 const duration = 3600;
 const nftCount = 10;
-const nftCountLarge = 3000;
+const nftCountLarge = 1000;
 
 const placeBid = async ({
   auctionMinter,

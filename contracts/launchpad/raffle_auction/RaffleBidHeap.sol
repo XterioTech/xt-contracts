@@ -94,13 +94,8 @@ library RaffleBidHeap {
         }
     }
 
-    function isHigherOrEqualBid(
-        Bid memory _b1,
-        Bid memory _b2
-    ) internal pure returns (bool) {
-        return
-            _b1.price > _b2.price ||
-            (_b1.price == _b2.price && _b1.nonce <= _b2.nonce);
+    function isHigherOrEqualBid(Bid memory _b1, Bid memory _b2) internal pure returns (bool) {
+        return _b1.price >= _b2.price && (_b1.price == _b2.price ? _b1.nonce <= _b2.nonce || _b1.nonce == _b2.nonce && _b1.id > _b2.id : true);
     }
 
     function swap(Heap storage heap, uint256 index1, uint256 index2) private {
