@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./RaffleBidHeap.sol";
 import "../../basic-tokens/interfaces/IGateway.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -21,7 +20,6 @@ contract RaffleAuctionMinter is AccessControl {
     event Bid(address indexed buyer, uint256 bidPrice);
     event Claim(address indexed buyer, uint256 refundAmount, uint256 nftCount);
 
-    using SafeMath for uint256;
     using Counters for Counters.Counter;
     using RaffleBidHeap for RaffleBidHeap.Heap;
 

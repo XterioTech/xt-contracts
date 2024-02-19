@@ -200,7 +200,7 @@ describe("RaffleAuctionMinter Bid", function () {
 });
 
 describe("RaffleAuctionMinter Claim", function () {
-  it.only("all the same bid price", async function () {
+  it("all the same bid price", async function () {
     const { auctionMinter, admin, erc721, nftManager, u1 } = await loadFixture(basicFixture);
     await auctionMinter.connect(admin).setAuctionEndTime((await time.latest()) + duration);
 
@@ -275,7 +275,7 @@ describe("RaffleAuctionMinter Management", function () {
 describe("RaffleAuctionMinter Large Dataset", function () {
   this.timeout(14400000);
 
-  it.only("large number of bids", async function () {
+  it.skip("large number of bids", async function () {
     const { auctionMinter, admin, erc721, nftManager, paymentReceiver } = await loadFixture(largeFixture);
     await auctionMinter.connect(admin).setAuctionEndTime((await time.latest()) + duration * 1000);
 
