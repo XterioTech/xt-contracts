@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./BidHeap.sol";
+import "./RaffleBidHeap.sol";
 import "../../basic-tokens/interfaces/IGateway.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-contract AuctionMinter is AccessControl {
+contract RaffleAuctionMinter is AccessControl {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     uint256 public constant MAX_BID_PER_USER = 50;
 
@@ -21,9 +21,9 @@ contract AuctionMinter is AccessControl {
     event Claim(address indexed buyer, uint256 refundAmount, uint256 nftCount);
 
     using Counters for Counters.Counter;
-    using BidHeap for BidHeap.Heap;
+    using RaffleBidHeap for RaffleBidHeap.Heap;
 
-    BidHeap.Heap private _heap;
+    RaffleBidHeap.Heap private _heap;
     Counters.Counter private _idCounter;
 
     address public gateway;
@@ -31,7 +31,7 @@ contract AuctionMinter is AccessControl {
     address public paymentRecipient;
     uint256 public auctionEndTime;
 
-    mapping(address => BidHeap.Bid[]) public userBids;
+    mapping(address => RaffleBidHeap.Bid[]) public userBids;
     mapping(address => bool) public hasClaimed;
     // bidder => limitForBuyerID => bidAmount
     mapping(address => mapping(uint256 => uint256)) buyerBidCount;
@@ -64,12 +64,12 @@ contract AuctionMinter is AccessControl {
     function sendPayment() external {
         require(
             block.timestamp > auctionEndTime,
-            "AuctionMinter: payment can only be made after the auction has ended"
+            "RaffleAuctionMinter: payment can only be made after the auction has ended"
         );
-        require(!paymentSent, "AuctionMinter: payment already sent");
+        require(!paymentSent, "RaffleAuctionMinter: payment already sent");
         uint256 value = _heap.size() * _heap.minBid().price;
         (bool success, ) = paymentRecipient.call{value: value}("");
-        require(success, "AuctionMinter: failed to send payment");
+        require(success, "RaffleAuctionMinter: failed to send payment");
         paymentSent = true;
     }
 
@@ -86,8 +86,8 @@ contract AuctionMinter is AccessControl {
     }
 
     function setAuctionEndTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
-        require(_t > block.timestamp, "AuctionMinter: invalid timestamp");
-        require(block.timestamp <= auctionEndTime, "AuctionMinter: already ended");
+        require(_t > block.timestamp, "RaffleAuctionMinter: invalid timestamp");
+        require(block.timestamp <= auctionEndTime, "RaffleAuctionMinter: already ended");
         auctionEndTime = _t;
     }
 
@@ -111,32 +111,33 @@ contract AuctionMinter is AccessControl {
 
         require(
             block.timestamp <= expireTime,
-            "AuctionMinter: signature expired"
+            "RaffleAuctionMinter: signature expired"
         );
         require(
             block.timestamp <= auctionEndTime,
-            "AuctionMinter: auction ended"
+            "RaffleAuctionMinter: auction ended"
         );
 
         require(
             userBids[msg.sender].length < MAX_BID_PER_USER,
-            "AuctionMinter: maximum bid per user reached"
+            "RaffleAuctionMinter: maximum bid per user reached"
         );
         require(
             buyerBidCount[msg.sender][limitForBuyerID] < limitForBuyerAmount,
-            "AuctionMinter: buyer limit exceeded"
+            "RaffleAuctionMinter: buyer limit exceeded"
         );
 
-        require(msg.value == bidPrice, "AuctionMinter: payment mismatch");
+        require(msg.value == bidPrice, "RaffleAuctionMinter: payment mismatch");
 
         buyerBidCount[msg.sender][limitForBuyerID] += 1;
 
         _idCounter.increment();
-        BidHeap.Bid memory newBid = BidHeap.Bid(
+        RaffleBidHeap.Bid memory newBid = RaffleBidHeap.Bid(
             _idCounter.current(),
             msg.sender,
             bidPrice,
-            block.timestamp
+            block.timestamp,
+            generateRandomNumber(_idCounter.current())
         );
 
         userBids[msg.sender].push(newBid);
@@ -149,9 +150,9 @@ contract AuctionMinter is AccessControl {
         info.hasClaimed = hasClaimed[_a];
         info.refundAmount = 0;
         info.nftCount = 0;
-        BidHeap.Bid memory _floorBid = _heap.minBid();
+        RaffleBidHeap.Bid memory _floorBid = _heap.minBid();
         for (uint256 i = 0; i < userBids[_a].length; i++) {
-            if (BidHeap.isHigherOrEqualBid(userBids[_a][i], _floorBid)) {
+            if (RaffleBidHeap.isHigherOrEqualBid(userBids[_a][i], _floorBid)) {
                 info.nftCount += 1;
                 info.refundAmount += userBids[_a][i].price - _floorBid.price;
             } else {
@@ -163,14 +164,14 @@ contract AuctionMinter is AccessControl {
     function claimAndRefund() external {
         require(
             block.timestamp > auctionEndTime,
-            "AuctionMinter: No claims or refunds allowed until auction ends"
+            "RaffleAuctionMinter: No claims or refunds allowed until auction ends"
         );
         ClaimInfo memory info = claimInfo(msg.sender);
 
-        require(!info.hasClaimed, "AuctionMinter: has claimed");
+        require(!info.hasClaimed, "RaffleAuctionMinter: has claimed");
         require(
             info.nftCount > 0 || info.refundAmount > 0,
-            "AuctionMinter: nothing to claim"
+            "RaffleAuctionMinter: nothing to claim"
         );
 
         hasClaimed[msg.sender] = true;
@@ -179,7 +180,7 @@ contract AuctionMinter is AccessControl {
             IGateway(gateway).ERC721_mint(nftAddress, msg.sender, 0);
         }
         (bool success, ) = msg.sender.call{value: info.refundAmount}("");
-        require(success, "AuctionMinter: failed to send refund");
+        require(success, "RaffleAuctionMinter: failed to send refund");
 
         emit Claim(msg.sender, info.refundAmount, info.nftCount);
     }
@@ -189,7 +190,7 @@ contract AuctionMinter is AccessControl {
         return address(this).balance;
     }
 
-    function floorBid() external view returns (BidHeap.Bid memory) {
+    function floorBid() external view returns (RaffleBidHeap.Bid memory) {
         return _heap.minBid();
     }
 
@@ -204,8 +205,8 @@ contract AuctionMinter is AccessControl {
 
     function getUserBids(
         address[] calldata _addresses
-    ) external view returns (BidHeap.Bid[][] memory bids) {
-        bids = new BidHeap.Bid[][](_addresses.length);
+    ) external view returns (RaffleBidHeap.Bid[][] memory bids) {
+        bids = new RaffleBidHeap.Bid[][](_addresses.length);
         for (uint256 i = 0; i < _addresses.length; i++) {
             bids[i] = userBids[_addresses[i]];
         }
@@ -249,7 +250,7 @@ contract AuctionMinter is AccessControl {
     ) internal pure {
         require(
             signer == ECDSA.recover(_getEthSignedMessageHash(hash), sig),
-            "AuctionMinter: invalid signature"
+            "RaffleAuctionMinter: invalid signature"
         );
     }
 
@@ -258,4 +259,18 @@ contract AuctionMinter is AccessControl {
     ) internal pure returns (bytes32) {
         return ECDSA.toEthSignedMessageHash(criteriaMessageHash);
     }
+
+    function generateRandomNumber(uint256 userInput) public view returns (uint256) {
+        uint256 randomNumber = uint256(
+            keccak256(
+                abi.encodePacked(
+                    blockhash(block.number - 1), // Use the hash value of the previous block as a seed
+                    block.timestamp, // Use the current block's timestamp as a seed
+                    userInput // Use the user input as a seed
+                )
+            )
+        );
+        return randomNumber;
+    }
+
 }
