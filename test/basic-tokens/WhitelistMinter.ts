@@ -14,8 +14,8 @@ async function defaultFixture() {
   return { ...base, whitelistMinter, payee, u1 };
 }
 
-describe("Test WhitelistMinter Contract", function () {
-  const startTime = 1999888777;
+describe("Test WhitelistMinter Contract", async function () {
+  const startTime = await time.latest();
   const erc1155TokenId = 1;
   const buyingAmount = 4;
   const limitForBuyerID = 2728;

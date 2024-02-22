@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import "../interfaces/IGateway.sol";
 import "../interfaces/IGatewayGuarded.sol";
@@ -18,6 +19,9 @@ import "../interfaces/IPausable.sol";
 import "../interfaces/IGatewayGuardedOwnable.sol";
 
 contract TokenGateway is Initializable, AccessControl, IGateway {
+    
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     /********************************************************************
      *                          Role System                             *
      ********************************************************************/
@@ -42,6 +46,12 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
      */
     mapping(address => bool) public override operatorWhitelist;
 
+    /**
+     * Store a one-to-many relationship between a certain nft contract
+     * and some minter addresses.
+     */
+    mapping (address => EnumerableSet.AddressSet) _nftMinters;
+
     event TransferGatewayOwnership(
         address indexed previousGatewayManager,
         address indexed newGatewayManager
@@ -58,11 +68,26 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
 
     event RemoveOperatorWhitelist(address indexed operator);
 
-    modifier onlyManagerOrWhitelist(address _tokenContract) {
+    event AddNftMinters(address indexed nftAddress, address[] minters);
+
+    event RemoveNftMinters(address indexed nftAddress, address[] minters);
+
+    // only Manager or Whitelist or Minter
+    modifier onlyTrustable(address _tokenContract) {
         require(
-            isInManagement(msg.sender, _tokenContract) ||
-                operatorWhitelist[msg.sender],
-            "TokenGateway: caller is not manager of the token contract and is not in whitelist"
+            isInManagement(msg.sender, _tokenContract)
+                || operatorWhitelist[msg.sender] 
+                || _nftMinters[_tokenContract].contains(msg.sender),
+            "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
+        );
+        _;
+    }
+
+    modifier onlyManagerOrGateway(address _tokenContract) {
+        require(
+            isInManagement(msg.sender, _tokenContract) 
+                || hasRole(GATEWAY_MANAGER_ROLE, msg.sender),
+            "TokenGateway: caller is not manager of the token contract and is not gateway manager"
         );
         _;
     }
@@ -88,7 +113,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         address _tokenContract,
         address _recipient,
         uint256 _tokenId
-    ) external override onlyManagerOrWhitelist(_tokenContract) {
+    ) external override onlyTrustable(_tokenContract) {
         IBasicERC721(_tokenContract).mint(_recipient, _tokenId);
     }
 
@@ -99,7 +124,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         address _tokenContract,
         address _recipient,
         uint256[] calldata _tokenId
-    ) external override onlyManagerOrWhitelist(_tokenContract) {
+    ) external override onlyTrustable(_tokenContract) {
         IBasicERC721(_tokenContract).mintBatch(_recipient, _tokenId);
     }
 
@@ -109,7 +134,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
     function ERC721_setURI(
         address _tokenContract,
         string calldata _newURI
-    ) external override onlyManagerOrWhitelist(_tokenContract) {
+    ) external override onlyTrustable(_tokenContract) {
         IBasicERC721(_tokenContract).setURI(_newURI);
     }
 
@@ -122,7 +147,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         uint256 _id,
         uint256 _amount,
         bytes calldata _data
-    ) external override onlyManagerOrWhitelist(_tokenContract) {
+    ) external override onlyTrustable(_tokenContract) {
         IBasicERC1155(_tokenContract).mint(_account, _id, _amount, _data);
     }
 
@@ -135,7 +160,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         uint256[] calldata _ids,
         uint256[] calldata _amounts,
         bytes calldata _data
-    ) external override onlyManagerOrWhitelist(_tokenContract) {
+    ) external override onlyTrustable(_tokenContract) {
         IBasicERC1155(_tokenContract).mintBatch(_to, _ids, _amounts, _data);
     }
 
@@ -145,7 +170,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
     function ERC1155_setURI(
         address _tokenContract,
         string calldata _newuri
-    ) external override onlyManagerOrWhitelist(_tokenContract) {
+    ) external override onlyTrustable(_tokenContract) {
         IBasicERC1155(_tokenContract).setURI(_newuri);
     }
 
@@ -153,19 +178,19 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         address _erc20Contract,
         address _recipient,
         uint256 _amount
-    ) external override onlyManagerOrWhitelist(_erc20Contract) {
+    ) external override onlyTrustable(_erc20Contract) {
         IBasicERC20(_erc20Contract).mint(_recipient, _amount);
     }
 
     function pause(
         address _contract
-    ) external override onlyManagerOrWhitelist(_contract) {
+    ) external override onlyTrustable(_contract) {
         IPausable(_contract).pause();
     }
 
     function unpause(
         address _contract
-    ) external override onlyManagerOrWhitelist(_contract) {
+    ) external override onlyTrustable(_contract) {
         IPausable(_contract).unpause();
     }
 
@@ -189,7 +214,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
     function setManagerOf(
         address _tokenContract,
         address _manager
-    ) external override onlyRole(GATEWAY_MANAGER_ROLE) {
+    ) external override onlyManagerOrGateway(_tokenContract) {
         emit AssignManager(
             msg.sender,
             _tokenContract,
@@ -203,10 +228,35 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         _nftManager[_tokenContract] = _manager;
     }
 
+    /**
+     * Add minters to the specific nftMinters set
+     */
+    function addNftMinters(
+        address _nftAddress,
+        address[] memory minters
+    ) external onlyManagerOrGateway(_nftAddress) {
+
+        for (uint256 i = 0; i < minters.length; i++) {
+            _nftMinters[_nftAddress].add(minters[i]);
+        }
+
+        emit AddNftMinters(_nftAddress, minters);
+    }
+
+    function removeNftMinters(
+        address _nftAddress, 
+        address[] memory minters
+    ) external onlyManagerOrGateway(_nftAddress) {
+        for (uint256 i = 0; i < minters.length; i++) {
+            _nftMinters[_nftAddress].remove(minters[i]);
+        }
+        
+        emit RemoveNftMinters(_nftAddress, minters);
+    }
+
     /********************************************************************
      *                      Admin-only functions                        *
      ********************************************************************/
-
     /**
      * Add an nft operator to the whitelist
      */
@@ -308,6 +358,10 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
             } catch {}
         }
         return configuredManager;
+    }
+
+    function nftMinters(address _nftAddress) public view returns (address[] memory) {
+        return  _nftMinters[_nftAddress].values();
     }
 
     /**
