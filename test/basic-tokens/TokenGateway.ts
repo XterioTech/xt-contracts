@@ -61,9 +61,10 @@ describe("Test TokenGateway Contract", function () {
 
     const nftAddress = await erc721.getAddress()
     // Add minters to the NFT contract
-    await gateway.addNftMinters(nftAddress, [u1.address, u2.address]);
+    await gateway.addMinter(nftAddress, u1.address);
+    await gateway.addMinter(nftAddress, u2.address);
     // Check if minters were added successfully
-    expect(await gateway.nftMinters(nftAddress)).to.deep.equal([u1.address, u2.address]);
+    expect(await gateway.minters(nftAddress)).to.deep.equal([u1.address, u2.address]);
     // minter mints to owner, u3
     await gateway.connect(u2).ERC721_mint(erc721, owner.address, 222);
     await gateway.connect(u2).ERC721_mint(erc721, owner.address, 223);
@@ -75,9 +76,9 @@ describe("Test TokenGateway Contract", function () {
     expect(await erc721.ownerOf(101)).to.equal(u2.address);
 
     // Remove minter1 from the NFT contract
-    await gateway.removeNftMinters(nftAddress, [u2.address]);
+    await gateway.removeMinter(nftAddress, u2.address);
     // Check if minter1 was removed successfully
-    expect(await gateway.nftMinters(nftAddress)).to.deep.equal([u1.address]);
+    expect(await gateway.minters(nftAddress)).to.deep.equal([u1.address]);
     await expect(gateway.connect(u2).ERC721_mint(erc721, u1.address, 111)).revertedWith(
       "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
     );
@@ -98,7 +99,7 @@ describe("Test TokenGateway Contract", function () {
       `${baseURI}/${await erc721.getAddress()}/${hre.ethers.zeroPadValue("0x04d2", 32)}`.toLowerCase()
     );
     await expect(gateway.connect(u2).ERC721_setURI(erc721, "new_uri")).revertedWith(
-      "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
+      "TokenGateway: caller is not manager of the token contract and is not gateway manager"
     );
     await expect(gateway.connect(u2).ERC721_mint(erc721, u1.address, 111)).revertedWith(
       "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
@@ -144,7 +145,7 @@ describe("Test TokenGateway Contract", function () {
       `${baseURI}/${await erc1155.getAddress()}/{id}`.toLowerCase()
     );
     await expect(gateway.connect(u2).ERC1155_setURI(erc1155, "new_uri")).revertedWith(
-      "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
+      "TokenGateway: caller is not manager of the token contract and is not gateway manager"
     );
     await expect(gateway.connect(u2).ERC1155_mint(erc1155, u1.address, 111, 1, "0x")).revertedWith(
       "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"

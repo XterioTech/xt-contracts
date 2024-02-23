@@ -50,7 +50,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
      * Store a one-to-many relationship between a certain nft contract
      * and some minter addresses.
      */
-    mapping (address => EnumerableSet.AddressSet) _nftMinters;
+    mapping (address => EnumerableSet.AddressSet) _minters;
 
     event TransferGatewayOwnership(
         address indexed previousGatewayManager,
@@ -68,16 +68,16 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
 
     event RemoveOperatorWhitelist(address indexed operator);
 
-    event AddNftMinters(address indexed nftAddress, address[] minters);
+    event AddMinter(address indexed tokenAddress, address minter);
 
-    event RemoveNftMinters(address indexed nftAddress, address[] minters);
+    event RemoveMinter(address indexed tokenAddress, address minter);
 
     // only Manager or Whitelist or Minter
-    modifier onlyTrustable(address _tokenContract) {
+    modifier onlyWithMintAccess(address _tokenContract) {
         require(
             isInManagement(msg.sender, _tokenContract)
                 || operatorWhitelist[msg.sender] 
-                || _nftMinters[_tokenContract].contains(msg.sender),
+                || _minters[_tokenContract].contains(msg.sender),
             "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
         );
         _;
@@ -113,7 +113,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         address _tokenContract,
         address _recipient,
         uint256 _tokenId
-    ) external override onlyTrustable(_tokenContract) {
+    ) external override onlyWithMintAccess(_tokenContract) {
         IBasicERC721(_tokenContract).mint(_recipient, _tokenId);
     }
 
@@ -124,7 +124,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         address _tokenContract,
         address _recipient,
         uint256[] calldata _tokenId
-    ) external override onlyTrustable(_tokenContract) {
+    ) external override onlyWithMintAccess(_tokenContract) {
         IBasicERC721(_tokenContract).mintBatch(_recipient, _tokenId);
     }
 
@@ -134,7 +134,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
     function ERC721_setURI(
         address _tokenContract,
         string calldata _newURI
-    ) external override onlyTrustable(_tokenContract) {
+    ) external override onlyManagerOrGateway(_tokenContract) {
         IBasicERC721(_tokenContract).setURI(_newURI);
     }
 
@@ -147,7 +147,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         uint256 _id,
         uint256 _amount,
         bytes calldata _data
-    ) external override onlyTrustable(_tokenContract) {
+    ) external override onlyWithMintAccess(_tokenContract) {
         IBasicERC1155(_tokenContract).mint(_account, _id, _amount, _data);
     }
 
@@ -160,7 +160,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         uint256[] calldata _ids,
         uint256[] calldata _amounts,
         bytes calldata _data
-    ) external override onlyTrustable(_tokenContract) {
+    ) external override onlyWithMintAccess(_tokenContract) {
         IBasicERC1155(_tokenContract).mintBatch(_to, _ids, _amounts, _data);
     }
 
@@ -170,7 +170,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
     function ERC1155_setURI(
         address _tokenContract,
         string calldata _newuri
-    ) external override onlyTrustable(_tokenContract) {
+    ) external override onlyManagerOrGateway(_tokenContract) {
         IBasicERC1155(_tokenContract).setURI(_newuri);
     }
 
@@ -178,19 +178,19 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         address _erc20Contract,
         address _recipient,
         uint256 _amount
-    ) external override onlyTrustable(_erc20Contract) {
+    ) external override onlyWithMintAccess(_erc20Contract) {
         IBasicERC20(_erc20Contract).mint(_recipient, _amount);
     }
 
     function pause(
         address _contract
-    ) external override onlyTrustable(_contract) {
+    ) external override onlyWithMintAccess(_contract) {
         IPausable(_contract).pause();
     }
 
     function unpause(
         address _contract
-    ) external override onlyTrustable(_contract) {
+    ) external override onlyWithMintAccess(_contract) {
         IPausable(_contract).unpause();
     }
 
@@ -229,29 +229,22 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
     }
 
     /**
-     * Add minters to the specific nftMinters set
+     * Add minter to the specific minters set
      */
-    function addNftMinters(
-        address _nftAddress,
-        address[] memory minters
-    ) external onlyManagerOrGateway(_nftAddress) {
-
-        for (uint256 i = 0; i < minters.length; i++) {
-            _nftMinters[_nftAddress].add(minters[i]);
-        }
-
-        emit AddNftMinters(_nftAddress, minters);
+    function addMinter(
+        address _tokenAddress,
+        address minter
+    ) external onlyManagerOrGateway(_tokenAddress) {
+        _minters[_tokenAddress].add(minter);
+        emit AddMinter(_tokenAddress, minter);
     }
 
-    function removeNftMinters(
-        address _nftAddress, 
-        address[] memory minters
-    ) external onlyManagerOrGateway(_nftAddress) {
-        for (uint256 i = 0; i < minters.length; i++) {
-            _nftMinters[_nftAddress].remove(minters[i]);
-        }
-        
-        emit RemoveNftMinters(_nftAddress, minters);
+    function removeMinter(
+        address _tokenAddress, 
+        address minter
+    ) external onlyManagerOrGateway(_tokenAddress) {
+        _minters[_tokenAddress].remove(minter);
+        emit RemoveMinter(_tokenAddress, minter);
     }
 
     /********************************************************************
@@ -360,8 +353,8 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         return configuredManager;
     }
 
-    function nftMinters(address _nftAddress) public view returns (address[] memory) {
-        return  _nftMinters[_nftAddress].values();
+    function minters(address _nftAddress) public view returns (address[] memory) {
+        return  _minters[_nftAddress].values();
     }
 
     /**
