@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "./RaffleBidHeap.sol";
 import "../../basic-tokens/interfaces/IGateway.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract RaffleAuctionMinter is AccessControl {
@@ -13,19 +12,17 @@ contract RaffleAuctionMinter is AccessControl {
 
     struct ClaimInfo {
         bool hasClaimed;
-        uint256 refundAmount;
-        uint256 nftCount;
+        uint64 refundAmount;
+        uint64 nftCount;
     }
 
     event Bid(address indexed buyer, uint256 bidPrice);
     event Claim(address indexed buyer, uint256 refundAmount, uint256 nftCount);
 
-    using Counters for Counters.Counter;
     using RaffleBidHeap for RaffleBidHeap.Heap;
-
     RaffleBidHeap.Heap private _heap;
-    Counters.Counter private _idCounter;
 
+    uint256 private _idCounter;
     address public gateway;
     address public nftAddress;
     address public paymentRecipient;
@@ -131,13 +128,13 @@ contract RaffleAuctionMinter is AccessControl {
 
         buyerBidCount[msg.sender][limitForBuyerID] += 1;
 
-        _idCounter.increment();
+        _idCounter += 1;
         RaffleBidHeap.Bid memory newBid = RaffleBidHeap.Bid(
-            _idCounter.current(),
+           uint32(_idCounter),
             msg.sender,
-            bidPrice,
-            block.timestamp,
-            generateRandomNumber(_idCounter.current())
+            uint64(bidPrice),
+            uint64(block.timestamp),
+            generateRandomNumber(_idCounter)
         );
 
         userBids[msg.sender].push(newBid);
@@ -213,7 +210,7 @@ contract RaffleAuctionMinter is AccessControl {
     }
 
     function getTotalBidsCnt() external view returns (uint256) {
-        return _idCounter.current();
+        return _idCounter;
     }
 
     function getBidAmtByBuyerId(
@@ -260,7 +257,7 @@ contract RaffleAuctionMinter is AccessControl {
         return ECDSA.toEthSignedMessageHash(criteriaMessageHash);
     }
 
-    function generateRandomNumber(uint256 userInput) public view returns (uint256) {
+    function generateRandomNumber(uint256 userInput) public view returns (uint64) {
         uint256 randomNumber = uint256(
             keccak256(
                 abi.encodePacked(
@@ -270,7 +267,7 @@ contract RaffleAuctionMinter is AccessControl {
                 )
             )
         );
-        return randomNumber;
+        return uint64(randomNumber);
     }
 
 }

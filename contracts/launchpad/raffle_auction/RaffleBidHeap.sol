@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 library RaffleBidHeap {
     struct Bid {
-        uint256 id;
+        uint32 id;
         address bidder;
-        uint256 price;
-        uint256 timestamp;
-        uint256 nonce;
+        uint64 price;
+        uint64 timestamp;
+        uint64 nonce;
     }
 
     struct Heap {
