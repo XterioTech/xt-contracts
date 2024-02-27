@@ -6,6 +6,7 @@ import "@openzeppelin/hardhat-upgrades";
 import "@openzeppelin/hardhat-upgrades";
 // import "@nomiclabs/hardhat-etherscan";
 import "hardhat-abi-exporter";
+import "hardhat-gas-reporter"
 import * as dotenv from "dotenv";
 dotenv.config();
 import "./extensions";
@@ -125,6 +126,11 @@ const config: HardhatUserConfig = {
       flat: false,
     },
   ],
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 21,
+    enabled: true
+  }
 };
 
 export default config;
