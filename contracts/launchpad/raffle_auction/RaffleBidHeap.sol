@@ -5,9 +5,9 @@ library RaffleBidHeap {
     struct Bid {
         uint32 id;
         address bidder;
-        uint64 price;
-        uint64 timestamp;
-        uint64 nonce;
+        uint32 timestamp;
+        uint32 nonce;
+        uint256 price;
     }
 
     struct Heap {

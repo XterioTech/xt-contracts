@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 library BidHeap {
     struct Bid {
-        uint256 id;
+        uint32 id;
         address bidder;
+        uint64 timestamp;
         uint256 price;
-        uint256 timestamp;
     }
 
     struct Heap {

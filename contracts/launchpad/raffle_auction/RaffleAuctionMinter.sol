@@ -12,8 +12,8 @@ contract RaffleAuctionMinter is AccessControl {
 
     struct ClaimInfo {
         bool hasClaimed;
-        uint64 refundAmount;
-        uint64 nftCount;
+        uint256 refundAmount;
+        uint256 nftCount;
     }
 
     event Bid(address indexed buyer, uint256 bidPrice);
@@ -132,9 +132,9 @@ contract RaffleAuctionMinter is AccessControl {
         RaffleBidHeap.Bid memory newBid = RaffleBidHeap.Bid(
            uint32(_idCounter),
             msg.sender,
-            uint64(bidPrice),
-            uint64(block.timestamp),
-            generateRandomNumber(_idCounter)
+            uint32(block.timestamp),
+            generateRandomNumber(_idCounter),
+            bidPrice
         );
 
         userBids[msg.sender].push(newBid);
@@ -257,7 +257,7 @@ contract RaffleAuctionMinter is AccessControl {
         return ECDSA.toEthSignedMessageHash(criteriaMessageHash);
     }
 
-    function generateRandomNumber(uint256 userInput) public view returns (uint64) {
+    function generateRandomNumber(uint256 userInput) public view returns (uint32) {
         uint256 randomNumber = uint256(
             keccak256(
                 abi.encodePacked(
@@ -267,7 +267,7 @@ contract RaffleAuctionMinter is AccessControl {
                 )
             )
         );
-        return uint64(randomNumber);
+        return uint32(randomNumber);
     }
 
 }
