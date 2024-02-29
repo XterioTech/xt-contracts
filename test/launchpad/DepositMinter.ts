@@ -28,15 +28,6 @@ const randomUser = async () => {
   return wallet;
 };
 
-function shuffleArray(origin: any[]) {
-  const array = [...origin];
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
-
 async function fixtureWithNFTCount(cnt: number) {
   const base = await nftTradingTestFixture();
   const [, , , admin, paymentReceiver, u1, u2] = await hre.ethers.getSigners();
@@ -107,6 +98,13 @@ describe("DepositMinter Deposit", function () {
     await expect(
       deposit({ depositMinter, user: u1 })
     ).to.be.revertedWith("DepositMinter: deposit time invalid");
+  });
+
+  it("cannot perform claimInfo operation until the auction ends", async function () {
+    const { depositMinter, admin, nftManager, u1 } = await loadFixture(basicFixture);
+    await expect(
+      depositMinter.getUserClaimInfos([u1.address])
+    ).to.be.revertedWith("DepositMinter: No claimInfo allowed until auction ends");
   });
 
   it("should not deposit if auction has ended", async function () {
