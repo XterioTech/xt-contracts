@@ -60,11 +60,15 @@ describe("Test TokenGateway Contract", function () {
     await erc721.waitForDeployment();
 
     const nftAddress = await erc721.getAddress()
+    expect(await gateway.isMinter(nftAddress, u1.address)).to.equal(false);
+    expect(await gateway.isMinter(nftAddress, u2.address)).to.equal(false);
     // Add minters to the NFT contract
     await gateway.addMinter(nftAddress, u1.address);
     await gateway.addMinter(nftAddress, u2.address);
     // Check if minters were added successfully
     expect(await gateway.minters(nftAddress)).to.deep.equal([u1.address, u2.address]);
+    expect(await gateway.isMinter(nftAddress, u1.address)).to.equal(true);
+    expect(await gateway.isMinter(nftAddress, u2.address)).to.equal(true);
     // minter mints to owner, u3
     await gateway.connect(u2).ERC721_mint(erc721, owner.address, 222);
     await gateway.connect(u2).ERC721_mint(erc721, owner.address, 223);

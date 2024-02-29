@@ -357,6 +357,10 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         return  _minters[_nftAddress].values();
     }
 
+    function isMinter(address _nftAddress, address _minter) public view returns (bool) {
+        return _minters[_nftAddress].contains(_minter);
+    }
+
     /**
      * @dev Check if address `_x` is in management.
      * @notice If `_x` is the previous manager and the grace period has not
