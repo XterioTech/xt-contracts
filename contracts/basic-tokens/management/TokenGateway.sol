@@ -184,13 +184,13 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
 
     function pause(
         address _contract
-    ) external override onlyWithMintAccess(_contract) {
+    ) external override onlyManagerOrGateway(_contract) {
         IPausable(_contract).pause();
     }
 
     function unpause(
         address _contract
-    ) external override onlyWithMintAccess(_contract) {
+    ) external override onlyManagerOrGateway(_contract) {
         IPausable(_contract).unpause();
     }
 
