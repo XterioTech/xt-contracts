@@ -141,6 +141,13 @@ describe("RaffleAuctionMinter Bid", function () {
     ).to.be.revertedWith("RaffleAuctionMinter: invalid signature");
   });
 
+  it("cannot perform claimInfo operation until the auction ends", async function () {
+    const { auctionMinter, admin, nftManager, u1 } = await loadFixture(basicFixture);
+    await expect(
+      auctionMinter.getUserClaimInfos([u1.address])
+    ).to.be.revertedWith("AuctionMinter: No claimInfo allowed until auction ends");
+  });
+
   it("should not place a bid if auction has ended", async function () {
     const { auctionMinter, admin, nftManager, u1 } = await loadFixture(basicFixture);
     await auctionMinter.connect(admin).setAuctionEndTime((await time.latest()) + duration);

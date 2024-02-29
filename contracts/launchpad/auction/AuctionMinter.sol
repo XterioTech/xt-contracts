@@ -144,6 +144,10 @@ contract AuctionMinter is AccessControl {
     }
 
     function claimInfo(address _a) public view returns (ClaimInfo memory info) {
+        require(
+            block.timestamp > auctionEndTime,
+            "AuctionMinter: No claimInfo allowed until auction ends"
+        );
         info.hasClaimed = hasClaimed[_a];
         info.refundAmount = 0;
         info.nftCount = 0;
