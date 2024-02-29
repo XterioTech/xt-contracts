@@ -68,6 +68,8 @@ export function getAddressForNetwork(contract: ContractOrAddrName, network: stri
 
 export function getTxOverridesForNetwork(network: string): { gasPrice?: number } {
   switch (network) {
+    case "bscTestnet":
+      return { gasPrice: 5000000000 };
     case "opbnb":
       return { gasPrice: 1000000008 };
     case "polygon":
