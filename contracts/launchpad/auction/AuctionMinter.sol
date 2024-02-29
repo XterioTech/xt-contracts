@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "./BidHeap.sol";
 import "../../basic-tokens/interfaces/IGateway.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract AuctionMinter is AccessControl {
@@ -20,12 +19,11 @@ contract AuctionMinter is AccessControl {
     event Bid(address indexed buyer, uint256 bidPrice);
     event Claim(address indexed buyer, uint256 refundAmount, uint256 nftCount);
 
-    using Counters for Counters.Counter;
     using BidHeap for BidHeap.Heap;
 
     BidHeap.Heap private _heap;
-    Counters.Counter private _idCounter;
 
+    uint256 private _idCounter;
     address public gateway;
     address public nftAddress;
     address public paymentRecipient;
@@ -131,12 +129,12 @@ contract AuctionMinter is AccessControl {
 
         buyerBidCount[msg.sender][limitForBuyerID] += 1;
 
-        _idCounter.increment();
+        _idCounter += 1;
         BidHeap.Bid memory newBid = BidHeap.Bid(
-            _idCounter.current(),
+            uint32(_idCounter),
             msg.sender,
-            bidPrice,
-            block.timestamp
+            uint64(block.timestamp),
+            bidPrice
         );
 
         userBids[msg.sender].push(newBid);
@@ -146,6 +144,10 @@ contract AuctionMinter is AccessControl {
     }
 
     function claimInfo(address _a) public view returns (ClaimInfo memory info) {
+        require(
+            block.timestamp > auctionEndTime,
+            "AuctionMinter: No claimInfo allowed until auction ends"
+        );
         info.hasClaimed = hasClaimed[_a];
         info.refundAmount = 0;
         info.nftCount = 0;
@@ -212,7 +214,7 @@ contract AuctionMinter is AccessControl {
     }
 
     function getTotalBidsCnt() external view returns (uint256) {
-        return _idCounter.current();
+        return _idCounter;
     }
 
     function getBidAmtByBuyerId(

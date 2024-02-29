@@ -156,6 +156,13 @@ describe("AuctionMinter Bid", function () {
     ).to.be.revertedWith("AuctionMinter: auction ended");
   });
 
+  it("cannot perform claimInfo operation until the auction ends", async function () {
+    const { auctionMinter, admin, nftManager, u1 } = await loadFixture(basicFixture);
+    await expect(
+      auctionMinter.getUserClaimInfos([u1.address])
+    ).to.be.revertedWith("AuctionMinter: No claimInfo allowed until auction ends");
+  });
+
   it("should not place a bid if maximum bid per user is reached", async function () {
     const { auctionMinter, admin, nftManager, u1, u2 } = await loadFixture(basicFixture);
     await auctionMinter.connect(admin).setAuctionEndTime((await time.latest()) + duration);
