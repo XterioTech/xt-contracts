@@ -145,7 +145,7 @@ describe("RaffleAuctionMinter Bid", function () {
     const { auctionMinter, admin, nftManager, u1 } = await loadFixture(basicFixture);
     await expect(
       auctionMinter.getUserClaimInfos([u1.address])
-    ).to.be.revertedWith("AuctionMinter: No claimInfo allowed until auction ends");
+    ).to.be.revertedWith("RaffleAuctionMinter: No claimInfo allowed until auction ends");
   });
 
   it("should not place a bid if auction has ended", async function () {
