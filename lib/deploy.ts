@@ -142,4 +142,15 @@ export const deployDepositMinter = async (
   return contract;
 };
 
+export const deployPalioVoter = async (
+  signer: AddressLike,
+  eventStartTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("PalioVoter");
+  const contract = await Contract.deploy(signer, eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
 

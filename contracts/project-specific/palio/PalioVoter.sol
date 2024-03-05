@@ -32,6 +32,12 @@ contract PalioVoter is Ownable {
     ) {
         signer = _signer;
         eventStartTime = _eventStartTime;
+        
+        votes = new uint256[](CHARACTER_CNT);
+    }
+
+    function setSigner(address _newSigner) external onlyOwner {
+        signer = _newSigner;
     }
 
     function chapterIndex() public view returns (uint256) {
