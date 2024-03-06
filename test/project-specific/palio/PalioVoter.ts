@@ -67,39 +67,40 @@ describe('PalioVoter', () => {
       const characterIdx = 1;
       const amount = 200;
       const totalAmount = 1000;
-
-      const signature = await signPalioVoter(signer, await v2.getAddress(), characterIdx, amount, totalAmount, eventStartTime - 500, palioVoter.target);
-      await expect(palioVoter.connect(v2).vote(characterIdx, amount, totalAmount, eventStartTime - 500, signature)).to.be.revertedWith('signature expired');
+      await expect(placeVote({ palioVoter, signer, voter: v1, characterIdx, amount, totalAmount, expire: eventStartTime - 50000 })).to.be.revertedWith('signature expired');
     });
 
     it('should not allow a user to vote for an eliminated character', async () => {
       const { palioVoter, signer, v1, v2, v3, eventStartTime } = await loadFixture(basicFixture);
-      const characterIdx = 2;
+      const characterIdx = 1;
       const amount = 300;
       const totalAmount = 1000;
 
-      await palioVoter.updateEliminatedCharacters(); // Eliminate character 2
-
-      const signature = await signPalioVoter(signer, await v3.getAddress(), characterIdx, amount, totalAmount, eventStartTime + 500, palioVoter.target);
-      await expect(palioVoter.connect(v3).vote(characterIdx, amount, totalAmount, eventStartTime + 500, signature)).to.be.revertedWith('This character has been eliminated.');
+      // 2 weeks after
+      await time.setNextBlockTimestamp(eventStartTime + 14 * 24 * 60 * 60);
+      await palioVoter.connect(v3).updateEliminatedCharacters(); // Eliminate character 2 (idx 1)
+      await expect(placeVote({ palioVoter, signer, voter: v1, characterIdx, amount, totalAmount })).to.be.revertedWith('This character has been eliminated');
     });
   });
 
   describe('updateEliminatedCharacters', () => {
     it('should eliminate the character with the least votes', async () => {
       const { palioVoter, signer, v1, v2, v3, eventStartTime } = await loadFixture(basicFixture);
-      await palioVoter.updateEliminatedCharacters();
-      const eliminatedCharacters = await palioVoter.getEliminatedCharacters();
-      expect(eliminatedCharacters).to.have.lengthOf(1);
-    });
-  });
+      const characterIdx = 1;
+      const characterIdx2 = 2;
+      const amount = 300;
+      const totalAmount = 1000;
 
-  describe('getEliminatedCharacters', () => {
-    it('should return the list of eliminated characters', async () => {
-      const { palioVoter, signer, v1, v2, v3, eventStartTime } = await loadFixture(basicFixture);
-      await palioVoter.updateEliminatedCharacters(); // Eliminate character with least votes
-      const eliminatedCharacters = await palioVoter.getEliminatedCharacters();
-      expect(eliminatedCharacters).to.have.lengthOf(1);
+      await placeVote({ palioVoter, signer, voter: v1, characterIdx, amount, totalAmount });
+      await placeVote({ palioVoter, signer, voter: v2, characterIdx: characterIdx2, amount, totalAmount });
+
+
+      expect(await palioVoter.getEliminatedCharacters()).to.have.lengthOf(0);
+
+      await time.setNextBlockTimestamp(eventStartTime + 7 * 24 * 60 * 60);
+
+      await placeVote({ palioVoter, signer, voter: v2, characterIdx: characterIdx2, amount, totalAmount, expire: eventStartTime + 7 * 24 * 60 * 60 + 500 });
+      expect(await palioVoter.getEliminatedCharacters()).to.have.lengthOf(1);
     });
   });
 });

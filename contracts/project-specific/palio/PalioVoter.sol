@@ -32,7 +32,7 @@ contract PalioVoter is Ownable {
     ) {
         signer = _signer;
         eventStartTime = _eventStartTime;
-        
+
         votes = new uint256[](CHARACTER_CNT);
     }
 
@@ -81,10 +81,10 @@ contract PalioVoter is Ownable {
             updateEliminatedCharacters();
         }
 
-        require(!eliminatedCharacters.contains(characterIdx), 'This character has been eliminated.');
+        require(!eliminatedCharacters.contains(characterIdx), 'This character has been eliminated');
 
-        require(amount > 0, 'Invalid vote amount.');
-        require(block.timestamp < expireTime, 'signature expired.');
+        require(amount > 0, 'Invalid vote amount');
+        require(block.timestamp < expireTime, 'signature expired');
 
         require(userVotedAmt[msg.sender] + amount <= totalAmount, 'Not enough votes');
         
@@ -107,7 +107,7 @@ contract PalioVoter is Ownable {
     }
 
     function updateEliminatedCharacters() public {
-        require(eliminatedCharacters.length() < chapterIndex(), 'Elimination for current chapter has already been done.');
+        require(eliminatedCharacters.length() < chapterIndex(), 'Elimination for current chapter has already been done');
         eliminatedCharacters.add(findMinCharacterId());
     }
 
