@@ -44,7 +44,7 @@
             "label": "_roles",
             "offset": 0,
             "slot": "1",
-            "type": "t_mapping(t_bytes32,t_struct(RoleData)3279_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)4461_storage)",
             "contract": "AccessControl",
             "src": "@openzeppelin/contracts/access/AccessControl.sol:56"
           },
@@ -106,11 +106,11 @@
             "label": "mapping(address => uint256)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_struct(RoleData)3279_storage)": {
+          "t_mapping(t_bytes32,t_struct(RoleData)4461_storage)": {
             "label": "mapping(bytes32 => struct AccessControl.RoleData)",
             "numberOfBytes": "32"
           },
-          "t_struct(RoleData)3279_storage": {
+          "t_struct(RoleData)4461_storage": {
             "label": "struct AccessControl.RoleData",
             "members": [
               {
@@ -293,6 +293,179 @@
             "numberOfBytes": "1"
           }
         }
+      }
+    },
+    "614741e185d200c136b0741d488d534f4b62e4b59020bca003b05f94ef2f8039": {
+      "address": "0x9cbf164420286357b268674F6Bf0fA29800D59aE",
+      "txHash": "0x9c962b323efbccd2bcae4bbd76a115aad390414be5acd5231546627c75d91e64",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)518_storage)",
+            "contract": "AccessControl",
+            "src": "@openzeppelin/contracts/access/AccessControl.sol:56"
+          },
+          {
+            "label": "_nftManager",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:40"
+          },
+          {
+            "label": "nftPreviousManager",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:41"
+          },
+          {
+            "label": "nftManagerGraceTimeStart",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:42"
+          },
+          {
+            "label": "operatorWhitelist",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:47"
+          },
+          {
+            "label": "_minters",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_mapping(t_address,t_struct(AddressSet)2950_storage)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:53"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(AddressSet)2950_storage)": {
+            "label": "mapping(address => struct EnumerableSet.AddressSet)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)518_storage)": {
+            "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AddressSet)2950_storage": {
+            "label": "struct EnumerableSet.AddressSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)2635_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(RoleData)518_storage": {
+            "label": "struct AccessControl.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Set)2635_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
       }
     }
   }
