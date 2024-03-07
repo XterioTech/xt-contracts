@@ -28,7 +28,7 @@ const main = async () => {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/launchpad/Refund.sol:Refund",
+        contract: "contracts/Distribute.sol:Distribute",
         constructorArguments: [await admin.getAddress()],
       });
     } catch (e) {
