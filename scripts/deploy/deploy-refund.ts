@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
-import { deployRefund } from "../../lib/deploy";
+import { deployDistribute } from "../../lib/deploy";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
@@ -9,7 +9,7 @@ const main = async () => {
   let address = process.env.verifyAddress;
 
   if (!address) {
-    console.info(colorize(Color.blue, `Deploy Refunder`));
+    console.info(colorize(Color.blue, `Deploy Distributer`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
@@ -17,11 +17,11 @@ const main = async () => {
     }
 
     console.info(`============================================================`);
-    console.info(`===================== Deploy Refunder ======================`);
+    console.info(`===================== Deploy Distributer ===================`);
     console.info(`============================================================`);
-    const refunder = await deployRefund(await admin.getAddress());
-    address = await refunder.getAddress();
-    console.info(`Refunder @ ${address}`);
+    const Distributer = await deployDistribute(await admin.getAddress());
+    address = await Distributer.getAddress();
+    console.info(`Distributer @ ${address}`);
   }
 
   if (!skipVerify) {

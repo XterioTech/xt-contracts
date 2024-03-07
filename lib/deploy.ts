@@ -119,13 +119,6 @@ export const deployRaffleAuctionMinter = async (
   return contract;
 };
 
-export const deployRefund = async (defaultOwner: AddressLike) => {
-  const Contract = await hre.ethers.getContractFactory("Refund");
-  const contract = await Contract.deploy(defaultOwner);
-  await contract.waitForDeployment();
-  return contract;
-};
-
 export const deployDepositMinter = async (
   admin: AddressLike,
   gateway: AddressLike,
@@ -142,4 +135,20 @@ export const deployDepositMinter = async (
   return contract;
 };
 
+export const deployPalioVoter = async (
+  signer: AddressLike,
+  eventStartTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("PalioVoter");
+  const contract = await Contract.deploy(signer, eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
 
+export const deployDistribute = async (defaultOwner: AddressLike) => {
+  const Contract = await hre.ethers.getContractFactory("Distribute");
+  const contract = await Contract.deploy(defaultOwner);
+  await contract.waitForDeployment();
+  return contract;
+};
