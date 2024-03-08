@@ -146,9 +146,12 @@ export const deployPalioVoter = async (
   return contract;
 };
 
-export const deployDistribute = async (defaultOwner: AddressLike) => {
+export const deployDistribute = async (
+  defaultOwner: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
   const Contract = await hre.ethers.getContractFactory("Distribute");
-  const contract = await Contract.deploy(defaultOwner);
+  const contract = await Contract.deploy(defaultOwner, txOverrides || {})
   await contract.waitForDeployment();
   return contract;
 };

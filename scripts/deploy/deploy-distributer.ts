@@ -2,6 +2,7 @@ import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployDistribute } from "../../lib/deploy";
+import { getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
@@ -19,7 +20,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`===================== Deploy Distributer ===================`);
     console.info(`============================================================`);
-    const Distributer = await deployDistribute(await admin.getAddress());
+    const Distributer = await deployDistribute(await admin.getAddress(), getTxOverridesForNetwork(hre.network.name));
     address = await Distributer.getAddress();
     console.info(`Distributer @ ${address}`);
   }
