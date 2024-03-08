@@ -48,6 +48,7 @@ export const safeManagerAddressMap: NetworkAddressMap = {
   goerli: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
   bscTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
   opbnbTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
+  xterioTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
 };
 
 const hyperMap = {
