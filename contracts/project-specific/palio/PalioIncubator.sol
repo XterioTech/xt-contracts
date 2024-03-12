@@ -13,6 +13,7 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
     event Boost(address indexed booster, uint256 indexed chapterIndex, uint256 boostPrice);
     event Regenerate(address indexed sender, uint count);
 
+    uint256 public constant MAX_CHAPTER = 4; // [0, 1, 2, 3]
     uint256 public constant CHAPTER_PERIOD = 7 * 24 * 60 * 60; // seconds for one chapter
     uint256 public constant DAY_PERIOD = 24 * 60 * 60; // seconds for one day
     uint256 public constant MAX_UTILITIES_PER_DAY = 3; // maximun utilities count claimed per day for each type
@@ -82,6 +83,7 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
         require(eggClaimed[msg.sender], "PalioIncubator: egg not claimed yet");
         require(!chatNFTClaimed[msg.sender][_chapterIndex], "PalioIncubator: already claimed in this chapter");
         require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
+        require(_chapterIndex < MAX_CHAPTER, "PalioIncubator: last chapter ended");
 
         chatNFTClaimed[msg.sender][_chapterIndex] = true;
         IGateway(gateway).ERC1155_mint(chatNFTAddress, msg.sender, _chapterIndex, 1,  "0x");
@@ -94,6 +96,7 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
         require(!boosted[msg.sender][_chapterIndex], "PalioIncubator: already boosted in this chapter");
         require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
         require(msg.value == BOOST_PRICE, "PalioIncubator: boost price not match");
+        require(_chapterIndex < MAX_CHAPTER, "PalioIncubator: last chapter ended");
 
         (bool sent, ) = payeeAddress.call{value: msg.value}("");
         require(sent, "PalioIncubator: Failed to send Ether to payee");
@@ -125,12 +128,10 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
     }
 
     function chapterIndex() private view returns (uint256) {
-        require(
-            block.timestamp >= eventStartTime,
-            "PalioIncubator: event not started"
-        );
+        require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
         return (block.timestamp - eventStartTime) / CHAPTER_PERIOD;
     }
+
 
     function claimedUtilities(
         address user,

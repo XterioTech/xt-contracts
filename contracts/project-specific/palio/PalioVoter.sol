@@ -42,13 +42,8 @@ contract PalioVoter is Ownable {
 
     function chapterIndex() public view returns (uint256) {
         require(block.timestamp >= eventStartTime, "PalioVoter: event not started");
-
         uint256 index = (block.timestamp - eventStartTime) / CHAPTER_PERIOD;
-        if (index >= CHARACTER_CNT - 1) {
-            return CHARACTER_CNT - 1;
-        } else {
-            return index;
-        }
+        return index < CHARACTER_CNT - 1 ? index : CHARACTER_CNT - 1;
     }
 
     function getVotedAmt(address voter) public view returns (uint256[] memory) {
