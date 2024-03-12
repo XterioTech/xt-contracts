@@ -112,8 +112,8 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
         (bool sent, ) = payeeAddress.call{value: msg.value}("");
         require(sent, "PalioIncubator: Failed to send Ether to payee");
 
-        regenerated[msg.sender] += 1;
-        emit Regenerate(msg.sender, hasRegenerated);
+        regenerated[msg.sender] = hasRegenerated + 1;
+        emit Regenerate(msg.sender, hasRegenerated + 1);
     }
 
     function dayIndex() private view returns (uint256) {
