@@ -9,9 +9,8 @@ import "../../basic-tokens/interfaces/IGateway.sol";
 contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
     event ClaimEgg(address indexed claimer, address nftaddress);
     event ClaimUtility(address indexed claimer, uint8 indexed utilityType);
-    event ClaimChatNFT(address indexed claimer, address nftaddress, uint256 indexed chapterIndex, uint256 amount);
+    event ClaimChatNFT(address indexed claimer, address nftaddress, uint256 indexed chapterIndex);
     event Boost(address indexed booster, uint256 indexed chapterIndex, uint256 boostPrice);
-    event Received(address sender, uint value);
     event Regenerate(address indexed sender, uint count);
 
     uint256 public constant CHAPTER_PERIOD = 7 * 24 * 60 * 60; // seconds for one chapter
@@ -21,6 +20,7 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
     uint256 public eventStartTime; // event start time
 
     address public gateway;
+    address public payeeAddress;
 
     address public eggAddress;
     // whether egg has claimed for the specific address
@@ -41,18 +41,16 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
 
     constructor(
         address _gateway,
+        address _payeeAddress,
         address _eggAddress,
         address _chatNFTAddress,
         uint256 _eventStartTime
     ) {
         eventStartTime = _eventStartTime;
         gateway = _gateway;
+        payeeAddress = _payeeAddress;
         eggAddress = _eggAddress;
         chatNFTAddress = _chatNFTAddress;
-    }
-
-    receive() external payable {
-        emit Received(msg.sender, msg.value);
     }
 
     function claimEgg() external nonReentrant {
@@ -87,7 +85,7 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
 
         chatNFTClaimed[msg.sender][_chapterIndex] = true;
         IGateway(gateway).ERC1155_mint(chatNFTAddress, msg.sender, _chapterIndex, 1,  "0x");
-        emit ClaimChatNFT(msg.sender, chatNFTAddress, _chapterIndex, 1);
+        emit ClaimChatNFT(msg.sender, chatNFTAddress, _chapterIndex);
     }
 
     function boost() external payable nonReentrant {
@@ -97,20 +95,25 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
         require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
         require(msg.value == BOOST_PRICE, "PalioIncubator: boost price not match");
 
+        (bool sent, ) = payeeAddress.call{value: msg.value}("");
+        require(sent, "PalioIncubator: Failed to send Ether to payee");
+
         boosted[msg.sender][_chapterIndex] = true;
         emit Boost(msg.sender, _chapterIndex, BOOST_PRICE);
     }
 
     function regenerate() external payable nonReentrant {
+        uint256 hasRegenerated = regenerated[msg.sender];
         require(eggClaimed[msg.sender], "PalioIncubator: egg not claimed yet");
-        require(regenerated[msg.sender] < MAX_REGENERATE, "PalioIncubator: regenerate limit exceeded");
+        require(hasRegenerated < MAX_REGENERATE, "PalioIncubator: regenerate limit exceeded");
         require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
-        require(msg.value == BOOST_PRICE * (regenerated[msg.sender] + 1), "PalioIncubator: regenerate price not match");
+        require(msg.value == BOOST_PRICE * (hasRegenerated + 1), "PalioIncubator: regenerate price not match");
 
-        // Increase user's regeneration count
+        (bool sent, ) = payeeAddress.call{value: msg.value}("");
+        require(sent, "PalioIncubator: Failed to send Ether to payee");
+
         regenerated[msg.sender] += 1;
-        // Emit Regenerate event
-        emit Regenerate(msg.sender, regenerated[msg.sender]);
+        emit Regenerate(msg.sender, hasRegenerated);
     }
 
     function dayIndex() private view returns (uint256) {
@@ -136,6 +139,16 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
     ) public view returns (uint256) {
         uint256 flag = (dayIdx << 8) & utilityType;
         return _claimedUtilities[user][flag];
+    }
+
+    function setClaimedUtilities(
+        address user,
+        uint8 utilityType,
+        uint256 dayIdx,
+        uint256 cnt
+    ) private {
+        uint256 flag = (dayIdx << 8) & utilityType;
+        _claimedUtilities[user][flag] = cnt;
     }
 
     function claimedUtilitiesToday(
@@ -166,25 +179,13 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
         return (chatNFTClaimedStatus, boostedStatus);
     }
 
-    function setClaimedUtilities(
-        address user,
-        uint8 utilityType,
-        uint256 dayIdx,
-        uint256 cnt
-    ) private {
-        uint256 flag = (dayIdx << 8) & utilityType;
-        _claimedUtilities[user][flag] = cnt;
-    }
-
     /************************************ Management Functions *************************************/
-    function withdrawTo(
-        address _to
-    ) external onlyOwner nonReentrant returns (bool sent) {
-        (sent, ) = _to.call{value: address(this).balance}("");
-    }
-
     function setGateway(address _gateway) external onlyOwner {
         gateway = _gateway;
+    }
+
+    function setPayeeAddress(address _payee) external onlyOwner {
+        payeeAddress = _payee;
     }
 
     function setEggAddress(address _addr) external onlyOwner {
