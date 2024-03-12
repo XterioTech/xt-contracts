@@ -120,10 +120,7 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
     }
 
     function dayIndex() private view returns (uint256) {
-        require(
-            block.timestamp >= eventStartTime,
-            "PalioIncubator: event not started"
-        );
+        require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
         return (block.timestamp - eventStartTime) / DAY_PERIOD;
     }
 
@@ -131,7 +128,6 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
         require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
         return (block.timestamp - eventStartTime) / CHAPTER_PERIOD;
     }
-
 
     function claimedUtilities(
         address user,
