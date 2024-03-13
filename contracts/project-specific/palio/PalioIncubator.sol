@@ -2,11 +2,11 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../../basic-tokens/interfaces/IGateway.sol";
 
 // Claim your Palio Egg and hatch it!
-contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable {
+contract PalioIncubator is Ownable, ReentrancyGuard {
     event ClaimEgg(address indexed claimer, address nftaddress);
     event ClaimUtility(address indexed claimer, uint8 indexed utilityType);
     event ClaimChatNFT(address indexed claimer, address nftaddress, uint256 indexed chapterIndex);
