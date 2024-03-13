@@ -17,6 +17,7 @@ export const tokenGatewayAddressMap: NetworkAddressMap = {
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
   bscTestnet: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   opbnbTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
+  xterioTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
 };
 
 export const marketplaceV2AddressMap: NetworkAddressMap = {
@@ -29,6 +30,7 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
   goerli: "0xDbE4F513dBc79dEF048Df54D870EfB3B2edE01cB",
   bscTestnet: "0x2973fAe1Db21e3f30dF115d43094E7B2d83251c5",
   opbnbTestnet: "0x1dDee87268F5AF34Ef2fBD128D0D8Dd21b67Bdb1",
+  xterioTestnet: "0x9A228181d15E57Ab4324B6903EcD847cADBF727B",
 };
 
 export const fansCreateAddressMap: NetworkAddressMap = {
@@ -83,5 +85,5 @@ export function getTxOverridesForNetwork(network: string): { gasPrice?: number }
 }
 
 export function isTestnet(network: string): boolean {
-  return network == "goerli" || network == "sepolia" || network == "bscTestnet" || network == "opbnbTestnet";
+  return network == "goerli" || network == "sepolia" || network == "bscTestnet" || network == "opbnbTestnet" || network == "xterioTestnet";
 }
