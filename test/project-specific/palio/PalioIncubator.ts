@@ -65,10 +65,42 @@ describe('PalioIncubator', () => {
       await incubator.connect(u1).claimUtility(1);
       await expect(incubator.connect(u1).claimUtility(1)).to.be.revertedWith("PalioIncubator: utility claim limit exceeded");
 
-      // await incubator.connect(u1).claimUtility(2);
-      // await incubator.connect(u1).claimUtility(2);
+      await incubator.connect(u1).claimUtility(2);
+      await incubator.connect(u1).claimUtility(2);
+      await incubator.connect(u1).claimUtility(2);
 
-      // await incubator.connect(u1).claimUtility(3);
+      await incubator.connect(u1).claimUtility(3);
+      await incubator.connect(u1).claimUtility(3);
+      await incubator.connect(u1).claimUtility(3);
+    });
+  });
+
+  describe('claimedUtilitiesTodayBatch', () => {
+    it('should return an array of claimed utilities count for a specific user and utility types for today', async () => {
+      const { incubator, u1 } = await loadFixture(baseFixture);
+      await incubator.connect(u1).claimEgg();
+      await incubator.connect(u1).claimUtility(1);
+      await incubator.connect(u1).claimUtility(2);
+
+      const claimedCounts = await incubator.claimedUtilitiesTodayBatch(u1.address, [1, 2]);
+
+      expect(claimedCounts).to.have.lengthOf(2);
+      expect(claimedCounts[0]).to.equal(1);
+      expect(claimedCounts[1]).to.equal(1);
+    });
+  });
+
+  describe('checkChapterStatus', () => {
+    it('should return the status of Chat NFT claimed and boosted for a specific user in the current chapter', async () => {
+      const { incubator, u1 } = await loadFixture(baseFixture);
+      await incubator.connect(u1).claimEgg();
+      await incubator.connect(u1).claimChatNFT();
+      await incubator.connect(u1).boost({ value: hre.ethers.parseEther("0.01") });
+
+      const [chatNFTClaimedStatus, boostedStatus] = await incubator.checkChapterStatus(u1.address);
+
+      expect(chatNFTClaimedStatus).to.be.true;
+      expect(boostedStatus).to.be.true;
     });
   });
 

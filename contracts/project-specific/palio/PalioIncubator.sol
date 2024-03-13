@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "../../basic-tokens/interfaces/IGateway.sol";
 
 // Claim your Palio Egg and hatch it!
-contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
+contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable {
     event ClaimEgg(address indexed claimer, address nftaddress);
     event ClaimUtility(address indexed claimer, uint8 indexed utilityType);
     event ClaimChatNFT(address indexed claimer, address nftaddress, uint256 indexed chapterIndex);
@@ -134,7 +134,7 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
         uint8 utilityType,
         uint256 dayIdx
     ) public view returns (uint256) {
-        uint256 flag = (dayIdx << 8) & utilityType;
+        uint256 flag = (dayIdx << 8) | utilityType;
         return _claimedUtilities[user][flag];
     }
 
@@ -144,7 +144,7 @@ contract PalioIncubator is Ownable, ReentrancyGuardUpgradeable{
         uint256 dayIdx,
         uint256 cnt
     ) private {
-        uint256 flag = (dayIdx << 8) & utilityType;
+        uint256 flag = (dayIdx << 8) | utilityType;
         _claimedUtilities[user][flag] = cnt;
     }
 
