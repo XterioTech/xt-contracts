@@ -11,14 +11,14 @@ contract PalioVoter is Ownable {
     uint256 public constant CHAPTER_PERIOD = 7 * 24 * 60 * 60; // seconds for one chapter
 
     uint256 public constant CHARACTER_CNT = 5;
-	
+
     address public signer;
 
     uint256[] public votes;
 
     // address => character_idx => count
     mapping(address => mapping(uint256 => uint256)) public votedAmt;
-    
+
     // address => all characters count
     mapping(address => uint256) public userVotedAmt;
 
@@ -26,10 +26,15 @@ contract PalioVoter is Ownable {
 
     EnumerableSet.UintSet eliminatedCharacters;
 
-    constructor(
-        address _signer, 
-        uint256 _eventStartTime
-    ) {
+    event CharacterEliminated(uint256 characterIdx);
+    event Vote(
+        address indexed voter,
+        uint256 characterIdx,
+        uint256 amount,
+        uint256 totalAmount
+    );
+
+    constructor(address _signer, uint256 _eventStartTime) {
         signer = _signer;
         eventStartTime = _eventStartTime;
 
@@ -41,7 +46,10 @@ contract PalioVoter is Ownable {
     }
 
     function chapterIndex() public view returns (uint256) {
-        require(block.timestamp >= eventStartTime, "PalioVoter: event not started");
+        require(
+            block.timestamp >= eventStartTime,
+            "PalioVoter: event not started"
+        );
         uint256 index = (block.timestamp - eventStartTime) / CHAPTER_PERIOD;
         return index < CHARACTER_CNT - 1 ? index : CHARACTER_CNT - 1;
     }
@@ -56,14 +64,14 @@ contract PalioVoter is Ownable {
         return result;
     }
 
-	function vote(
+    function vote(
         uint256 characterIdx,
         uint256 amount,
         uint256 totalAmount,
         uint256 expireTime,
         bytes calldata _sig
     ) external {
-		// Check signature validity
+        // Check signature validity
         bytes32 inputHash = _getInputHash(
             characterIdx,
             amount,
@@ -76,17 +84,25 @@ contract PalioVoter is Ownable {
             updateEliminatedCharacters();
         }
 
-        require(!eliminatedCharacters.contains(characterIdx), 'This character has been eliminated');
+        require(
+            !eliminatedCharacters.contains(characterIdx),
+            "This character has been eliminated"
+        );
 
-        require(amount > 0, 'Invalid vote amount');
-        require(block.timestamp < expireTime, 'signature expired');
+        require(amount > 0, "Invalid vote amount");
+        require(block.timestamp < expireTime, "signature expired");
 
-        require(userVotedAmt[msg.sender] + amount <= totalAmount, 'Not enough votes');
-        
+        require(
+            userVotedAmt[msg.sender] + amount <= totalAmount,
+            "Not enough votes"
+        );
+
         votes[characterIdx] += amount;
         votedAmt[msg.sender][characterIdx] += amount;
         userVotedAmt[msg.sender] += amount;
-	}
+
+        emit Vote(msg.sender, characterIdx, amount, totalAmount);
+    }
 
     function findMinCharacterId() public view returns (uint256) {
         uint256 minVotes = type(uint256).max;
@@ -102,14 +118,22 @@ contract PalioVoter is Ownable {
     }
 
     function updateEliminatedCharacters() public {
-        require(eliminatedCharacters.length() < chapterIndex(), 'Elimination for current chapter has already been done');
-        eliminatedCharacters.add(findMinCharacterId());
+        require(
+            eliminatedCharacters.length() < chapterIndex(),
+            "Elimination for current chapter has already been done"
+        );
+
+        uint256 minCharacterIdx = findMinCharacterId();
+        eliminatedCharacters.add(minCharacterIdx);
+        emit CharacterEliminated(minCharacterIdx);
     }
 
     function getEliminatedCharacters() public view returns (uint256[] memory) {
         if (eliminatedCharacters.length() < chapterIndex()) {
             uint256 minCharacterIdx = findMinCharacterId();
-            uint256[] memory eliminatedIds = new uint256[](eliminatedCharacters.length() + 1);
+            uint256[] memory eliminatedIds = new uint256[](
+                eliminatedCharacters.length() + 1
+            );
             for (uint256 i = 0; i < eliminatedCharacters.length(); i++) {
                 eliminatedIds[i] = eliminatedCharacters.at(i);
             }
@@ -119,7 +143,7 @@ contract PalioVoter is Ownable {
         return eliminatedCharacters.values();
     }
 
-	function _getInputHash(
+    function _getInputHash(
         uint256 characterIdx,
         uint256 amount,
         uint256 totalAmount,
@@ -130,7 +154,7 @@ contract PalioVoter is Ownable {
                 abi.encodePacked(
                     msg.sender,
                     characterIdx,
-					amount,
+                    amount,
                     totalAmount,
                     expireTime,
                     block.chainid,

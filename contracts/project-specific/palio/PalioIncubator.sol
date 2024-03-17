@@ -9,8 +9,16 @@ import "../../basic-tokens/interfaces/IGateway.sol";
 contract PalioIncubator is Ownable, ReentrancyGuard {
     event ClaimEgg(address indexed claimer, address nftaddress);
     event ClaimUtility(address indexed claimer, uint8 indexed utilityType);
-    event ClaimChatNFT(address indexed claimer, address nftaddress, uint256 indexed chapterIndex);
-    event Boost(address indexed booster, uint256 indexed chapterIndex, uint256 boostPrice);
+    event ClaimChatNFT(
+        address indexed claimer,
+        address nftaddress,
+        uint256 indexed chapterIndex
+    );
+    event Boost(
+        address indexed booster,
+        uint256 indexed chapterIndex,
+        uint256 boostPrice
+    );
     event Regenerate(address indexed sender, uint count);
 
     uint256 public constant MAX_CHAPTER = 4; // [0, 1, 2, 3]
@@ -32,8 +40,8 @@ contract PalioIncubator is Ownable, ReentrancyGuard {
     address public chatNFTAddress;
     // whether chat NFT has claimed for the specific address in every chapter
     mapping(address => mapping(uint256 => bool)) public chatNFTClaimed;
-    
-    uint256 public constant BOOST_PRICE = 0.01 ether;   
+
+    uint256 public constant BOOST_PRICE = 0.01 ether;
     // whether has boosted for the specific address in every chapter
     mapping(address => mapping(uint256 => bool)) public boosted;
 
@@ -56,7 +64,10 @@ contract PalioIncubator is Ownable, ReentrancyGuard {
 
     function claimEgg() external nonReentrant {
         require(!eggClaimed[msg.sender], "PalioIncubator: already claimed");
-        require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
+        require(
+            block.timestamp >= eventStartTime,
+            "PalioIncubator: event not started"
+        );
 
         eggClaimed[msg.sender] = true;
 
@@ -66,7 +77,10 @@ contract PalioIncubator is Ownable, ReentrancyGuard {
 
     function claimUtility(uint8 utilityType) external nonReentrant {
         require(eggClaimed[msg.sender], "PalioIncubator: egg not claimed yet");
-        require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
+        require(
+            block.timestamp >= eventStartTime,
+            "PalioIncubator: event not started"
+        );
 
         uint256 dayIdx = dayIndex();
         uint256 claimedCnt = claimedUtilities(msg.sender, utilityType, dayIdx);
@@ -74,29 +88,56 @@ contract PalioIncubator is Ownable, ReentrancyGuard {
             claimedCnt < MAX_UTILITIES_PER_DAY,
             "PalioIncubator: utility claim limit exceeded"
         );
-        setClaimedUtilities(msg.sender, utilityType, dayIdx, claimedCnt+1);
+        setClaimedUtilities(msg.sender, utilityType, dayIdx, claimedCnt + 1);
         emit ClaimUtility(msg.sender, utilityType);
     }
 
     function claimChatNFT() external nonReentrant {
         uint256 _chapterIndex = chapterIndex();
         require(eggClaimed[msg.sender], "PalioIncubator: egg not claimed yet");
-        require(!chatNFTClaimed[msg.sender][_chapterIndex], "PalioIncubator: already claimed in this chapter");
-        require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
-        require(_chapterIndex < MAX_CHAPTER, "PalioIncubator: last chapter ended");
+        require(
+            !chatNFTClaimed[msg.sender][_chapterIndex],
+            "PalioIncubator: already claimed in this chapter"
+        );
+        require(
+            block.timestamp >= eventStartTime,
+            "PalioIncubator: event not started"
+        );
+        require(
+            _chapterIndex < MAX_CHAPTER,
+            "PalioIncubator: last chapter ended"
+        );
 
         chatNFTClaimed[msg.sender][_chapterIndex] = true;
-        IGateway(gateway).ERC1155_mint(chatNFTAddress, msg.sender, _chapterIndex, 1,  "0x");
+        IGateway(gateway).ERC1155_mint(
+            chatNFTAddress,
+            msg.sender,
+            _chapterIndex,
+            1,
+            "0x"
+        );
         emit ClaimChatNFT(msg.sender, chatNFTAddress, _chapterIndex);
     }
 
     function boost() external payable nonReentrant {
         uint256 _chapterIndex = chapterIndex();
         require(eggClaimed[msg.sender], "PalioIncubator: egg not claimed yet");
-        require(!boosted[msg.sender][_chapterIndex], "PalioIncubator: already boosted in this chapter");
-        require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
-        require(msg.value == BOOST_PRICE, "PalioIncubator: boost price not match");
-        require(_chapterIndex < MAX_CHAPTER, "PalioIncubator: last chapter ended");
+        require(
+            !boosted[msg.sender][_chapterIndex],
+            "PalioIncubator: already boosted in this chapter"
+        );
+        require(
+            block.timestamp >= eventStartTime,
+            "PalioIncubator: event not started"
+        );
+        require(
+            msg.value == BOOST_PRICE,
+            "PalioIncubator: boost price not match"
+        );
+        require(
+            _chapterIndex < MAX_CHAPTER,
+            "PalioIncubator: last chapter ended"
+        );
 
         (bool sent, ) = payeeAddress.call{value: msg.value}("");
         require(sent, "PalioIncubator: Failed to send Ether to payee");
@@ -108,9 +149,18 @@ contract PalioIncubator is Ownable, ReentrancyGuard {
     function regenerate() external payable nonReentrant {
         uint256 hasRegenerated = regenerated[msg.sender];
         require(eggClaimed[msg.sender], "PalioIncubator: egg not claimed yet");
-        require(hasRegenerated < MAX_REGENERATE, "PalioIncubator: regenerate limit exceeded");
-        require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
-        require(msg.value == BOOST_PRICE * (hasRegenerated + 1), "PalioIncubator: regenerate price not match");
+        require(
+            hasRegenerated < MAX_REGENERATE,
+            "PalioIncubator: regenerate limit exceeded"
+        );
+        require(
+            block.timestamp >= eventStartTime,
+            "PalioIncubator: event not started"
+        );
+        require(
+            msg.value == BOOST_PRICE * (hasRegenerated + 1),
+            "PalioIncubator: regenerate price not match"
+        );
 
         (bool sent, ) = payeeAddress.call{value: msg.value}("");
         require(sent, "PalioIncubator: Failed to send Ether to payee");
@@ -120,12 +170,18 @@ contract PalioIncubator is Ownable, ReentrancyGuard {
     }
 
     function dayIndex() private view returns (uint256) {
-        require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
+        require(
+            block.timestamp >= eventStartTime,
+            "PalioIncubator: event not started"
+        );
         return (block.timestamp - eventStartTime) / DAY_PERIOD;
     }
 
     function chapterIndex() private view returns (uint256) {
-        require(block.timestamp >= eventStartTime, "PalioIncubator: event not started");
+        require(
+            block.timestamp >= eventStartTime,
+            "PalioIncubator: event not started"
+        );
         return (block.timestamp - eventStartTime) / CHAPTER_PERIOD;
     }
 
@@ -156,19 +212,21 @@ contract PalioIncubator is Ownable, ReentrancyGuard {
     }
 
     function claimedUtilitiesTodayBatch(
-        address user, 
+        address user,
         uint8[] calldata utilityTypes
     ) public view returns (uint256[] memory) {
         uint256 dayIdx = dayIndex();
         uint256[] memory claimedCounts = new uint256[](utilityTypes.length);
-        
+
         for (uint256 i = 0; i < utilityTypes.length; i++) {
             claimedCounts[i] = claimedUtilities(user, utilityTypes[i], dayIdx);
         }
         return claimedCounts;
     }
 
-    function checkChapterStatus(address user) public view returns (bool chatNFTClaimedStatus, bool boostedStatus) {
+    function checkChapterStatus(
+        address user
+    ) public view returns (bool chatNFTClaimedStatus, bool boostedStatus) {
         uint256 _chapterIndex = chapterIndex();
         chatNFTClaimedStatus = chatNFTClaimed[user][_chapterIndex];
         boostedStatus = boosted[user][_chapterIndex];

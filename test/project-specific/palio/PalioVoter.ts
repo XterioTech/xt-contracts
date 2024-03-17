@@ -61,7 +61,16 @@ describe('PalioVoter', () => {
       const votedAmt = await palioVoter.getVotedAmt(await v1.getAddress());
       expect(votedAmt[characterIdx]).to.equal(amount);
     });
+    it('should emit a Vote event when a user votes for a character', async () => {
+      const { palioVoter, signer, v1, eventStartTime } = await loadFixture(basicFixture);
+      const characterIdx = 0;
+      const amount = 100;
+      const totalAmount = 1000;
 
+      await expect(placeVote({ palioVoter, signer, voter: v1, characterIdx, amount, totalAmount }))
+        .to.emit(palioVoter, 'Vote')
+        .withArgs(await v1.getAddress(), characterIdx, amount, totalAmount);
+    });
     it('should not allow a user to vote with an expired signature', async () => {
       const { palioVoter, signer, v1, v2, eventStartTime } = await loadFixture(basicFixture);
       const characterIdx = 1;
