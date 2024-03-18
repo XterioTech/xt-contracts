@@ -19,7 +19,6 @@ import "../interfaces/IPausable.sol";
 import "../interfaces/IGatewayGuardedOwnable.sol";
 
 contract TokenGateway is Initializable, AccessControl, IGateway {
-    
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /********************************************************************
@@ -50,7 +49,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
      * Store a one-to-many relationship between a certain nft contract
      * and some minter addresses.
      */
-    mapping (address => EnumerableSet.AddressSet) _minters;
+    mapping(address => EnumerableSet.AddressSet) _minters;
 
     event TransferGatewayOwnership(
         address indexed previousGatewayManager,
@@ -75,9 +74,9 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
     // only Manager or Whitelist or Minter
     modifier onlyWithMintAccess(address _tokenContract) {
         require(
-            isInManagement(msg.sender, _tokenContract)
-                || operatorWhitelist[msg.sender] 
-                || _minters[_tokenContract].contains(msg.sender),
+            isInManagement(msg.sender, _tokenContract) ||
+                operatorWhitelist[msg.sender] ||
+                _minters[_tokenContract].contains(msg.sender),
             "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
         );
         _;
@@ -85,13 +84,14 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
 
     modifier onlyManagerOrGateway(address _tokenContract) {
         require(
-            isInManagement(msg.sender, _tokenContract) 
-                || hasRole(GATEWAY_MANAGER_ROLE, msg.sender),
+            isInManagement(msg.sender, _tokenContract) ||
+                hasRole(GATEWAY_MANAGER_ROLE, msg.sender),
             "TokenGateway: caller is not manager of the token contract and is not gateway manager"
         );
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
@@ -244,7 +244,7 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
     }
 
     function removeMinter(
-        address _tokenAddress, 
+        address _tokenAddress,
         address minter
     ) external onlyManagerOrGateway(_tokenAddress) {
         _minters[_tokenAddress].remove(minter);
@@ -357,11 +357,16 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         return configuredManager;
     }
 
-    function minters(address _nftAddress) public view returns (address[] memory) {
-        return  _minters[_nftAddress].values();
+    function minters(
+        address _nftAddress
+    ) public view returns (address[] memory) {
+        return _minters[_nftAddress].values();
     }
 
-    function isMinter(address _nftAddress, address _minter) public view returns (bool) {
+    function isMinter(
+        address _nftAddress,
+        address _minter
+    ) public view returns (bool) {
         return _minters[_nftAddress].contains(_minter);
     }
 

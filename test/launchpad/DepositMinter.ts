@@ -6,8 +6,6 @@ import { DepositMinter } from "../../typechain-types";
 import { nftTradingTestFixture } from "../common_fixtures";
 import { loadFixture, mine, setBalance, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 
-const initialStartTime = 1903490000;
-const initialEndTime = 1903490000;
 const duration = 3600;
 const nftCount = 10;
 const nftCountLarge = 300;
@@ -49,16 +47,13 @@ async function fixtureWithNFTCount(cnt: number) {
     gatewayAddress,
     nftAddress,
     paymentReceiver.address,
-    initialStartTime,
-    initialEndTime,
+    (await time.latest()),
+    (await time.latest()) + duration,
     hre.ethers.parseEther('0.01')
   )
 
   await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(await depositMinter.getAddress());
   expect(await base.gateway.nftManager(nftAddress)).equal(base.nftManager.address, "nftManager matched");
-
-  await depositMinter.connect(admin).setAuctionStartTime((await time.latest()));
-  await depositMinter.connect(admin).setAuctionEndTime((await time.latest()) + duration);
 
   return {
     ...base,
@@ -80,7 +75,7 @@ async function largeFixture() {
 
 describe("DepositMinter Deposit", function () {
   it("should deposit", async function () {
-    const { depositMinter, admin, nftManager, u1 } = await loadFixture(basicFixture);
+    const { depositMinter, u1 } = await loadFixture(basicFixture);
     expect(await depositMinter.getBidAmtByBuyerId(u1.address)).to.equal(0);
 
     await deposit({ depositMinter, user: u1 })
@@ -101,16 +96,16 @@ describe("DepositMinter Deposit", function () {
   });
 
   it("should not deposit if auction has not started", async function () {
-    const { depositMinter, admin, nftManager, u1 } = await loadFixture(basicFixture);
+    const { depositMinter, admin, u1 } = await loadFixture(basicFixture);
 
-    await depositMinter.connect(admin).setAuctionStartTime((await time.latest()) + duration);
+    await depositMinter.connect(admin).setAuctionStartTime((await time.latest()) + duration / 2);
     await expect(
       deposit({ depositMinter, user: u1 })
     ).to.be.revertedWith("DepositMinter: deposit time invalid");
   });
 
   it("should not deposit if auction has ended", async function () {
-    const { depositMinter, admin, nftManager, u1 } = await loadFixture(basicFixture);
+    const { depositMinter, u1 } = await loadFixture(basicFixture);
 
     await time.increase(duration + 600);
     await expect(
@@ -119,7 +114,7 @@ describe("DepositMinter Deposit", function () {
   });
 
   it("should not deposit if maximum deposit per user is reached", async function () {
-    const { depositMinter, admin, nftManager, u1, u2 } = await loadFixture(basicFixture);
+    const { depositMinter, u1 } = await loadFixture(basicFixture);
     await deposit({ depositMinter, user: u1 })
     await expect(deposit({ depositMinter, user: u1 })).to.be.revertedWith("DepositMinter: buyer limit exceeded");
   });
@@ -127,7 +122,7 @@ describe("DepositMinter Deposit", function () {
 
 describe("DepositMinter Claim", function () {
   it("normal claim", async function () {
-    const { depositMinter, admin, erc721, nftManager, u1 } = await loadFixture(basicFixture);
+    const { depositMinter, admin, erc721, u1 } = await loadFixture(basicFixture);
 
     // deposit 
     const users = [];
@@ -209,7 +204,7 @@ describe("DepositMinter Large Dataset", function () {
   this.timeout(14400000);
 
   it.skip("large number of deposits", async function () {
-    const { depositMinter, admin, erc721, nftManager, paymentReceiver } = await loadFixture(largeFixture);
+    const { depositMinter, admin, erc721, paymentReceiver } = await loadFixture(largeFixture);
 
     const users = [];
     const totalBids = Math.floor(nftCountLarge * 1.1);

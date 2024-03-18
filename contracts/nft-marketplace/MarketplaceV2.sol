@@ -122,6 +122,7 @@ contract MarketplaceV2 is
 
     event SetGateway(address indexed gateway);
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
