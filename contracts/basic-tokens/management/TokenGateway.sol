@@ -92,6 +92,10 @@ contract TokenGateway is Initializable, AccessControl, IGateway {
         _;
     }
 
+    constructor() {
+        _disableInitializers();
+    }
+
     /**
      * NFTGateway is an upgradeable function.
      * When initializing the gateway, a gateway admin address

@@ -122,6 +122,10 @@ contract MarketplaceV2 is
 
     event SetGateway(address indexed gateway);
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         address _gateway,
         address _serviceFeeRecipient
@@ -342,6 +346,10 @@ contract MarketplaceV2 is
                 "MarketplaceV2: buy order not filled"
             );
         }
+        
+        fills[seller][sellerMessageHash] += fill;
+        fills[buyer][buyerMessageHash] += fill;
+        
         executeTransfers(
             transactionType,
             order,
@@ -351,8 +359,6 @@ contract MarketplaceV2 is
             sellerMetadata.recipient,
             buyerMetadata.recipient
         );
-        fills[seller][sellerMessageHash] += fill;
-        fills[buyer][buyerMessageHash] += fill;
 
         /*  LOGS  */
         emit MatchOrder(
@@ -423,6 +429,9 @@ contract MarketplaceV2 is
             "MarketplaceV2: invalid payment method"
         );
 
+        require(order.serviceFee < BASE, "MarketplaceV2: invalid serviceFee");
+        require(order.royaltyFee < BASE, "MarketplaceV2: invalid royaltyFee");
+
         require(
             sellerMetadata.sellOrBuy == true,
             "MarketplaceV2: seller should sell"
@@ -474,6 +483,8 @@ contract MarketplaceV2 is
                     sellerMetadata.maximumFill == 1,
                 "MarketplaceV2: invalid maximumFill"
             );
+        } else {
+            require(transactionType == TRANSACT_ERC1155, "MarketplaceV2: invalid transactionType");
         }
     }
 

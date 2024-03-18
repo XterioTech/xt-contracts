@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
+contract DepositMinter is AccessControl, ReentrancyGuard {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     struct Bid {
         uint256 id;
@@ -113,11 +113,12 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
     }
 
     function setAuctionEndTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
-        require(_t > block.timestamp, "DepositMinter: invalid timestamp");
+        require(_t > block.timestamp && auctionStartTime < _t, "DepositMinter: invalid timestamp");
         auctionEndTime = _t;
     }
 
     function setAuctionStartTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
+        require(_t < auctionEndTime, "DepositMinter: invalid timestamp");
         auctionStartTime = _t;
     }
 
