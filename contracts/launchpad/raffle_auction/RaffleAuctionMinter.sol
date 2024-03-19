@@ -33,7 +33,6 @@ contract RaffleAuctionMinter is AccessControl {
     // bidder => limitForBuyerID => bidAmount
     mapping(address => mapping(uint256 => uint256)) buyerBidCount;
 
-    uint256 public highestBidPrice;
     bool public paymentSent;
 
     constructor(
