@@ -481,7 +481,7 @@ contract MarketplaceV2 is
         if (transactionType == TRANSACT_ERC721) {
             require(
                 sellerMetadata.maximumFill == 1 &&
-                    sellerMetadata.maximumFill == 1,
+                    buyerMetadata.maximumFill == 1,
                 "MarketplaceV2: invalid maximumFill"
             );
         } else {
