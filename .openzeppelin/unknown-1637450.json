@@ -1,21 +1,25 @@
 {
   "manifestVersion": "3.2",
+  "admin": {
+    "address": "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
+    "txHash": "0x225042307c746a7107579cd5c0f0c234972a0ab7143aebdb7804348e124dc4cc"
+  },
   "proxies": [
     {
-      "address": "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
-      "txHash": "0xf8a0e6c6a939cfb0852f20fb5fbf34b8cc06d0006c82a13a7cb7bde71bd32f9e",
+      "address": "0xB6Fe7Bc1c8836983C0643D5869c42bD27aCAAedD",
+      "txHash": "0xa7b3d2e76e43bdbca9beb1ac1a1402901c71c4f1e3c0b36b605aa0c0cffd02ea",
       "kind": "transparent"
     },
     {
       "address": "0x9A228181d15E57Ab4324B6903EcD847cADBF727B",
-      "txHash": "0x58e75c6bd18fa3600738a2cb004e64ade82d69f9e7fa34038ce748ed51405dc9",
+      "txHash": "0x76c9ade6d05afc1d2499beaaba0d3e01ced144efec4ea688305ccaac699bd3bd",
       "kind": "transparent"
     }
   ],
   "impls": {
     "614741e185d200c136b0741d488d534f4b62e4b59020bca003b05f94ef2f8039": {
       "address": "0x38f9e50EBF26e4E01db00aE5238e725d8647b115",
-      "txHash": "0x415e003687762c1cd25c9f4cc924fe1dd7694c179d6979222911cba7a29a95d4",
+      "txHash": "0xeffe812ca4f010432fb03db0fd08c0a4d09aa86fb5ac61ec597e9b9254d7d921",
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [
@@ -40,7 +44,7 @@
             "label": "_roles",
             "offset": 0,
             "slot": "1",
-            "type": "t_mapping(t_bytes32,t_struct(RoleData)518_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)4461_storage)",
             "contract": "AccessControl",
             "src": "@openzeppelin/contracts/access/AccessControl.sol:56"
           },
@@ -80,7 +84,7 @@
             "label": "_minters",
             "offset": 0,
             "slot": "6",
-            "type": "t_mapping(t_address,t_struct(AddressSet)2950_storage)",
+            "type": "t_mapping(t_address,t_struct(AddressSet)12995_storage)",
             "contract": "TokenGateway",
             "src": "contracts/basic-tokens/management/TokenGateway.sol:53"
           }
@@ -110,7 +114,7 @@
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(AddressSet)2950_storage)": {
+          "t_mapping(t_address,t_struct(AddressSet)12995_storage)": {
             "label": "mapping(address => struct EnumerableSet.AddressSet)",
             "numberOfBytes": "32"
           },
@@ -118,7 +122,7 @@
             "label": "mapping(address => uint256)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_struct(RoleData)518_storage)": {
+          "t_mapping(t_bytes32,t_struct(RoleData)4461_storage)": {
             "label": "mapping(bytes32 => struct AccessControl.RoleData)",
             "numberOfBytes": "32"
           },
@@ -126,19 +130,19 @@
             "label": "mapping(bytes32 => uint256)",
             "numberOfBytes": "32"
           },
-          "t_struct(AddressSet)2950_storage": {
+          "t_struct(AddressSet)12995_storage": {
             "label": "struct EnumerableSet.AddressSet",
             "members": [
               {
                 "label": "_inner",
-                "type": "t_struct(Set)2635_storage",
+                "type": "t_struct(Set)12680_storage",
                 "offset": 0,
                 "slot": "0"
               }
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(RoleData)518_storage": {
+          "t_struct(RoleData)4461_storage": {
             "label": "struct AccessControl.RoleData",
             "members": [
               {
@@ -156,7 +160,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(Set)2635_storage": {
+          "t_struct(Set)12680_storage": {
             "label": "struct EnumerableSet.Set",
             "members": [
               {
@@ -182,13 +186,12 @@
             "label": "uint8",
             "numberOfBytes": "1"
           }
-        },
-        "namespaces": {}
+        }
       }
     },
     "207ca27a116f808a41dd3a8f29893970072b5cc0c1c8edba2017c8363418b069": {
       "address": "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
-      "txHash": "0x873da5b99aafb8d0bece7b1da06859153e5849749690dc28043d4a0883dd0d6a",
+      "txHash": "0x9e17f0b3f4d3cf7091155f4966b323b240ac6aad69027ec72bc720facbbed64b",
       "layout": {
         "solcVersion": "0.8.19",
         "storage": [

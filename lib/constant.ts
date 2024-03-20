@@ -17,7 +17,7 @@ export const tokenGatewayAddressMap: NetworkAddressMap = {
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
   bscTestnet: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   opbnbTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
-  xterioTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
+  xterioTestnet: "0xB6Fe7Bc1c8836983C0643D5869c42bD27aCAAedD",
 };
 
 export const marketplaceV2AddressMap: NetworkAddressMap = {
