@@ -22,7 +22,7 @@ contract BasicERC20 is
 
     event SetTransferWhitelisted(address addr, bool whitelisted);
 
-    uint256 public constant VERSION_BasicERC20 = 20230912;
+    uint256 public constant VERSION_BasicERC20 = 20240320;
 
     uint8 private _decimals;
 
