@@ -224,6 +224,16 @@ contract PalioIncubator is Ownable, ReentrancyGuard {
         return claimedCounts;
     }
 
+    function checkChatNFTClaimStatusBatch(
+        address user
+    ) external view returns (bool[] memory) {
+        bool[] memory claimStatus = new bool[](MAX_CHAPTER);
+        for (uint256 i = 0; i < MAX_CHAPTER; i++) {
+            claimStatus[i] = chatNFTClaimed[user][i];
+        }
+        return claimStatus;
+    }
+
     function checkChapterStatus(
         address user
     ) public view returns (bool chatNFTClaimedStatus, bool boostedStatus) {

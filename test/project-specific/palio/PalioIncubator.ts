@@ -118,6 +118,21 @@ describe('PalioIncubator', () => {
       await incubator.connect(u1).claimChatNFT();
       await expect(incubator.connect(u1).claimChatNFT()).to.be.revertedWith("PalioIncubator: already claimed in this chapter");
     });
+
+
+    it('should return an array of chatNFT claim status for a specific user in all chapters', async () => {
+      const { incubator, u1 } = await loadFixture(baseFixture);
+      await incubator.connect(u1).claimEgg();
+      await incubator.connect(u1).claimChatNFT();
+
+      const claimStatus = await incubator.checkChatNFTClaimStatusBatch(u1.address);
+
+      expect(claimStatus).to.have.lengthOf(4);
+      expect(claimStatus[0]).to.be.true; // Chapter 0
+      expect(claimStatus[1]).to.be.false; // Chapter 1
+      expect(claimStatus[2]).to.be.false; // Chapter 2
+      expect(claimStatus[3]).to.be.false; // Chapter 3
+    });
   });
 
   describe('boost', () => {
