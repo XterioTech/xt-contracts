@@ -61,16 +61,8 @@ describe('PalioIncubator', () => {
       const { incubator, u1 } = await loadFixture(baseFixture);
       await incubator.connect(u1).claimEgg();
       await incubator.connect(u1).claimUtility(1);
-      await incubator.connect(u1).claimUtility(1);
-      await incubator.connect(u1).claimUtility(1);
       await expect(incubator.connect(u1).claimUtility(1)).to.be.revertedWith("PalioIncubator: utility claim limit exceeded");
-
       await incubator.connect(u1).claimUtility(2);
-      await incubator.connect(u1).claimUtility(2);
-      await incubator.connect(u1).claimUtility(2);
-
-      await incubator.connect(u1).claimUtility(3);
-      await incubator.connect(u1).claimUtility(3);
       await incubator.connect(u1).claimUtility(3);
     });
   });

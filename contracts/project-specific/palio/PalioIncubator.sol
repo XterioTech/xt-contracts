@@ -24,7 +24,7 @@ contract PalioIncubator is Ownable, ReentrancyGuard {
     uint256 public constant MAX_CHAPTER = 4; // [0, 1, 2, 3]
     uint256 public constant CHAPTER_PERIOD = 7 * 24 * 60 * 60; // seconds for one chapter
     uint256 public constant DAY_PERIOD = 24 * 60 * 60; // seconds for one day
-    uint256 public constant MAX_UTILITIES_PER_DAY = 3; // maximun utilities count claimed per day for each type
+    uint256 public constant MAX_UTILITIES_PER_DAY = 1; // maximun utilities count claimed per day for each type
 
     uint256 public eventStartTime; // event start time
 
