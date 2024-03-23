@@ -216,7 +216,7 @@ describe("Test TokenGateway Contract", function () {
 
     // Pause
     await gateway.connect(owner).pause(erc20);
-    await expect(erc20.connect(owner).transfer(u1.address, transferAmountSmall)).to.be.revertedWith("Pausable: paused");
+    await expect(erc20.connect(owner).transfer(u1.address, transferAmountSmall)).to.be.revertedWith("BasicERC20: paused");
 
     // Unpause
     await gateway.connect(owner).unpause(erc20);
