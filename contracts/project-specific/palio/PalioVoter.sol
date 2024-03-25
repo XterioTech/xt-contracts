@@ -8,8 +8,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 contract PalioVoter is Ownable {
     using EnumerableSet for EnumerableSet.UintSet;
 
-    uint256 public constant CHAPTER_PERIOD = 6 * 60 * 60; // seconds for one chapter for test
-    // uint256 public constant CHAPTER_PERIOD = 7 * 24 * 60 * 60; // seconds for one chapter
+    uint256 public constant CHAPTER_PERIOD = 7 * 24 * 60 * 60; // seconds for one chapter
 
     uint256 public constant CHARACTER_CNT = 5;
 

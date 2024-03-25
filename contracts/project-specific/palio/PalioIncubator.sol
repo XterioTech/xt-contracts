@@ -112,7 +112,7 @@ contract PalioIncubator is Ownable, ReentrancyGuard {
         IGateway(gateway).ERC1155_mint(
             chatNFTAddress,
             msg.sender,
-            _chapterIndex,
+            _chapterIndex + 1,
             1,
             "0x"
         );
