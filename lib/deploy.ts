@@ -143,3 +143,29 @@ export const deployDepositMinter = async (
 };
 
 
+export const deployPalioIncubator = async (
+  gateway: AddressLike,
+  payeeAddress: AddressLike,
+  eggAddress: AddressLike,
+  chatNFTAddress: AddressLike,
+  eventStartTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("PalioIncubator");
+  const contract = await Contract.deploy(gateway, payeeAddress, eggAddress, chatNFTAddress, eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployPalioVoter = async (
+  signer: AddressLike,
+  eventStartTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("PalioVoter");
+  const contract = await Contract.deploy(signer, eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+
