@@ -1,14 +1,15 @@
 import hre from "hardhat";
+import { ContractOrAddrName, getAddressForNetwork } from "../../lib/constant";
 
 const main = async () => {
   await hre.run("verify:verify", {
-    address: "0x3CdFE680f802036Da70C7E19eCf3781789695F9d",
+    address: "0xb7E548C4f133AdBB910914D7529D5CB00c2E9051",
     constructorArguments: [
       "PalioAI START",
       "PAS",
-      "https://api.xter.io/asset/nft/meta/xterio_testnet",
-      "0xB6Fe7Bc1c8836983C0643D5869c42bD27aCAAedD",
-      "0xB4c7E393619E0924e6B3dbc718B7e2a29A123529",
+      "https://api.xter.io/asset/nft/meta/xterio",
+      "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+      "0xeCF63dFBa014dc9CEa2715d10082Bbbc892D2188",
       0
     ],
     contract: "contracts/basic-tokens/BasicERC721C.sol:BasicERC721C",
