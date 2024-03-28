@@ -72,6 +72,10 @@ const config: HardhatUserConfig = {
     xterioTestnet: {
       url: "https://xterio-testnet.alt.technology/",
       accounts: privateKey != "" ? [privateKey] : [],
+    },
+    xterio: {
+      url: "https://xterio.alt.technology/",
+      accounts: privateKey != "" ? [privateKey] : [],
     }
   },
   solidity: {
@@ -95,6 +99,7 @@ const config: HardhatUserConfig = {
       arbitrumOne: process.env.API_KEY_ARBISCAN || "",
       polygon: process.env.API_KEY_POLYGONSCAN || "",
       xterioTestnet: "no need",
+      xterio: "no need",
     },
     customChains: [
       {
@@ -117,8 +122,16 @@ const config: HardhatUserConfig = {
         network: "xterioTestnet",
         chainId: 1637450,
         urls: {
-          apiURL: `https://xterio-testnet-explorer.alt.technology/api`,
-          browserURL: "https://xterio-testnet-explorer.alt.technology/",
+          apiURL: `https://testnet.xterscan.io/api`,
+          browserURL: "https://testnet.xterscan.io/",
+        },
+      },
+      {
+        network: "xterio",
+        chainId: 112358,
+        urls: {
+          apiURL: `https://xterscan.io/api`,
+          browserURL: "https://xterscan.io/",
         },
       },
     ],
