@@ -31,6 +31,11 @@ async function main() {
   if (!address) {
     console.info(colorize(Color.blue, `Deploy PalioIncubator`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
+    console.info(colorize(Color.yellow, `Event Start Time: ${new Date(eventStartTime * 1000)}`));
+    console.info(colorize(Color.yellow, `Egg Address: ${eggAddress}`));
+    console.info(colorize(Color.yellow, `Chat NFT Address: ${chatNFTAddress}`));
+    console.info(colorize(Color.yellow, `Payee Address: ${payeeAddress}`));
+
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;

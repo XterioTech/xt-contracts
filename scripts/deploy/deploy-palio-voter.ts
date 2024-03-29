@@ -22,6 +22,8 @@ async function main() {
   if (!address) {
     console.info(colorize(Color.blue, `Deploy PalioVoter`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
+    console.info(colorize(Color.yellow, `Event Start Time: ${new Date(eventStartTime * 1000)}`));
+    console.info(colorize(Color.yellow, `Palio Signer Address: ${palioSignerAddress}`));
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
