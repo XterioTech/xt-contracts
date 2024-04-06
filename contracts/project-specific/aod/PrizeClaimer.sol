@@ -168,13 +168,13 @@ contract PrizeClaimer is AccessControl {
 
         dogtagCurrentTokenId = dogtagCurrentTokenId + 1;
 
+        mintedTimes[msg.sender] = mintedTimes[msg.sender] + 1;
+
         IGateway(gateway).ERC721_mint(
                     dogtagNftAddress,
                     msg.sender,
                     dogtagCurrentTokenId
                 );
-
-        mintedTimes[msg.sender] = mintedTimes[msg.sender] + 1;
 
     }
 
