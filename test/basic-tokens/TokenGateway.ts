@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { expect } from "chai";
 import { deployForwarder, deployGateway } from "../../lib/deploy";
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 
 describe("Test TokenGateway Contract", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -9,12 +9,12 @@ describe("Test TokenGateway Contract", function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function defaultFixture() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, manager, u1, u2] = await hre.ethers.getSigners();
+    const [owner, manager, u1, u2, u3] = await hre.ethers.getSigners();
     const gateway = await deployGateway(owner.address);
     const forwarder = await deployForwarder();
     await gateway.connect(owner).addManager(manager.address);
 
-    return { gateway, forwarder, owner, manager, u1, u2 };
+    return { gateway, forwarder, owner, manager, u1, u2, u3 };
   }
 
   it("Gateway admin role transfer", async function () {
@@ -50,13 +50,51 @@ describe("Test TokenGateway Contract", function () {
     await expect(gateway.connect(owner).removeOperatorWhitelist(forwarder)).to.emit(gateway, "RemoveOperatorWhitelist");
   });
 
+  it('should add and remove minters to the NFT contract', async () => {
+    const { gateway, forwarder, owner, manager, u1, u2 } = await loadFixture(defaultFixture);
+    const tokenName = "TestERC721";
+    const tokenSymbol = "TE721";
+    const baseURI = "https://api.test/meta/goerli";
+    const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
+    const erc721 = await BasicERC721C.connect(u1).deploy(tokenName, tokenSymbol, baseURI, gateway, forwarder, 10000);
+    await erc721.waitForDeployment();
+
+    const nftAddress = await erc721.getAddress()
+    expect(await gateway.isMinter(nftAddress, u1.address)).to.equal(false);
+    expect(await gateway.isMinter(nftAddress, u2.address)).to.equal(false);
+    // Add minters to the NFT contract
+    await gateway.addMinter(nftAddress, u1.address);
+    await gateway.addMinter(nftAddress, u2.address);
+    // Check if minters were added successfully
+    expect(await gateway.minters(nftAddress)).to.deep.equal([u1.address, u2.address]);
+    expect(await gateway.isMinter(nftAddress, u1.address)).to.equal(true);
+    expect(await gateway.isMinter(nftAddress, u2.address)).to.equal(true);
+    // minter mints to owner, u3
+    await gateway.connect(u2).ERC721_mint(erc721, owner.address, 222);
+    await gateway.connect(u2).ERC721_mint(erc721, owner.address, 223);
+    await gateway.connect(u2).ERC721_mint(erc721, u1.address, 333);
+    await gateway.connect(u2).ERC721_mintBatch(erc721, u2.address, [101, 102, 103]);
+    expect(await erc721.ownerOf(222)).to.equal(owner.address);
+    expect(await erc721.ownerOf(223)).to.equal(owner.address);
+    expect(await erc721.ownerOf(333)).to.equal(u1.address);
+    expect(await erc721.ownerOf(101)).to.equal(u2.address);
+
+    // Remove minter1 from the NFT contract
+    await gateway.removeMinter(nftAddress, u2.address);
+    // Check if minter1 was removed successfully
+    expect(await gateway.minters(nftAddress)).to.deep.equal([u1.address]);
+    await expect(gateway.connect(u2).ERC721_mint(erc721, u1.address, 111)).revertedWith(
+      "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
+    );
+  });
+
   it("ERC721 gateway operations", async function () {
     const { gateway, forwarder, owner, manager, u1, u2 } = await loadFixture(defaultFixture);
     const tokenName = "TestERC721";
     const tokenSymbol = "TE721";
     const baseURI = "https://api.test/meta/goerli";
     const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
-    const erc721 = await BasicERC721C.connect(u1).deploy(tokenName, tokenSymbol, baseURI, gateway, forwarder);
+    const erc721 = await BasicERC721C.connect(u1).deploy(tokenName, tokenSymbol, baseURI, gateway, forwarder, 10000);
     await erc721.waitForDeployment();
 
     /***************** Basic Checks ****************/
@@ -65,10 +103,10 @@ describe("Test TokenGateway Contract", function () {
       `${baseURI}/${await erc721.getAddress()}/${hre.ethers.zeroPadValue("0x04d2", 32)}`.toLowerCase()
     );
     await expect(gateway.connect(u2).ERC721_setURI(erc721, "new_uri")).revertedWith(
-      "TokenGateway: caller is not manager of the token contract and is not in whitelist"
+      "TokenGateway: caller is not manager of the token contract and is not gateway manager"
     );
     await expect(gateway.connect(u2).ERC721_mint(erc721, u1.address, 111)).revertedWith(
-      "TokenGateway: caller is not manager of the token contract and is not in whitelist"
+      "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
     );
 
     /******************** Tests ********************/
@@ -111,13 +149,13 @@ describe("Test TokenGateway Contract", function () {
       `${baseURI}/${await erc1155.getAddress()}/{id}`.toLowerCase()
     );
     await expect(gateway.connect(u2).ERC1155_setURI(erc1155, "new_uri")).revertedWith(
-      "TokenGateway: caller is not manager of the token contract and is not in whitelist"
+      "TokenGateway: caller is not manager of the token contract and is not gateway manager"
     );
     await expect(gateway.connect(u2).ERC1155_mint(erc1155, u1.address, 111, 1, "0x")).revertedWith(
-      "TokenGateway: caller is not manager of the token contract and is not in whitelist"
+      "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
     );
     await expect(gateway.connect(u2).ERC1155_mintBatch(erc1155, u1.address, [111], [1], "0x")).revertedWith(
-      "TokenGateway: caller is not manager of the token contract and is not in whitelist"
+      "TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set"
     );
 
     /******************** Tests ********************/
@@ -142,7 +180,7 @@ describe("Test TokenGateway Contract", function () {
   });
 
   it("ERC20 gateway oprations", async function () {
-    const { gateway, forwarder, owner, u1 } = await loadFixture(defaultFixture);
+    const { gateway, forwarder, manager, owner, u1, u2, u3 } = await loadFixture(defaultFixture);
 
     const tokenName = "Test-ERC20";
     const tokenSymbol = "TERC20";
@@ -164,29 +202,53 @@ describe("Test TokenGateway Contract", function () {
 
     expect(await erc20.balanceOf(owner.address)).to.equal(initialSupply);
 
-    // owner transfers to u3
+    // owner transfers to u1
     await erc20.connect(owner).transfer(u1.address, transferAmount);
     expect(await erc20.balanceOf(owner.address)).to.equal(initialSupply - transferAmount);
     expect(await erc20.balanceOf(u1.address)).to.equal(transferAmount);
 
     // owner burns some tokens
     await erc20.connect(owner).burn(burnAmount);
-    // owner tries to burn from u3
+    // owner tries to burn from u1
     await expect(erc20.connect(owner).burnFrom(u1.address, burnAmount)).to.be.revertedWith(
       "ERC20: insufficient allowance"
     );
 
     // Pause
     await gateway.connect(owner).pause(erc20);
-    await expect(erc20.connect(owner).transfer(u1.address, transferAmountSmall)).to.be.revertedWith("Pausable: paused");
+    await expect(erc20.connect(owner).transfer(u1.address, transferAmountSmall)).to.be.revertedWith("BasicERC20: paused");
 
     // Unpause
     await gateway.connect(owner).unpause(erc20);
-    // owner transfers small amount to u3
+    // owner transfers small amount to u1
     await erc20.connect(owner).transfer(u1.address, transferAmountSmall);
     expect(await erc20.balanceOf(owner.address)).to.equal(
       initialSupply - transferAmount - burnAmount - transferAmountSmall
     );
     expect(await erc20.balanceOf(u1.address)).to.equal(transferAmount + transferAmountSmall);
+
+    // ----------------------------------------
+    // gateway manager change to erc20-manager
+    await gateway.connect(manager).setManagerOf(erc20, u3.address);
+    await gateway.connect(u3).ERC20_mint(erc20, u3.address, 1);
+    expect(await erc20.balanceOf(u3.address)).to.equal(1);
+
+    // old manager change to new manager
+    await gateway.connect(u3).setManagerOf(erc20, u2.address);
+
+    await gateway.connect(u3).ERC20_mint(erc20, u3.address, 1);
+    expect(await erc20.balanceOf(u3.address)).to.equal(2);
+
+    await gateway.connect(u2).ERC20_mint(erc20, u3.address, 1);
+    expect(await erc20.balanceOf(u3.address)).to.equal(3);
+
+    // Reset timestamp to 2 days after
+    const currentTimestamp = await time.latest();
+    await time.setNextBlockTimestamp(currentTimestamp + + 2 * 24 * 60 * 60);
+
+    await expect(gateway.connect(u3).ERC20_mint(erc20, u3.address, 1)).to.be.revertedWith("TokenGateway: caller is not manager of the token contract and is not in whitelist and is not in minter set");
+
+    await gateway.connect(u2).ERC20_mint(erc20, u3.address, 1);
+    expect(await erc20.balanceOf(u3.address)).to.equal(4);
   });
 });

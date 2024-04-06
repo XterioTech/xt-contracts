@@ -1,11 +1,11 @@
 import hre from "hardhat";
 import { MarketplaceV2, TokenGateway } from "../typechain-types";
-import { AddressLike, Overrides } from "ethers";
+import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
 
-export const deployMajorToken = async (wallet: AddressLike) => {
+export const deployMajorToken = async (admin: AddressLike, wallet: AddressLike, txOverrides?: NonPayableOverrides & { from?: string }) => {
   const Token = await hre.ethers.getContractFactory("XterToken");
-  const token = await Token.deploy(wallet);
+  const token = await Token.deploy(admin, wallet, txOverrides || {});
   await token.waitForDeployment();
   return token;
 };
@@ -85,3 +85,98 @@ export const deployCreatorTokenTransferValidator = async (
   await contract.waitForDeployment();
   return contract;
 };
+
+export const deployFansCreate = async (admin: AddressLike, uri: string, txOverrides?: NonPayableOverrides & { from?: string }) => {
+  const Contract = await hre.ethers.getContractFactory("FansCreate");
+  const contract = await Contract.deploy(admin, uri, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployFansCreateERC20 = async (admin: AddressLike, uri: string, paymentToken: AddressLike, priceCoef: BigNumberish, txOverrides?: NonPayableOverrides & { from?: string }) => {
+  const Contract = await hre.ethers.getContractFactory("FansCreateERC20");
+  const contract = await Contract.deploy(admin, uri, paymentToken, priceCoef, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployAuctionMinter = async (
+  admin: AddressLike,
+  gateway: AddressLike,
+  nftAddress: AddressLike,
+  paymentRecipient: AddressLike,
+  nftAmount: number, // heap maxCapacity
+  auctionEndTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("AuctionMinter");
+  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, nftAmount, auctionEndTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployRaffleAuctionMinter = async (
+  admin: AddressLike,
+  gateway: AddressLike,
+  nftAddress: AddressLike,
+  paymentRecipient: AddressLike,
+  nftAmount: number, // heap maxCapacity
+  auctionEndTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("RaffleAuctionMinter");
+  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, nftAmount, auctionEndTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployRefund = async (defaultOwner: AddressLike) => {
+  const Contract = await hre.ethers.getContractFactory("Refund");
+  const contract = await Contract.deploy(defaultOwner);
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployDepositMinter = async (
+  admin: AddressLike,
+  gateway: AddressLike,
+  nftAddress: AddressLike,
+  paymentRecipient: AddressLike,
+  auctionStartTime: number,
+  auctionEndTime: number,
+  unitPrice: BigNumberish,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("DepositMinter");
+  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, auctionStartTime, auctionEndTime, unitPrice, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+
+export const deployPalioIncubator = async (
+  gateway: AddressLike,
+  payeeAddress: AddressLike,
+  eggAddress: AddressLike,
+  chatNFTAddress: AddressLike,
+  eventStartTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("PalioIncubator");
+  const contract = await Contract.deploy(gateway, payeeAddress, eggAddress, chatNFTAddress, eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployPalioVoter = async (
+  signer: AddressLike,
+  eventStartTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("PalioVoter");
+  const contract = await Contract.deploy(signer, eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+

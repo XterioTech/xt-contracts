@@ -17,7 +17,7 @@ describe("Test BasicERC721C Contract", function () {
     const [, , u0, u1, u2, u3, u4, u5] = await hre.ethers.getSigners();
 
     const BasicERC721C = await hre.ethers.getContractFactory("BasicERC721C");
-    const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder);
+    const erc721 = await BasicERC721C.deploy(tokenName, tokenSymbol, baseURI, base.gateway, base.forwarder, 10000);
     await erc721.waitForDeployment();
 
     return { ...base, erc721, u0, u1, u2, u3, u4, u5 };
@@ -65,6 +65,10 @@ describe("Test BasicERC721C Contract", function () {
     await expect(erc721.connect(u0).unpause()).to.revertedWith(
       "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
     );
+    // u0 cannot set maxTokenId
+    await expect(erc721.connect(u0).setMaxTokenID(100)).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
   });
 
   it("Cannot transfer when paused", async function () {
@@ -88,6 +92,14 @@ describe("Test BasicERC721C Contract", function () {
     await expect(erc721.connect(u0).burn(1)).to.be.revertedWith("ERC721: caller is not token owner or approved");
     await erc721.connect(u1).approve(u0.address, 1);
     await erc721.connect(u0).burn(1);
+  });
+
+  it("Cannot mint tokenId > maxTokenId", async function () {
+    const { erc721, owner, u0, u1 } = await loadFixture(defaultFixture);
+
+    await erc721.mint(u1.address, 1);
+    await erc721.connect(owner).setMaxTokenID(1)
+    await expect(erc721.mint(u1.address, 2)).to.be.revertedWith("ERC721: invalid, tokenId > maxTokenId");
   });
 
   it("ERC721C None Security Policy", async function () {

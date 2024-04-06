@@ -6,6 +6,7 @@ import "@openzeppelin/hardhat-upgrades";
 import "@openzeppelin/hardhat-upgrades";
 // import "@nomiclabs/hardhat-etherscan";
 import "hardhat-abi-exporter";
+import "hardhat-gas-reporter"
 import * as dotenv from "dotenv";
 dotenv.config();
 import "./extensions";
@@ -36,6 +37,7 @@ const config: HardhatUserConfig = {
       accounts: privateKey != "" ? [privateKey] : [],
     },
     bscTestnet: {
+      chainId: 97,
       url: "https://data-seed-prebsc-2-s1.binance.org:8545",
       accounts: privateKey != "" ? [privateKey] : [],
     },
@@ -67,7 +69,19 @@ const config: HardhatUserConfig = {
       url: "https://polygon-rpc.com",
       accounts: privateKey != "" ? [privateKey] : [],
     },
+<<<<<<< HEAD
       },
+=======
+    xterioTestnet: {
+      url: "https://xterio-testnet.alt.technology/",
+      accounts: privateKey != "" ? [privateKey] : [],
+    },
+    xterio: {
+      url: "https://xterio.alt.technology/",
+      accounts: privateKey != "" ? [privateKey] : [],
+    }
+  },
+>>>>>>> 6e8b4a9f3ed112d1a61523d1422c399fa06911e0
   solidity: {
     version: "0.8.19",
     settings: {
@@ -89,7 +103,13 @@ const config: HardhatUserConfig = {
       opbnb: process.env.API_KEY_NODEREAL_OPBNB || "",
       arbitrumOne: process.env.API_KEY_ARBISCAN || "",
       polygon: process.env.API_KEY_POLYGONSCAN || "",
+<<<<<<< HEAD
           },
+=======
+      xterioTestnet: "no need",
+      xterio: "no need",
+    },
+>>>>>>> 6e8b4a9f3ed112d1a61523d1422c399fa06911e0
     customChains: [
       {
         network: "opbnbTestnet",
@@ -107,7 +127,27 @@ const config: HardhatUserConfig = {
           browserURL: "https://opbnbscan.com/",
         },
       },
+<<<<<<< HEAD
           ],
+=======
+      {
+        network: "xterioTestnet",
+        chainId: 1637450,
+        urls: {
+          apiURL: `https://testnet.xterscan.io/api`,
+          browserURL: "https://testnet.xterscan.io/",
+        },
+      },
+      {
+        network: "xterio",
+        chainId: 112358,
+        urls: {
+          apiURL: `https://xterscan.io/api`,
+          browserURL: "https://xterscan.io/",
+        },
+      },
+    ],
+>>>>>>> 6e8b4a9f3ed112d1a61523d1422c399fa06911e0
   },
   abiExporter: [
     {
@@ -125,6 +165,13 @@ const config: HardhatUserConfig = {
       flat: false,
     },
   ],
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 21,
+    enabled: true,
+    // outputFile: 'stdout',
+    showTimeSpent: true
+  }
 };
 
 export default config;

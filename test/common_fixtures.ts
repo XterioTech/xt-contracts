@@ -53,7 +53,8 @@ export const nftTradingTestFixture = async () => {
     tokenSymbol,
     baseURI,
     base.gateway,
-    base.forwarder
+    base.forwarder,
+    10000
   );
   await erc721.waitForDeployment();
 
@@ -65,7 +66,7 @@ export const nftTradingTestFixture = async () => {
   // await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc721, nftManager.address);
   // await base.gateway.connect(base.gatewayAdmin).setManagerOf(erc1155, nftManager.address);
 
-  const paymentToken = await deployMajorToken(base.owner.address);
+  const paymentToken = await deployMajorToken(base.owner.address, base.owner.address);
 
   const erc20TokenName = "TestERC20";
   const erc20TokenSymbol = "TE20";
