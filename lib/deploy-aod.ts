@@ -36,7 +36,9 @@ export const deployPrizeClaimer = async (
   admin: AddressLike,
   gateway: AddressLike,
   singer_address: AddressLike,
-  scoreNFTAddress: AddressLike,
+  payeeAddress: AddressLike,
+  hammerNFTAddress: AddressLike,
+  dogtagNFTAddress: AddressLike,
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("PrizeClaimer");
@@ -44,7 +46,9 @@ export const deployPrizeClaimer = async (
     admin,
     gateway,
     singer_address,
-    scoreNFTAddress,
+    payeeAddress,
+    hammerNFTAddress,
+    dogtagNFTAddress,
     txOverrides || {}
   );
   await contract.waitForDeployment();

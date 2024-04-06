@@ -67,7 +67,7 @@ const config: HardhatUserConfig = {
       url: "https://polygon-rpc.com",
       accounts: privateKey != "" ? [privateKey] : [],
     },
-  },
+      },
   solidity: {
     version: "0.8.19",
     settings: {
@@ -75,6 +75,7 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
+      viaIR: true,
     },
   },
   etherscan: {
@@ -88,7 +89,7 @@ const config: HardhatUserConfig = {
       opbnb: process.env.API_KEY_NODEREAL_OPBNB || "",
       arbitrumOne: process.env.API_KEY_ARBISCAN || "",
       polygon: process.env.API_KEY_POLYGONSCAN || "",
-    },
+          },
     customChains: [
       {
         network: "opbnbTestnet",
@@ -106,7 +107,7 @@ const config: HardhatUserConfig = {
           browserURL: "https://opbnbscan.com/",
         },
       },
-    ],
+          ],
   },
   abiExporter: [
     {

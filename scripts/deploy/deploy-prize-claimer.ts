@@ -1,16 +1,20 @@
 import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
-import { deployPrizeClaimer } from "../../lib/deploy";
+import { deployPrizeClaimer } from "../../lib/deploy-aod";
 import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
+  address = "0x7d05C044A18eF22EAbbFa9419d907ef00364c1e9"
 
-  const signerAddress = "0x11d2f99D641b1d38d2e1adF1d85f0a3Fec9cb411"
-  const scoreNFTAddress = "0xf3d9Ba842a71C63cE391F48b71E8CDCAE6e9756C"
+  // TODO
+  const signerAddress = "0x204983A2f4d9C1B893572fe8DFcdCF485F4893B3"
+  const payeeAddress = "0xfc7Ee59fdaB8875a2b2a2d5173172ff12af6e45a"
+  const hammerNFTAddress = "0x37db14B0CC1e517C6Dbdfa60aecE4a045185548E"
+  const dogtagNFTAddress = "0x09Baf813EFDc01E33b9b90D7059c155FDbd403Cf"
 
   if (!address) {
     const gatewayAddress = getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name);
@@ -25,7 +29,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`=================== Deploy PrizeClaimer ====================`);
     console.info(`============================================================`);
-    const PrizeClaimer = await deployPrizeClaimer(admin.address, gatewayAddress, signerAddress, scoreNFTAddress, getTxOverridesForNetwork(hre.network.name));
+    const PrizeClaimer = await deployPrizeClaimer(admin.address, gatewayAddress, signerAddress, payeeAddress, hammerNFTAddress, dogtagNFTAddress, getTxOverridesForNetwork(hre.network.name));
     address = await PrizeClaimer.getAddress();
     console.info(`PrizeClaimer @ ${address}`);
     console.info("Add operator whitelist in TokenGateway...");
@@ -38,7 +42,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/project-specific/aod/PrizeClaimer.sol:PrizeClaimer",
-        constructorArguments: [admin.address, getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name), signerAddress, scoreNFTAddress],
+        constructorArguments: [admin.address, getAddressForNetwork(ContractOrAddrName.TokenGateway, hre.network.name), signerAddress, payeeAddress, hammerNFTAddress, dogtagNFTAddress],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);
