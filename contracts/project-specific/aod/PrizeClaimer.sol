@@ -8,14 +8,14 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract PrizeClaimer is AccessControl {
+contract PrizeClaimer is AccessControl, ReentrancyGuard {
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     enum PrizeType {
         Type1, // Mining
         Type2, // Chest
         Type3, // MiniGame
-        Type4  // DogTagNFT
+        Type4 // DogTagNFT
     }
 
     address private hammerNftAddress;
@@ -74,7 +74,6 @@ contract PrizeClaimer is AccessControl {
         emit Received(msg.sender, msg.value);
     }
 
-
     /************************************ Management Functions *************************************/
     function setSignerAddress(address _addr) public onlyRole(OPERATOR_ROLE) {
         signerAddress = _addr;
@@ -94,7 +93,6 @@ contract PrizeClaimer is AccessControl {
         (sent, ) = _to.call{value: address(this).balance}("");
     }
 
-
     /************************************ Public Functions *************************************/
 
     function claimWithSig(
@@ -111,7 +109,7 @@ contract PrizeClaimer is AccessControl {
         uint256 _prizeDioAmount,
         uint32 _deadline,
         bytes calldata _sig // Signature provided by the backend
-    ) external payable {
+    ) external payable nonReentrant {
         // Check if before deadline
         require(
             block.timestamp <= _deadline,
@@ -121,7 +119,8 @@ contract PrizeClaimer is AccessControl {
         require(!openIdMintedStatus[_prizeOpenId], "OpenID has been used");
 
         require(
-            _prizeDamAmount <= maxMintAmount && _prizeDioAmount <= maxMintAmount,
+            _prizeDamAmount <= maxMintAmount &&
+                _prizeDioAmount <= maxMintAmount,
             "Exceed Max Amount"
         );
 
@@ -147,7 +146,7 @@ contract PrizeClaimer is AccessControl {
             (bool sent, ) = payeeAddress.call{value: _prizePayFee}("");
             require(sent, "Failed to sent fee");
         }
-        
+
         _awardPrize(
             _prizeTypeIdx,
             _prizeOpenId,
@@ -163,8 +162,7 @@ contract PrizeClaimer is AccessControl {
         );
     }
 
-    function claimDogtagNft() external {
-
+    function claimDogtagNft() external nonReentrant {
         require(mintedTimes[msg.sender] < 1, "Already Minted");
 
         dogtagCurrentTokenId = dogtagCurrentTokenId + 1;
@@ -172,11 +170,10 @@ contract PrizeClaimer is AccessControl {
         mintedTimes[msg.sender] = mintedTimes[msg.sender] + 1;
 
         IGateway(gateway).ERC721_mint(
-                    dogtagNftAddress,
-                    msg.sender,
-                    dogtagCurrentTokenId
-                );
-
+            dogtagNftAddress,
+            msg.sender,
+            dogtagCurrentTokenId
+        );
     }
 
     function getMintedOpenIds(
@@ -185,9 +182,7 @@ contract PrizeClaimer is AccessControl {
         return mintedOpenIds[user];
     }
 
-    function checkOpenIdMinted(
-        uint256 openid
-    ) external view returns (bool) {
+    function checkOpenIdMinted(uint256 openid) external view returns (bool) {
         if (openIdMintedStatus[openid]) {
             return true;
         } else {
@@ -210,15 +205,11 @@ contract PrizeClaimer is AccessControl {
         return balance > 0;
     }
 
-    function setHammerNftAddress(
-        address _addr
-    ) public onlyRole(OPERATOR_ROLE) {
+    function setHammerNftAddress(address _addr) public onlyRole(OPERATOR_ROLE) {
         hammerNftAddress = _addr;
     }
 
-    function setDogTagNftAddress(
-        address _addr
-    ) public onlyRole(OPERATOR_ROLE) {
+    function setDogTagNftAddress(address _addr) public onlyRole(OPERATOR_ROLE) {
         dogtagNftAddress = _addr;
     }
 
@@ -227,7 +218,6 @@ contract PrizeClaimer is AccessControl {
     ) public onlyRole(OPERATOR_ROLE) {
         dogtagCurrentTokenId = _tokenId;
     }
-    
 
     /************************************ Internal Functions *************************************/
 
@@ -254,7 +244,6 @@ contract PrizeClaimer is AccessControl {
         openIdMintedStatus[_prizeOpenId] = true;
 
         if (prize == PrizeType.Type1) {
-
             if (_prizeDamAmount > 0) {
                 IGateway(gateway).ERC20_mint(
                     _prizeDamAddress,
@@ -270,12 +259,7 @@ contract PrizeClaimer is AccessControl {
                     _prizeDioAmount
                 );
             }
-
-        } else if (
-            prize == PrizeType.Type2 ||
-            prize == PrizeType.Type3
-        )
-        {
+        } else if (prize == PrizeType.Type2 || prize == PrizeType.Type3) {
             if (_prizeMultiplier == 1 && prize == PrizeType.Type3) {
                 // Check Hammer NFT to Multiple
 
@@ -294,7 +278,7 @@ contract PrizeClaimer is AccessControl {
                     _prizeDioAmount = _prizeDioAmount * _prizeMultiplier;
                 }
             }
-         
+
             if (_prizeNftAmount > 0) {
                 IGateway(gateway).ERC1155_mint(
                     _prizeNftAddress,
@@ -318,7 +302,6 @@ contract PrizeClaimer is AccessControl {
                     _prizeDioAmount
                 );
             }
-
         } else {
             revert("Unknown prize type");
         }
@@ -341,7 +324,8 @@ contract PrizeClaimer is AccessControl {
 
     function _toPrizeType(uint16 value) internal pure returns (PrizeType) {
         require(
-            value >= uint16(PrizeType.Type1) && value <= uint16(PrizeType.Type3),
+            value >= uint16(PrizeType.Type1) &&
+                value <= uint16(PrizeType.Type3),
             "Invalid prize type"
         );
         return PrizeType(value);
