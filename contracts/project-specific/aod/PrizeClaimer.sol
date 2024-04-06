@@ -249,6 +249,10 @@ contract PrizeClaimer is AccessControl {
         // 2 - Chest
         // 3 - MiniGame: _prizePayFee = 0
 
+        // Update Status
+        mintedOpenIds[msg.sender].push(_prizeOpenId);
+        openIdMintedStatus[_prizeOpenId] = true;
+
         if (prize == PrizeType.Type1) {
 
             if (_prizeDamAmount > 0) {
@@ -318,10 +322,6 @@ contract PrizeClaimer is AccessControl {
         } else {
             revert("Unknown prize type");
         }
-
-        // Update Status
-        mintedOpenIds[msg.sender].push(_prizeOpenId);
-        openIdMintedStatus[_prizeOpenId] = true;
 
         emit ClaimPrize(
             msg.sender,

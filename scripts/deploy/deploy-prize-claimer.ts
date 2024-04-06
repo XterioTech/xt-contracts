@@ -8,7 +8,7 @@ const main = async () => {
   const [admin] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
-  address = "0x7d05C044A18eF22EAbbFa9419d907ef00364c1e9"
+  // address = "0x7d05C044A18eF22EAbbFa9419d907ef00364c1e9"
 
   // TODO
   const signerAddress = "0x204983A2f4d9C1B893572fe8DFcdCF485F4893B3"
