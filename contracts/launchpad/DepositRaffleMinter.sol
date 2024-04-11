@@ -187,9 +187,14 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
             uint256 idx = bidIndex[userBids[_a][i].id];
             if (idx >= winStart && idx < winStart + nftAmount) {
                 info.nftCount += 1;
-                info.refundAmount += userBids[_a][i].price - nftPrice;
+                info.refundAmount +=
+                    userBids[_a][i].price *
+                    userBids[_a][i].share -
+                    nftPrice;
             } else {
-                info.refundAmount += userBids[_a][i].price;
+                info.refundAmount +=
+                    userBids[_a][i].price *
+                    userBids[_a][i].share;
             }
         }
     }
