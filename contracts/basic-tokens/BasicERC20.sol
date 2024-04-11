@@ -19,9 +19,14 @@ contract BasicERC20 is
     GatewayGuardedOwnable,
     Pausable
 {
-    uint256 public constant VERSION_BasicERC20 = 20230912;
+
+    event SetTransferWhitelisted(address addr, bool whitelisted);
+
+    uint256 public constant VERSION_BasicERC20 = 20240320;
 
     uint8 private _decimals;
+
+    mapping(address => bool) public transferWhitelisted;
 
     /**
      * @param gateway Gateway contract of the ERC20 contract.
@@ -60,13 +65,18 @@ contract BasicERC20 is
         _unpause();
     }
 
+    function setTransferWhitelisted(address addr, bool whitelisted) external onlyGatewayOrOwner {
+        transferWhitelisted[addr] = whitelisted;
+        emit SetTransferWhitelisted(addr, whitelisted);
+    }
+
     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 amount
     ) internal virtual override {
-        if (from != address(0)) {
-            _requireNotPaused();
+        if (paused()) {
+            require(transferWhitelisted[from] || transferWhitelisted[to], "BasicERC20: paused");
         }
         super._beforeTokenTransfer(from, to, amount);
     }

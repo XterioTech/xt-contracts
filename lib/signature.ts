@@ -47,3 +47,27 @@ export const signAuctionMinterBid = async (
   );
   return await signer.signMessage(hre.ethers.getBytes(msgHash));
 };
+
+export const signPalioVoter = async (
+  signer: Signer,
+  voter: string,
+  characterIdx: number,
+  amount: number,
+  totalAmount: number,
+  expireTime: number,
+  contractAddress: AddressLike
+) => {
+  const msgHash = hre.ethers.solidityPackedKeccak256(
+    [
+      "address", // voter address
+      "uint256", // characterIdx
+      "uint256", // amount
+      "uint256", // totalAmount
+      "uint256", // expireTime
+      "uint256", // chainid
+      "address", // contract address
+    ],
+    [voter, characterIdx, amount, totalAmount, expireTime, hre.network.config.chainId, contractAddress]
+  );
+  return await signer.signMessage(hre.ethers.getBytes(msgHash));
+};

@@ -69,6 +69,14 @@ const config: HardhatUserConfig = {
       url: "https://polygon-rpc.com",
       accounts: privateKey != "" ? [privateKey] : [],
     },
+    xterioTestnet: {
+      url: "https://xterio-testnet.alt.technology/",
+      accounts: privateKey != "" ? [privateKey] : [],
+    },
+    xterio: {
+      url: "https://xterio.alt.technology/",
+      accounts: privateKey != "" ? [privateKey] : [],
+    }
   },
   solidity: {
     version: "0.8.19",
@@ -90,6 +98,8 @@ const config: HardhatUserConfig = {
       opbnb: process.env.API_KEY_NODEREAL_OPBNB || "",
       arbitrumOne: process.env.API_KEY_ARBISCAN || "",
       polygon: process.env.API_KEY_POLYGONSCAN || "",
+      xterioTestnet: "no need",
+      xterio: "no need",
     },
     customChains: [
       {
@@ -106,6 +116,22 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: `https://open-platform.nodereal.io/${process.env.API_KEY_NODEREAL_OPBNB}/op-bnb-mainnet/contract/`,
           browserURL: "https://opbnbscan.com/",
+        },
+      },
+      {
+        network: "xterioTestnet",
+        chainId: 1637450,
+        urls: {
+          apiURL: `https://testnet.xterscan.io/api`,
+          browserURL: "https://testnet.xterscan.io/",
+        },
+      },
+      {
+        network: "xterio",
+        chainId: 112358,
+        urls: {
+          apiURL: `https://xterscan.io/api`,
+          browserURL: "https://xterscan.io/",
         },
       },
     ],

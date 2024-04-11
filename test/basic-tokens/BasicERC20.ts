@@ -43,6 +43,10 @@ describe("Test BasicERC20 Contract", function () {
     await expect(erc20.connect(u0).unpause()).to.revertedWith(
       "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
     );
+    // u0 cannot set whitelisted
+    await expect(erc20.connect(u0).setTransferWhitelisted(u0, true)).to.revertedWith(
+      "GatewayGuardedOwnable: caller is neither the gateway nor the owner"
+    );
   });
 
   it("Mint", async function () {
@@ -61,7 +65,7 @@ describe("Test BasicERC20 Contract", function () {
   });
 
   it("Cannot mint or transfer when paused", async function () {
-    const { erc20, u1, u2 } = await loadFixture(defaultFixture);
+    const { erc20, owner, u1, u2 } = await loadFixture(defaultFixture);
 
     await erc20.mint(u1.address, 1000);
     await erc20.connect(u1).transfer(u2.address, 500);
@@ -69,7 +73,8 @@ describe("Test BasicERC20 Contract", function () {
     // pause
     await erc20.pause();
     // cannot transfer when paused
-    await expect(erc20.connect(u1).transfer(u2.address, 500)).to.be.revertedWith("Pausable: paused");
+    await expect(erc20.connect(u1).transfer(u2.address, 500)).to.be.revertedWith("BasicERC20: paused");
+    await erc20.connect(owner).setTransferWhitelisted("0x0000000000000000000000000000000000000000", true);
     // can mint when paused
     expect(await erc20.mint(u1.address, 1000)).to.emit(erc20, "Transfer").withArgs("0x0000000000000000000000000000000000000000", u1.address, 1000);
 
