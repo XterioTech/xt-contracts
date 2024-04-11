@@ -22,12 +22,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         uint256 nftCount;
     }
 
-    event Desposit(
-        address indexed buyer,
-        uint256 indexed id,
-        uint256 indexed share,
-        uint256 unitPrice
-    );
+    event Desposit(address indexed buyer, uint256 unitPrice, uint256 share);
     event Claim(address indexed buyer, uint256 refundAmount, uint256 nftCount);
 
     uint256 private _idCounter;
@@ -171,7 +166,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         // shuffle WinStart
         winStart = shuffleWinStart(bids.length, _idCounter);
 
-        emit Desposit(msg.sender, _idCounter, share, unitPrice);
+        emit Desposit(msg.sender, unitPrice, share);
     }
 
     function claimInfo(address _a) public view returns (ClaimInfo memory info) {
