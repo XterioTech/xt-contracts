@@ -37,6 +37,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
 
     uint256 public nftAmount = 2000; //default selected nft amount
     uint256 public limitForBuyerAmount = 1;
+    uint256 public maxShare;
 
     mapping(address => bool) public hasClaimed;
     mapping(address => uint256) buyerBidCount; // bidder => bidAmount
@@ -54,7 +55,8 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         uint256 _auctionStartTime,
         uint256 _auctionEndTime,
         uint256 _unitPrice,
-        uint256 _nftPrice
+        uint256 _nftPrice,
+        uint256 _maxShare
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setupRole(MANAGER_ROLE, _admin);
@@ -67,6 +69,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         auctionEndTime = _auctionEndTime;
         unitPrice = _unitPrice;
         nftPrice = _nftPrice;
+        maxShare = _maxShare;
     }
 
     receive() external payable {}
@@ -137,7 +140,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         );
 
         require(
-            msg.value == unitPrice * share,
+            msg.value == unitPrice * share && share <= maxShare,
             "DepositRaffleMinter: payment mismatch"
         );
 
@@ -153,18 +156,23 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         );
         userBids[msg.sender].push(newBid);
 
-        // shuffle newBid insertion position
-        uint256 to = generateRandomInRange(0, bids.length - 1, _idCounter);
-        Bid memory temp = bids[to];
-        bids[to] = newBid;
-        bids.push(temp);
+        if (bids.length < nftAmount) {
+            bids.push(newBid);
+            bidIndex[newBid.id] = bids.length - 1;
+        } else {
+            // shuffle newBid insertion position
+            uint256 to = generateRandomInRange(0, bids.length - 1, _idCounter);
+            Bid memory temp = bids[to];
+            bids[to] = newBid;
+            bids.push(temp);
 
-        // update bidIndex
-        bidIndex[newBid.id] = to;
-        bidIndex[temp.id] = bids.length - 1;
+            // update bidIndex
+            bidIndex[newBid.id] = to;
+            bidIndex[temp.id] = bids.length - 1;
 
-        // shuffle WinStart
-        winStart = shuffleWinStart(bids.length, _idCounter);
+            // shuffle WinStart
+            winStart = shuffleWinStart(bids.length, _idCounter);
+        }
 
         emit Desposit(msg.sender, unitPrice, share);
     }
