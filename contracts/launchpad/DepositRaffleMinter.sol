@@ -11,7 +11,8 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
     struct Bid {
         uint32 id;
         address bidder;
-        uint64 timestamp;
+        uint32 timestamp;
+        uint32 share;
         uint256 price;
     }
 
@@ -21,6 +22,12 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         uint256 nftCount;
     }
 
+    event Desposit(
+        address indexed buyer,
+        uint256 indexed id,
+        uint256 indexed share,
+        uint256 bidPrice
+    );
     event Claim(address indexed buyer, uint256 refundAmount, uint256 nftCount);
 
     uint256 private _idCounter;
@@ -33,7 +40,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
     uint256 public nftPrice;
     bool public paymentSent;
 
-    uint256 public nftAmount = 1000; //default selected nft amount
+    uint256 public nftAmount = 2000; //default selected nft amount
     uint256 public limitForBuyerAmount = 1;
 
     mapping(address => bool) public hasClaimed;
@@ -96,7 +103,10 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
     }
 
     function setNftAmount(uint256 _amt) external onlyRole(MANAGER_ROLE) {
-        require(_amt < nftAmount, "DepositRaffleMinter: nftAmount can not increase");
+        require(
+            _amt < nftAmount,
+            "DepositRaffleMinter: nftAmount can not increase"
+        );
         nftAmount = _amt;
     }
 
@@ -120,7 +130,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
     }
 
     /**************** Core Functions ****************/
-    function deposit() external payable nonReentrant {
+    function deposit(uint256 share) external payable nonReentrant {
         require(
             block.timestamp >= auctionStartTime &&
                 block.timestamp <= auctionEndTime,
@@ -131,7 +141,10 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
             "DepositRaffleMinter: buyer limit exceeded"
         );
 
-        require(msg.value == unitPrice, "DepositRaffleMinter: payment mismatch");
+        require(
+            msg.value == unitPrice * share,
+            "DepositRaffleMinter: payment mismatch"
+        );
 
         buyerBidCount[msg.sender] += 1;
 
@@ -139,7 +152,8 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         Bid memory newBid = Bid(
             uint32(_idCounter),
             msg.sender,
-            uint64(block.timestamp),
+            uint32(block.timestamp),
+            uint32(share),
             unitPrice
         );
         userBids[msg.sender].push(newBid);
@@ -156,6 +170,8 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
 
         // shuffle WinStart
         winStart = shuffleWinStart(bids.length, _idCounter);
+
+        emit Desposit(msg.sender, _idCounter, share, unitPrice);
     }
 
     function claimInfo(address _a) public view returns (ClaimInfo memory info) {
