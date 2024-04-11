@@ -26,7 +26,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         address indexed buyer,
         uint256 indexed id,
         uint256 indexed share,
-        uint256 bidPrice
+        uint256 unitPrice
     );
     event Claim(address indexed buyer, uint256 refundAmount, uint256 nftCount);
 
