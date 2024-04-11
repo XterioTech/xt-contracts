@@ -55,8 +55,9 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         uint256 _auctionStartTime,
         uint256 _auctionEndTime,
         uint256 _unitPrice,
+        uint256 _maxShare,
         uint256 _nftPrice,
-        uint256 _maxShare
+        uint256 _nftAmount
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setupRole(MANAGER_ROLE, _admin);
@@ -70,6 +71,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         unitPrice = _unitPrice;
         nftPrice = _nftPrice;
         maxShare = _maxShare;
+        nftAmount = _nftAmount;
     }
 
     receive() external payable {}
@@ -102,7 +104,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
 
     function setNftAmount(uint256 _amt) external onlyRole(MANAGER_ROLE) {
         require(
-            _amt < nftAmount,
+            _amt > 0 && _amt < nftAmount,
             "DepositRaffleMinter: nftAmount can not increase"
         );
         nftAmount = _amt;
@@ -268,14 +270,16 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
             block.timestamp > auctionEndTime,
             "DepositRaffleMinter: winnerBids not allowed until auction ends"
         );
-        uint256 endIdx = startIdx + batchSize - 1;
-        if (endIdx >= winStart + nftAmount) {
-            endIdx = winStart + nftAmount - 1;
-        }
-        uint256 resultSize = endIdx - startIdx + 1;
+        require(
+            batchSize <= nftAmount,
+            "DepositRaffleMinter: batchSize overflow"
+        );
+        uint256 resultSize = batchSize > nftAmount - startIdx
+            ? nftAmount - startIdx
+            : batchSize;
         Bid[] memory result = new Bid[](resultSize);
         for (uint256 i = 0; i < resultSize; i++) {
-            result[i] = bids[startIdx + i];
+            result[i] = bids[winStart + startIdx + i];
         }
         return result;
     }

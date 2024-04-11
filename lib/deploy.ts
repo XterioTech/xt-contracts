@@ -142,6 +142,25 @@ export const deployDepositMinter = async (
   return contract;
 };
 
+export const deployDepositRaffleMinter = async (
+  admin: AddressLike,
+  gateway: AddressLike,
+  nftAddress: AddressLike,
+  paymentRecipient: AddressLike,
+  auctionStartTime: number,
+  auctionEndTime: number,
+  unitPrice: BigNumberish,
+  maxShare: BigNumberish,
+  nftPrice: BigNumberish,
+  nftAmount: BigNumberish,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("DepositRaffleMinter");
+  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, auctionStartTime, auctionEndTime, unitPrice, maxShare, nftPrice, nftAmount, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
 
 export const deployPalioIncubator = async (
   gateway: AddressLike,
