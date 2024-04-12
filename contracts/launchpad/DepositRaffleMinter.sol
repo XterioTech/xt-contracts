@@ -289,7 +289,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         uint256 low,
         uint256 high,
         uint256 salt
-    ) public view returns (uint256) {
+    ) private view returns (uint256) {
         require(high > low, "high must be greater than low");
         uint256 randomNumber = uint256(
             keccak256(
@@ -306,7 +306,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
     function shuffleWinStart(
         uint256 maxAmount,
         uint256 salt
-    ) public view returns (uint256) {
+    ) private view returns (uint256) {
         if (maxAmount <= nftAmount) return 0;
         return generateRandomInRange(0, maxAmount - nftAmount, salt);
     }
