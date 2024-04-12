@@ -22,7 +22,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         uint256 nftCount;
     }
 
-    event Desposit(address indexed buyer, uint256 unitPrice, uint256 share);
+    event Deposit(address indexed buyer, uint256 unitPrice, uint256 share);
     event Claim(address indexed buyer, uint256 refundAmount, uint256 nftCount);
 
     uint256 private _idCounter;
@@ -35,7 +35,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
     uint256 public nftPrice;
     bool public paymentSent;
 
-    uint256 public nftAmount = 2000; //default selected nft amount
+    uint256 public nftAmount;
     uint256 public limitForBuyerAmount = 1;
     uint256 public maxShare;
 
@@ -59,6 +59,15 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         uint256 _nftPrice,
         uint256 _nftAmount
     ) {
+        require(
+            _unitPrice >= _nftPrice,
+            "DepositRaffleMinter: unitPrice must be larger than or equal to nftPrice"
+        );
+        require(
+            _nftAmount > 0,
+            "DepositRaffleMinter: nftAmount must be larger than zero"
+        );
+
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setupRole(MANAGER_ROLE, _admin);
         _setupRole(MANAGER_ROLE, msg.sender);
@@ -83,11 +92,11 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
             "DepositRaffleMinter: payment can only be made after the auction has ended & nftAmount has been set"
         );
         require(!paymentSent, "DepositRaffleMinter: payment already sent");
+        paymentSent = true;
 
         uint256 value = nftPrice * nftAmount;
         (bool success, ) = paymentRecipient.call{value: value}("");
         require(success, "DepositRaffleMinter: failed to send payment");
-        paymentSent = true;
     }
 
     function setGateway(address _g) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -104,8 +113,13 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
 
     function setNftAmount(uint256 _amt) external onlyRole(MANAGER_ROLE) {
         require(
-            _amt > 0 && _amt < nftAmount,
-            "DepositRaffleMinter: nftAmount can not increase"
+            block.timestamp < auctionEndTime,
+            "DepositRaffleMinter: cannot change nftAmount once ended"
+        );
+        require(
+            block.timestamp < auctionStartTime ||
+                (_amt > 0 && _amt < nftAmount),
+            "DepositRaffleMinter: nftAmount can not increase once started"
         );
         nftAmount = _amt;
     }
@@ -176,7 +190,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
             winStart = shuffleWinStart(bids.length, _idCounter);
         }
 
-        emit Desposit(msg.sender, unitPrice, share);
+        emit Deposit(msg.sender, unitPrice, share);
     }
 
     function claimInfo(address _a) public view returns (ClaimInfo memory info) {
