@@ -172,12 +172,12 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         );
         userBids[msg.sender].push(newBid);
 
-        if (bids.length < nftAmount) {
+        uint256 oldBidsLength = bids.length;
+        if (oldBidsLength < nftAmount) {
             bids.push(newBid);
-            bidIndex[newBid.id] = bids.length - 1;
+            bidIndex[newBid.id] = oldBidsLength;
         } else {
             // shuffle newBid insertion position
-            uint256 oldBidsLength = bids.length;
             uint256 to = generateRandomInRange(0, oldBidsLength - 1, _idCounter);
             Bid memory temp = bids[to];
             bids[to] = newBid;
