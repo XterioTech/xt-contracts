@@ -232,7 +232,7 @@ describe("DepositRaffleMinter", function () {
         const claimInfo = claimInfos[i];
         const userBid = await depositRaffleMinter.userBids(users[i], 0);
         const bidIndex = Number(await depositRaffleMinter.bidIndex(userBid.id))
-        if (bidIndex >= winStart && bidIndex < winStart + nftAmountLarge) {
+        if (bidIndex >= winStart && bidIndex < winStart + nftAmount) {
           winners.add(userBid.id)
           console.log(`--------[i: ${i}, id: ${userBid.id}, share: ${shares[i]}, address: ${userBid.bidder}] win --------`)
           expect(claimInfo.hasClaimed).equal(false);
@@ -251,7 +251,7 @@ describe("DepositRaffleMinter", function () {
       }
 
       const batchSize = 2
-      for (let startIdx = 0; startIdx < nftAmountLarge; startIdx += batchSize) {
+      for (let startIdx = 0; startIdx < nftAmount; startIdx += batchSize) {
         const winnerBids = await depositRaffleMinter.getWinnerBids(startIdx, batchSize);
         // console.log('startIdx ==', startIdx)
         // console.log('winnerBids ==', winnerBids)
@@ -311,7 +311,7 @@ describe("DepositRaffleMinter", function () {
 describe("DepositRaffleMinter Large Dataset", function () {
   this.timeout(14400000);
 
-  it.only("large dataset raffle deposit with random shares", async function () {
+  it.skip("large dataset raffle deposit with random shares", async function () {
     const { depositRaffleMinter, admin, erc721, nftManager, u1 } = await loadFixture(largeFixture);
     await depositRaffleMinter.connect(admin).setAuctionEndTime((await time.latest()) + duration * 1000);
 

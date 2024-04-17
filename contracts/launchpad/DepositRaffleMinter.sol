@@ -177,17 +177,18 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
             bidIndex[newBid.id] = bids.length - 1;
         } else {
             // shuffle newBid insertion position
-            uint256 to = generateRandomInRange(0, bids.length - 1, _idCounter);
+            uint256 oldBidsLength = bids.length;
+            uint256 to = generateRandomInRange(0, oldBidsLength - 1, _idCounter);
             Bid memory temp = bids[to];
             bids[to] = newBid;
             bids.push(temp);
 
             // update bidIndex
             bidIndex[newBid.id] = to;
-            bidIndex[temp.id] = bids.length - 1;
+            bidIndex[temp.id] = oldBidsLength;
 
             // shuffle WinStart
-            winStart = shuffleWinStart(bids.length, _idCounter);
+            winStart = shuffleWinStart(oldBidsLength + 1, _idCounter);
         }
 
         emit Deposit(msg.sender, unitPrice, share);
