@@ -24,7 +24,9 @@ const deposit = async ({
   user: ethers.Signer;
   share: number;
 }) => {
-  return depositRaffleMinter.connect(user).deposit(share, { value: unitPrice * BigInt(share) });
+  const gasEstimated = await depositRaffleMinter.connect(user).deposit.estimateGas(share, { value: unitPrice * BigInt(share)});
+  const gasLimit = gasEstimated + gasEstimated / BigInt(2);
+  return depositRaffleMinter.connect(user).deposit(share, { value: unitPrice * BigInt(share), gasLimit });
 };
 
 const randomUser = async () => {
@@ -344,6 +346,7 @@ describe("DepositRaffleMinter Large Dataset", function () {
       if (numPlaced % 10 == 0 || numPlaced == TotalDepositCnt) {
         console.log(`depositing ${numPlaced} / ${TotalDepositCnt}`);
         await mine(1);
+        console.log(`minted: ${await depositRaffleMinter.getTotalBidsCnt()}`)
       }
     };
 
@@ -352,10 +355,15 @@ describe("DepositRaffleMinter Large Dataset", function () {
       await afterDeposited();
     }
 
+    let i = 0;
     while (await depositRaffleMinter.getTotalBidsCnt() < TotalDepositCnt) {
       await mine(10);
       console.log(`minted: ${await depositRaffleMinter.getTotalBidsCnt()}`)
-      // await new Promise(resolve => setTimeout(resolve, 5000)); // 延迟操作 1s
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 延迟操作 1s
+      i ++;
+      if (i > 10) {
+        throw new Error("not mined")
+      }
     }
     // re-enable automining when you are done, so you dont need to manually mine future blocks
     await hre.network.provider.send("evm_setAutomine", [true]);
