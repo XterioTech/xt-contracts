@@ -5,6 +5,7 @@ import { deployDepositRaffleMinter } from "../../lib/deploy";
 import { DepositRaffleMinter } from "../../typechain-types";
 import { loadFixture, mine, setBalance, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { nftTradingTestFixture } from "../common_fixtures";
+import * as fs from 'fs';
 
 const initialStartTime = 1903490000;
 const initialEndTime = 1903490000;
@@ -415,13 +416,15 @@ describe("DepositRaffleMinter Large Dataset", function () {
     expect(winners.size).equal(nftAmountLarge);
 
     const batchSize = 50
-    for (let startIdx = 0; startIdx < nftAmount; startIdx += batchSize) {
+    const allWinnerBids = [];
+    for (let startIdx = 0; startIdx < nftAmountLarge; startIdx += batchSize) {
       const winnerBids = await depositRaffleMinter.getWinnerBids(startIdx, batchSize);
-      // console.log('startIdx ==', startIdx)
-      // console.log('winnerBids ==', winnerBids)
+      allWinnerBids.push(...winnerBids);
       for (let i = 0; i < winnerBids.length; i++) {
         expect(winners.has(winnerBids[i].id)).equal(true);
       }
     }
+    const csvData = allWinnerBids.map((bid) => `${bid.id},${bid.bidder},${bid.timestamp},${bid.share},${bid.price}`).join('\n');
+    fs.writeFileSync('winnerBids.csv', 'id,bidder,timestamp,share,unitPrice\n' + csvData, 'utf-8');
   });
 });
