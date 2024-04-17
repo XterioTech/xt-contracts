@@ -13,7 +13,7 @@ const unitPrice = hre.ethers.parseEther('0.01');
 const maxShare = 10;
 const nftPrice = hre.ethers.parseEther('0');
 const nftAmount = 5;
-const nftAmountLarge = 60;
+const nftAmountLarge = 100;
 
 const deposit = async ({
   depositRaffleMinter,
@@ -24,7 +24,7 @@ const deposit = async ({
   user: ethers.Signer;
   share: number;
 }) => {
-  const gasEstimated = await depositRaffleMinter.connect(user).deposit.estimateGas(share, { value: unitPrice * BigInt(share)});
+  const gasEstimated = await depositRaffleMinter.connect(user).deposit.estimateGas(share, { value: unitPrice * BigInt(share) });
   const gasLimit = gasEstimated + gasEstimated / BigInt(2);
   return depositRaffleMinter.connect(user).deposit(share, { value: unitPrice * BigInt(share), gasLimit });
 };
@@ -73,8 +73,6 @@ async function fixture(_nftAmount?: number) {
 async function largeFixture() {
   return fixture(nftAmountLarge);
 }
-
-
 
 // struct Bid {
 //   uint32 id;
@@ -234,7 +232,7 @@ describe("DepositRaffleMinter", function () {
         const claimInfo = claimInfos[i];
         const userBid = await depositRaffleMinter.userBids(users[i], 0);
         const bidIndex = Number(await depositRaffleMinter.bidIndex(userBid.id))
-        if (bidIndex >= winStart && bidIndex < winStart + nftAmount) {
+        if (bidIndex >= winStart && bidIndex < winStart + nftAmountLarge) {
           winners.add(userBid.id)
           console.log(`--------[i: ${i}, id: ${userBid.id}, share: ${shares[i]}, address: ${userBid.bidder}] win --------`)
           expect(claimInfo.hasClaimed).equal(false);
@@ -253,7 +251,7 @@ describe("DepositRaffleMinter", function () {
       }
 
       const batchSize = 2
-      for (let startIdx = 0; startIdx < nftAmount; startIdx += batchSize) {
+      for (let startIdx = 0; startIdx < nftAmountLarge; startIdx += batchSize) {
         const winnerBids = await depositRaffleMinter.getWinnerBids(startIdx, batchSize);
         // console.log('startIdx ==', startIdx)
         // console.log('winnerBids ==', winnerBids)
@@ -317,7 +315,7 @@ describe("DepositRaffleMinter Large Dataset", function () {
     const { depositRaffleMinter, admin, erc721, nftManager, u1 } = await loadFixture(largeFixture);
     await depositRaffleMinter.connect(admin).setAuctionEndTime((await time.latest()) + duration * 1000);
 
-    const TotalDepositCnt = 100
+    const TotalDepositCnt = 500
     // deposit 
     const users = [];
     const shares = [];
@@ -360,7 +358,7 @@ describe("DepositRaffleMinter Large Dataset", function () {
       await mine(10);
       console.log(`minted: ${await depositRaffleMinter.getTotalBidsCnt()}`)
       await new Promise(resolve => setTimeout(resolve, 1000)); // 延迟操作 1s
-      i ++;
+      i++;
       if (i > 10) {
         throw new Error("not mined")
       }
@@ -377,46 +375,53 @@ describe("DepositRaffleMinter Large Dataset", function () {
     await time.increase(duration * 1000 + 600);
     expect(await depositRaffleMinter.getTotalBidsCnt()).equal(TotalDepositCnt);
 
+    const claimInfos = await depositRaffleMinter.getUserClaimInfos(users.map((u) => u.address));
+    // console.log('claimInfos.length ==', claimInfos.length);
 
-    // const claimInfos = await depositRaffleMinter.getUserClaimInfos(users.map((u) => u.address));
+    // calculate winStart & every user win
+    const winners = new Set()
+    let winnersAdded = 0;
+    const afterWinnersAdded = async () => {
+      winnersAdded++;
+      if (winnersAdded % 10 == 0 || winnersAdded == TotalDepositCnt) {
+        console.log(`winnersAdded ${winnersAdded} / ${TotalDepositCnt}`);
+      }
+    };
 
-    // // console.log(`claimInfos.length ==`, claimInfos.length)
+    const winStart = Number(await depositRaffleMinter.winStart())
+    for (let i = 0; i < TotalDepositCnt; i++) {
+      const claimInfo = claimInfos[i];
+      const userBid = await depositRaffleMinter.userBids(users[i], 0);
+      const bidIndex = Number(await depositRaffleMinter.bidIndex(userBid.id))
+      if (bidIndex >= winStart && bidIndex < winStart + nftAmountLarge) {
+        winners.add(userBid.id)
+        // console.log(`--------[i: ${i}, id: ${userBid.id}, share: ${shares[i]}, address: ${userBid.bidder}] win --------`)
+        expect(claimInfo.hasClaimed).equal(false);
+        expect(claimInfo.nftCount).equal(1);
+        expect(claimInfo.refundAmount).equal(unitPrice * BigInt(shares[i]) - nftPrice);
+        await depositRaffleMinter.connect(users[i]).claimAndRefund();
+        expect(await erc721.balanceOf(users[i])).equal(1);
+      } else {
+        // console.log(`--------[share: ${shares[i]}] not win --------`)
+        expect(claimInfo.hasClaimed).equal(false);
+        expect(claimInfo.nftCount).equal(0);
+        expect(claimInfo.refundAmount).equal(unitPrice * BigInt(shares[i]));
+        await depositRaffleMinter.connect(users[i]).claimAndRefund();
+        expect(await erc721.balanceOf(users[i])).equal(0);
+      }
+      await afterWinnersAdded()
+    }
 
-    // const winners = new Set()
-    // // calculate winStart & every user win
-    // const winStart = Number(await depositRaffleMinter.winStart())
-    // for (let i = 0; i < TotalDepositCnt; i++) {
-    //   const claimInfo = claimInfos[i];
-    //   const userBid = await depositRaffleMinter.userBids(users[i], 0);
-    //   const bidIndex = Number(await depositRaffleMinter.bidIndex(userBid.id))
-    //   if (bidIndex >= winStart && bidIndex < winStart + nftAmount) {
-    //     winners.add(userBid.id)
-    //     // console.log(`--------[i: ${i}, id: ${userBid.id}, share: ${shares[i]}, address: ${userBid.bidder}] win --------`)
-    //     expect(claimInfo.hasClaimed).equal(false);
-    //     expect(claimInfo.nftCount).equal(1);
-    //     expect(claimInfo.refundAmount).equal(unitPrice * BigInt(shares[i]) - nftPrice);
-    //     await depositRaffleMinter.connect(users[i]).claimAndRefund();
-    //     expect(await erc721.balanceOf(users[i])).equal(1);
-    //   } else {
-    //     // console.log(`--------[share: ${shares[i]}] not win --------`)
-    //     expect(claimInfo.hasClaimed).equal(false);
-    //     expect(claimInfo.nftCount).equal(0);
-    //     expect(claimInfo.refundAmount).equal(unitPrice * BigInt(shares[i]));
-    //     await depositRaffleMinter.connect(users[i]).claimAndRefund();
-    //     expect(await erc721.balanceOf(users[i])).equal(0);
-    //   }
-    // }
+    expect(winners.size).equal(nftAmountLarge);
 
-    // expect(winners.size).equal(nftAmountLarge);
-
-    // const batchSize = 50
-    // for (let startIdx = 0; startIdx < nftAmount; startIdx += batchSize) {
-    //   const winnerBids = await depositRaffleMinter.getWinnerBids(startIdx, batchSize);
-    //   // console.log('startIdx ==', startIdx)
-    //   // console.log('winnerBids ==', winnerBids)
-    //   for (let i = 0; i < winnerBids.length; i++) {
-    //     expect(winners.has(winnerBids[i].id)).equal(true);
-    //   }
-    // }
+    const batchSize = 50
+    for (let startIdx = 0; startIdx < nftAmount; startIdx += batchSize) {
+      const winnerBids = await depositRaffleMinter.getWinnerBids(startIdx, batchSize);
+      // console.log('startIdx ==', startIdx)
+      // console.log('winnerBids ==', winnerBids)
+      for (let i = 0; i < winnerBids.length; i++) {
+        expect(winners.has(winnerBids[i].id)).equal(true);
+      }
+    }
   });
 });
