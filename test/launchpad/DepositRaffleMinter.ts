@@ -3,7 +3,7 @@ import ethers from "ethers";
 import { expect } from "chai";
 import { deployDepositRaffleMinter } from "../../lib/deploy";
 import { DepositRaffleMinter } from "../../typechain-types";
-import { loadFixture, setBalance, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { loadFixture, mine, setBalance, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { nftTradingTestFixture } from "../common_fixtures";
 
 const initialStartTime = 1903490000;
@@ -13,6 +13,7 @@ const unitPrice = hre.ethers.parseEther('0.01');
 const maxShare = 10;
 const nftPrice = hre.ethers.parseEther('0');
 const nftAmount = 5;
+const nftAmountLarge = 60;
 
 const deposit = async ({
   depositRaffleMinter,
@@ -32,7 +33,7 @@ const randomUser = async () => {
   return wallet;
 };
 
-async function fixture() {
+async function fixture(_nftAmount?: number) {
   const base = await nftTradingTestFixture();
   const [, , , admin, paymentReceiver, u1, u2] = await hre.ethers.getSigners();
   const gatewayAddress = await base.gateway.getAddress();
@@ -48,7 +49,7 @@ async function fixture() {
     unitPrice,
     maxShare,
     nftPrice,
-    nftAmount
+    _nftAmount ?? nftAmount
   );
 
   await base.gateway.connect(base.gatewayAdmin).addOperatorWhitelist(await depositRaffleMinter.getAddress());
@@ -66,6 +67,12 @@ async function fixture() {
     u2,
   };
 }
+
+async function largeFixture() {
+  return fixture(nftAmountLarge);
+}
+
+
 
 // struct Bid {
 //   uint32 id;
@@ -255,7 +262,6 @@ describe("DepositRaffleMinter", function () {
     });
   });
 
-
   describe("Management", function () {
     it("should have valid access control", async function () {
       const { depositRaffleMinter, gateway, admin, u1, u2, erc721 } = await loadFixture(fixture);
@@ -299,5 +305,110 @@ describe("DepositRaffleMinter", function () {
         "DepositRaffleMinter: nftAmount can not increase"
       );
     });
+  });
+});
+
+describe("DepositRaffleMinter Large Dataset", function () {
+  this.timeout(14400000);
+
+  it.only("large dataset raffle deposit with random shares", async function () {
+    const { depositRaffleMinter, admin, erc721, nftManager, u1 } = await loadFixture(largeFixture);
+    await depositRaffleMinter.connect(admin).setAuctionEndTime((await time.latest()) + duration * 1000);
+
+    const TotalDepositCnt = 100
+    // deposit 
+    const users = [];
+    const shares = [];
+    for (let i = 0; i < TotalDepositCnt; i++) {
+      const u = await randomUser();
+      users.push(u);
+      const share = Math.floor(Math.random() * 10) + 1; // Generate a random share between 1 and 10
+      shares.push(share)
+
+      if (i % 100 === 99 || i == TotalDepositCnt - 1) {
+        console.log(`generating users and shares ${i + 1} / ${TotalDepositCnt}`);
+      }
+    }
+
+    console.log("users & shares generated");
+
+    // refer to https://stackoverflow.com/questions/72497597/how-to-make-local-hardhat-network-run-faster
+    // enable manual mining
+    await hre.network.provider.send("evm_setAutomine", [false]);
+    await hre.network.provider.send("evm_setIntervalMining", [0]);
+
+    console.log("large # of deposit now");
+    let numPlaced = 0;
+    const afterDeposited = async () => {
+      numPlaced++;
+      if (numPlaced % 10 == 0 || numPlaced == TotalDepositCnt) {
+        console.log(`depositing ${numPlaced} / ${TotalDepositCnt}`);
+        await mine(1);
+      }
+    };
+
+    for (let i = 0; i < TotalDepositCnt; i++) {
+      await deposit({ depositRaffleMinter, user: users[i], share: shares[i] })
+      await afterDeposited();
+    }
+
+    while (await depositRaffleMinter.getTotalBidsCnt() < TotalDepositCnt) {
+      await mine(10);
+      console.log(`minted: ${await depositRaffleMinter.getTotalBidsCnt()}`)
+      // await new Promise(resolve => setTimeout(resolve, 5000)); // 延迟操作 1s
+    }
+    // re-enable automining when you are done, so you dont need to manually mine future blocks
+    await hre.network.provider.send("evm_setAutomine", [true]);
+
+
+    console.log(`getTotalBidsCnt: ${await depositRaffleMinter.getTotalBidsCnt()}`)
+
+    console.log("all deposit done!!!!");
+
+    // increase timestamp to auction ended
+    await time.increase(duration * 1000 + 600);
+    expect(await depositRaffleMinter.getTotalBidsCnt()).equal(TotalDepositCnt);
+
+
+    // const claimInfos = await depositRaffleMinter.getUserClaimInfos(users.map((u) => u.address));
+
+    // // console.log(`claimInfos.length ==`, claimInfos.length)
+
+    // const winners = new Set()
+    // // calculate winStart & every user win
+    // const winStart = Number(await depositRaffleMinter.winStart())
+    // for (let i = 0; i < TotalDepositCnt; i++) {
+    //   const claimInfo = claimInfos[i];
+    //   const userBid = await depositRaffleMinter.userBids(users[i], 0);
+    //   const bidIndex = Number(await depositRaffleMinter.bidIndex(userBid.id))
+    //   if (bidIndex >= winStart && bidIndex < winStart + nftAmount) {
+    //     winners.add(userBid.id)
+    //     // console.log(`--------[i: ${i}, id: ${userBid.id}, share: ${shares[i]}, address: ${userBid.bidder}] win --------`)
+    //     expect(claimInfo.hasClaimed).equal(false);
+    //     expect(claimInfo.nftCount).equal(1);
+    //     expect(claimInfo.refundAmount).equal(unitPrice * BigInt(shares[i]) - nftPrice);
+    //     await depositRaffleMinter.connect(users[i]).claimAndRefund();
+    //     expect(await erc721.balanceOf(users[i])).equal(1);
+    //   } else {
+    //     // console.log(`--------[share: ${shares[i]}] not win --------`)
+    //     expect(claimInfo.hasClaimed).equal(false);
+    //     expect(claimInfo.nftCount).equal(0);
+    //     expect(claimInfo.refundAmount).equal(unitPrice * BigInt(shares[i]));
+    //     await depositRaffleMinter.connect(users[i]).claimAndRefund();
+    //     expect(await erc721.balanceOf(users[i])).equal(0);
+    //   }
+    // }
+
+    // expect(winners.size).equal(nftAmountLarge);
+
+    // const batchSize = 50
+    // for (let startIdx = 0; startIdx < nftAmount; startIdx += batchSize) {
+    //   const winnerBids = await depositRaffleMinter.getWinnerBids(startIdx, batchSize);
+    //   // console.log('startIdx ==', startIdx)
+    //   // console.log('winnerBids ==', winnerBids)
+    //   for (let i = 0; i < winnerBids.length; i++) {
+    //     expect(winners.has(winnerBids[i].id)).equal(true);
+    //   }
+    // }
   });
 });
