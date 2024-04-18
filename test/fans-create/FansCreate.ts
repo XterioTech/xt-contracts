@@ -14,8 +14,7 @@ const PROJECT_ID = 666;
 describe("Test FansCreate Contract", function () {
   async function basicFixture() {
     const [admin, signer, p1, c1, c2, u1, u2, u3] = await hre.ethers.getSigners();
-    const fansCreate = await deployFansCreate(admin.address, URI);
-    await fansCreate.grantRole(await fansCreate.SIGNER_ROLE(), signer);
+    const fansCreate = await deployFansCreate(admin.address, signer.address, admin.address, URI);
     return {
       fansCreate,
       admin,

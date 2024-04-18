@@ -69,10 +69,16 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
     // mapping from workId to the creator
     mapping(uint256 => address) public workCreator;
 
-    constructor(address admin, string memory uri) ERC1155(uri) {
+    constructor(
+        address admin,
+        address signer,
+        address recipient,
+        string memory uri
+    ) ERC1155(uri) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MANAGER_ROLE, admin);
-        protocolFeeRecipient = admin;
+        _grantRole(SIGNER_ROLE, signer);
+        protocolFeeRecipient = recipient;
     }
 
     /**

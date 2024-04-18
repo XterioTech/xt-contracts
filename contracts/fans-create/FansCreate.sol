@@ -8,7 +8,12 @@ contract FansCreate is FansCreateCore {
     // Mark the payment token as native BNB token
     address public constant paymentToken = address(0);
 
-    constructor(address admin, string memory uri) FansCreateCore(admin, uri) {}
+    constructor(
+        address admin,
+        address signer,
+        address recipient,
+        string memory uri
+    ) FansCreateCore(admin, signer, recipient, uri) {}
 
     /// @dev This virtual function should return the coefficient C of calculating the price
     ///     price(supply) = C * supply * supply

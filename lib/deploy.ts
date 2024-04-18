@@ -3,7 +3,11 @@ import { MarketplaceV2, TokenGateway } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
 
-export const deployMajorToken = async (admin: AddressLike, wallet: AddressLike, txOverrides?: NonPayableOverrides & { from?: string }) => {
+export const deployMajorToken = async (
+  admin: AddressLike,
+  wallet: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
   const Token = await hre.ethers.getContractFactory("XterToken");
   const token = await Token.deploy(admin, wallet, txOverrides || {});
   await token.waitForDeployment();
@@ -75,16 +79,30 @@ export const deployCreatorTokenTransferValidator = async (defaultOwner: AddressL
   return contract;
 };
 
-export const deployFansCreate = async (admin: AddressLike, uri: string, txOverrides?: NonPayableOverrides & { from?: string }) => {
+export const deployFansCreate = async (
+  admin: AddressLike,
+  signer: AddressLike,
+  recipient: AddressLike,
+  uri: string,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
   const Contract = await hre.ethers.getContractFactory("FansCreate");
-  const contract = await Contract.deploy(admin, uri, txOverrides || {});
+  const contract = await Contract.deploy(admin, signer, recipient, uri, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
 
-export const deployFansCreateERC20 = async (admin: AddressLike, uri: string, paymentToken: AddressLike, priceCoef: BigNumberish, txOverrides?: NonPayableOverrides & { from?: string }) => {
+export const deployFansCreateERC20 = async (
+  admin: AddressLike,
+  signer: AddressLike,
+  recipient: AddressLike,
+  uri: string,
+  paymentToken: AddressLike,
+  priceCoef: BigNumberish,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
   const Contract = await hre.ethers.getContractFactory("FansCreateERC20");
-  const contract = await Contract.deploy(admin, uri, paymentToken, priceCoef, txOverrides || {});
+  const contract = await Contract.deploy(admin, signer, recipient, uri, paymentToken, priceCoef, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
@@ -99,7 +117,15 @@ export const deployAuctionMinter = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("AuctionMinter");
-  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, nftAmount, auctionEndTime, txOverrides || {});
+  const contract = await Contract.deploy(
+    admin,
+    gateway,
+    nftAddress,
+    paymentRecipient,
+    nftAmount,
+    auctionEndTime,
+    txOverrides || {}
+  );
   await contract.waitForDeployment();
   return contract;
 };
@@ -114,7 +140,15 @@ export const deployRaffleAuctionMinter = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("RaffleAuctionMinter");
-  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, nftAmount, auctionEndTime, txOverrides || {});
+  const contract = await Contract.deploy(
+    admin,
+    gateway,
+    nftAddress,
+    paymentRecipient,
+    nftAmount,
+    auctionEndTime,
+    txOverrides || {}
+  );
   await contract.waitForDeployment();
   return contract;
 };
@@ -137,7 +171,16 @@ export const deployDepositMinter = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("DepositMinter");
-  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, auctionStartTime, auctionEndTime, unitPrice, txOverrides || {});
+  const contract = await Contract.deploy(
+    admin,
+    gateway,
+    nftAddress,
+    paymentRecipient,
+    auctionStartTime,
+    auctionEndTime,
+    unitPrice,
+    txOverrides || {}
+  );
   await contract.waitForDeployment();
   return contract;
 };
@@ -156,11 +199,22 @@ export const deployDepositRaffleMinter = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("DepositRaffleMinter");
-  const contract = await Contract.deploy(admin, gateway, nftAddress, paymentRecipient, auctionStartTime, auctionEndTime, unitPrice, maxShare, nftPrice, nftAmount, txOverrides || {});
+  const contract = await Contract.deploy(
+    admin,
+    gateway,
+    nftAddress,
+    paymentRecipient,
+    auctionStartTime,
+    auctionEndTime,
+    unitPrice,
+    maxShare,
+    nftPrice,
+    nftAmount,
+    txOverrides || {}
+  );
   await contract.waitForDeployment();
   return contract;
 };
-
 
 export const deployPalioIncubator = async (
   gateway: AddressLike,
@@ -171,7 +225,14 @@ export const deployPalioIncubator = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("PalioIncubator");
-  const contract = await Contract.deploy(gateway, payeeAddress, eggAddress, chatNFTAddress, eventStartTime, txOverrides || {});
+  const contract = await Contract.deploy(
+    gateway,
+    payeeAddress,
+    eggAddress,
+    chatNFTAddress,
+    eventStartTime,
+    txOverrides || {}
+  );
   await contract.waitForDeployment();
   return contract;
 };
@@ -186,5 +247,3 @@ export const deployPalioVoter = async (
   await contract.waitForDeployment();
   return contract;
 };
-
-

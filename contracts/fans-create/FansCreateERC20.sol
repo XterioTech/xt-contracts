@@ -14,10 +14,12 @@ contract FansCreateERC20 is FansCreateCore {
 
     constructor(
         address admin,
+        address signer,
+        address recipient,
         string memory uri,
         address _paymentToken,
         uint256 _coefficient
-    ) FansCreateCore(admin, uri) {
+    ) FansCreateCore(admin, signer, recipient, uri) {
         paymentToken = _paymentToken;
         _priceCoefficient = _coefficient;
     }
