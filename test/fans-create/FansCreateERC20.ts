@@ -57,9 +57,9 @@ describe("Test FansCreate Contract", function () {
     expect(await fansCreate.calcPrice(0, 1)).equal(0);
     expect(await fansCreate.calcPrice(0, 2)).equal(c);
     expect(await fansCreate.calcPrice(1, 1)).equal(c);
-    expect(await fansCreate.calcPrice(2, 1)).equal(c * BigInt(2 * 2));
-    expect(await fansCreate.calcPrice(3, 1)).equal(c * BigInt(3 * 3));
-    expect(await fansCreate.calcPrice(2, 2)).equal(c * BigInt(2 * 2 + 3 * 3));
+    expect(await fansCreate.calcPrice(2, 1)).equal(c * BigInt(2));
+    expect(await fansCreate.calcPrice(3, 1)).equal(c * BigInt(3));
+    expect(await fansCreate.calcPrice(2, 2)).equal(c * BigInt(2 + 3));
   });
 
   it("Publish and buy", async function () {

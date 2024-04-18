@@ -20,8 +20,8 @@ contract FansCreate is FansCreateCore {
         override
         returns (uint256)
     {
-        // 1BNB / 1250
-        return 800000000000000;
+        // 0.0002 BNB
+        return 200000000000000;
     }
 
     /// @dev This virtual function should check and charge trader the specified `amount` of the payment token
