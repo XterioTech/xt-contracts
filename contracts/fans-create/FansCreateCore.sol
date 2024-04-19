@@ -52,9 +52,9 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
 
     // fee ratios
     uint256 public constant FEE_RATIO_DENOMINATOR = 10000;
-    uint256 public protocolFeeRatio = 400;
-    uint256 public projectFeeRatio = 400;
-    uint256 public creatorFeeRatio = 400;
+    uint256 public protocolFeeRatio = 200;
+    uint256 public projectFeeRatio = 200;
+    uint256 public creatorFeeRatio = 600;
 
     // protocol fee recipient
     address public protocolFeeRecipient;
