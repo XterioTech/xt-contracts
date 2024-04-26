@@ -74,8 +74,8 @@ describe("Test BasicERC20 Contract", function () {
     await erc20.pause();
     // cannot transfer when paused
     await expect(erc20.connect(u1).transfer(u2.address, 500)).to.be.revertedWith("BasicERC20: paused");
-    await erc20.connect(owner).setTransferWhitelisted("0x0000000000000000000000000000000000000000", true);
     // can mint when paused
+    await erc20.connect(owner).setTransferWhitelisted("0x0000000000000000000000000000000000000000", true);
     expect(await erc20.mint(u1.address, 1000)).to.emit(erc20, "Transfer").withArgs("0x0000000000000000000000000000000000000000", u1.address, 1000);
 
     // unpause

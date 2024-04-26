@@ -105,7 +105,7 @@ describe("Test FansCreate Contract", function () {
     await fansCreate
       .connect(c1)
       .publishAndBuyKeys(c1.address, WORK_ID2, 2, PROJECT_ID, deadline, signer.address, signature2);
-    expect(await paymentToken.balanceOf(p1.address)).equal(priceInfo.price * BigInt(4) / BigInt(100)); // note that before publish, the priceInfo.projectFee would be 0, so we cannot directly refer to it
+    expect(await paymentToken.balanceOf(p1.address)).equal(priceInfo.price * BigInt(2) / BigInt(100)); // note that before publish, the priceInfo.projectFee would be 0, so we cannot directly refer to it
     expect(await paymentToken.balanceOf(c1.address)).equal(priceInfo.creatorFee);
 
     await time.setNextBlockTimestamp(deadline + 60);
