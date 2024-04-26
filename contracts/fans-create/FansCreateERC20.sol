@@ -14,16 +14,18 @@ contract FansCreateERC20 is FansCreateCore {
 
     constructor(
         address admin,
+        address signer,
+        address recipient,
         string memory uri,
         address _paymentToken,
         uint256 _coefficient
-    ) FansCreateCore(admin, uri) {
+    ) FansCreateCore(admin, signer, recipient, uri) {
         paymentToken = _paymentToken;
         _priceCoefficient = _coefficient;
     }
 
     /// @dev This virtual function should return the coefficient C of calculating the price
-    ///     price(supply) = C * supply * supply
+    ///     price(supply) = C * supply
     /// note that this coefficient should take into account the payment token's decimals, as the calculated price is considered the raw value
     function priceCoefficient()
         internal

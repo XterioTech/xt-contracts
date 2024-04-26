@@ -12,11 +12,13 @@ export const tokenGatewayAddressMap: NetworkAddressMap = {
   arbitrumOne: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   polygon: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   bsc: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+  xterio: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   // Testnets
   sepolia: "0x38f9e50EBF26e4E01db00aE5238e725d8647b115",
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
   bscTestnet: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   opbnbTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
+  xterioTestnet: "0xB6Fe7Bc1c8836983C0643D5869c42bD27aCAAedD",
 };
 
 export const marketplaceV2AddressMap: NetworkAddressMap = {
@@ -29,6 +31,7 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
   goerli: "0xDbE4F513dBc79dEF048Df54D870EfB3B2edE01cB",
   bscTestnet: "0x2973fAe1Db21e3f30dF115d43094E7B2d83251c5",
   opbnbTestnet: "0x1dDee87268F5AF34Ef2fBD128D0D8Dd21b67Bdb1",
+  xterioTestnet: "0x9A228181d15E57Ab4324B6903EcD847cADBF727B",
 };
 
 export const fansCreateAddressMap: NetworkAddressMap = {
@@ -43,11 +46,13 @@ export const safeManagerAddressMap: NetworkAddressMap = {
   arbitrumOne: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
   polygon: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
   bsc: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
+  xterio: "0x9b5D0Ccb7C95e448B742BA83D85282a38944b3E9", // Safe not available on xterio chain, use XterAdmin1 address
   // Testnets
   sepolia: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
   goerli: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
   bscTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
   opbnbTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
+  xterioTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
 };
 
 const hyperMap = {
@@ -82,5 +87,5 @@ export function getTxOverridesForNetwork(network: string): { gasPrice?: number }
 }
 
 export function isTestnet(network: string): boolean {
-  return network == "goerli" || network == "sepolia" || network == "bscTestnet" || network == "opbnbTestnet";
+  return network == "goerli" || network == "sepolia" || network == "bscTestnet" || network == "opbnbTestnet" || network == "xterioTestnet";
 }

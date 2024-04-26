@@ -8,10 +8,15 @@ contract FansCreate is FansCreateCore {
     // Mark the payment token as native BNB token
     address public constant paymentToken = address(0);
 
-    constructor(address admin, string memory uri) FansCreateCore(admin, uri) {}
+    constructor(
+        address admin,
+        address signer,
+        address recipient,
+        string memory uri
+    ) FansCreateCore(admin, signer, recipient, uri) {}
 
     /// @dev This virtual function should return the coefficient C of calculating the price
-    ///     price(supply) = C * supply * supply
+    ///     price(supply) = C * supply
     /// note that this coefficient should take into account the payment token's decimals, as the calculated price is considered the raw value
     function priceCoefficient()
         internal
@@ -20,8 +25,8 @@ contract FansCreate is FansCreateCore {
         override
         returns (uint256)
     {
-        // 1BNB / 1250
-        return 800000000000000;
+        // 0.0002 BNB
+        return 200000000000000;
     }
 
     /// @dev This virtual function should check and charge trader the specified `amount` of the payment token

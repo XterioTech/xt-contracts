@@ -52,9 +52,9 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
 
     // fee ratios
     uint256 public constant FEE_RATIO_DENOMINATOR = 10000;
-    uint256 public protocolFeeRatio = 400;
-    uint256 public projectFeeRatio = 400;
-    uint256 public creatorFeeRatio = 400;
+    uint256 public protocolFeeRatio = 200;
+    uint256 public projectFeeRatio = 200;
+    uint256 public creatorFeeRatio = 600;
 
     // protocol fee recipient
     address public protocolFeeRecipient;
@@ -69,10 +69,16 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
     // mapping from workId to the creator
     mapping(uint256 => address) public workCreator;
 
-    constructor(address admin, string memory uri) ERC1155(uri) {
+    constructor(
+        address admin,
+        address signer,
+        address recipient,
+        string memory uri
+    ) ERC1155(uri) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MANAGER_ROLE, admin);
-        protocolFeeRecipient = admin;
+        _grantRole(SIGNER_ROLE, signer);
+        protocolFeeRecipient = recipient;
     }
 
     /**
@@ -125,14 +131,9 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         uint256 supply,
         uint256 amount
     ) public view returns (uint256) {
-        uint256 sum1 = supply == 0
-            ? 0
-            : ((supply - 1) * (supply) * (2 * (supply - 1) + 1)) / 6;
-        uint256 sum2 = supply == 0 && amount == 1
-            ? 0
-            : ((supply + amount - 1) *
-                (supply + amount) *
-                (2 * (supply + amount - 1) + 1)) / 6;
+        // Price(supply, amount) = Sum(supply+amount-1) - Sum(supply-1)
+        uint256 sum1 = supply == 0 ? 0 : ((supply - 1) * supply) / 2;
+        uint256 sum2 = ((supply + amount - 1) * (supply + amount)) / 2;
         uint256 summation = sum2 - sum1;
         return summation * priceCoefficient();
     }
@@ -210,7 +211,10 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
             block.timestamp <= deadline,
             "FansCreateCore: deadline exceeded"
         );
-        require(workCreator[workId] == address(0), "FansCreateCore: already published");
+        require(
+            workCreator[workId] == address(0),
+            "FansCreateCore: already published"
+        );
         // Check signature validity
         bytes32 hash = keccak256(
             abi.encodePacked(
@@ -277,7 +281,10 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         address _projectFeeRecipient;
         if (priceInfo.projectFee > 0) {
             _projectFeeRecipient = projectFeeRecipient[priceInfo.projectId];
-            require(_projectFeeRecipient != address(0), "FansCreateCore: projectFeeRecipient not set");
+            require(
+                _projectFeeRecipient != address(0),
+                "FansCreateCore: projectFeeRecipient not set"
+            );
             payOut(priceInfo.projectFee, _projectFeeRecipient);
         }
         emit DistributeFee(
@@ -333,7 +340,10 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         address _projectFeeRecipient;
         if (priceInfo.projectFee > 0) {
             _projectFeeRecipient = projectFeeRecipient[priceInfo.projectId];
-            require(_projectFeeRecipient != address(0), "FansCreateCore: projectFeeRecipient not set");
+            require(
+                _projectFeeRecipient != address(0),
+                "FansCreateCore: projectFeeRecipient not set"
+            );
             payOut(priceInfo.projectFee, _projectFeeRecipient);
         }
         emit DistributeFee(

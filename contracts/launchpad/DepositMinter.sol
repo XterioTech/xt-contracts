@@ -2,19 +2,17 @@
 pragma solidity ^0.8.0;
 
 import "../basic-tokens/interfaces/IGateway.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract DepositMinter is AccessControl, ReentrancyGuard {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     struct Bid {
-        uint256 id;
+        uint32 id;
         address bidder;
+        uint64 timestamp;
         uint256 price;
-        uint256 timestamp;
     }
 
     struct ClaimInfo {
@@ -25,11 +23,7 @@ contract DepositMinter is AccessControl, ReentrancyGuard {
 
     event Claim(address indexed buyer, uint256 refundAmount, uint256 nftCount);
 
-    using SafeMath for uint256;
-    using Counters for Counters.Counter;
-
-    Counters.Counter private _idCounter;
-
+    uint256 private _idCounter;
     address public gateway;
     address public nftAddress;
     address public paymentRecipient;
@@ -138,18 +132,21 @@ contract DepositMinter is AccessControl, ReentrancyGuard {
 
         buyerBidCount[msg.sender] += 1;
 
-        _idCounter.increment();
+        _idCounter += 1;
         Bid memory newBid = Bid(
-            _idCounter.current(),
+            uint32(_idCounter),
             msg.sender,
-            unitPrice,
-            block.timestamp
+            uint64(block.timestamp),
+            unitPrice
         );
-
         userBids[msg.sender].push(newBid);
     }
 
     function claimInfo(address _a) public view returns (ClaimInfo memory info) {
+        require(
+            block.timestamp > auctionEndTime,
+            "DepositMinter: No claimInfo allowed until auction ends"
+        );
         info.hasClaimed = hasClaimed[_a];
         info.refundAmount = 0;
         info.nftCount = 0;
@@ -212,7 +209,7 @@ contract DepositMinter is AccessControl, ReentrancyGuard {
     }
 
     function getTotalBidsCnt() external view returns (uint256) {
-        return _idCounter.current();
+        return _idCounter;
     }
 
     function getBidAmtByBuyerId(
