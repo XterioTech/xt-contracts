@@ -13,6 +13,7 @@ export const tokenGatewayAddressMap: NetworkAddressMap = {
   polygon: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   bsc: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   xterio: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+  base: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   // Testnets
   sepolia: "0x38f9e50EBF26e4E01db00aE5238e725d8647b115",
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
@@ -47,6 +48,7 @@ export const safeManagerAddressMap: NetworkAddressMap = {
   polygon: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
   bsc: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
   xterio: "0x9b5D0Ccb7C95e448B742BA83D85282a38944b3E9", // Safe not available on xterio chain, use XterAdmin1 address
+  base: "0xB5472ffef665d1a27538FAa35a5c40cb5f11e28A", // Base has a different official factory address, so the safe address is different
   // Testnets
   sepolia: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
   goerli: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",

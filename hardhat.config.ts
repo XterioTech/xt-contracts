@@ -69,6 +69,10 @@ const config: HardhatUserConfig = {
       url: "https://polygon-rpc.com",
       accounts: privateKey != "" ? [privateKey] : [],
     },
+    base: {
+      url: "https://mainnet.base.org",
+      accounts: privateKey != "" ? [privateKey] : [],
+    },
     xterioTestnet: {
       url: "https://xterio-testnet.alt.technology/",
       accounts: privateKey != "" ? [privateKey] : [],
@@ -98,6 +102,7 @@ const config: HardhatUserConfig = {
       opbnb: process.env.API_KEY_NODEREAL_OPBNB || "",
       arbitrumOne: process.env.API_KEY_ARBISCAN || "",
       polygon: process.env.API_KEY_POLYGONSCAN || "",
+      base: process.env.API_KEY_ETHERSCAN_BASE || "",
       xterioTestnet: "no need",
       xterio: "no need",
     },
@@ -132,6 +137,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: `https://xterscan.io/api`,
           browserURL: "https://xterscan.io/",
+        },
+      },
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: `https://api.basescan.org/api`,
+          browserURL: "https://basescan.org/",
         },
       },
     ],

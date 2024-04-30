@@ -1,0 +1,190 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0xa0Acf085B324491227f353613E39b11705497c51",
+      "txHash": "0x2dc0d00f4c7d0e85f8609a8d12ed1bff0d98200cc49a715d5d3379c780d092de",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+      "txHash": "0x66c85f84a7406919b4d71a8e90bcfad743aefa5d5b4606463c6065730d99623a",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "614741e185d200c136b0741d488d534f4b62e4b59020bca003b05f94ef2f8039": {
+      "address": "0xF0232b1fAC7de145c458C26A2a8a9C00f1d58535",
+      "txHash": "0x967ca8043f141fc146b534f4d7027d0b52eaea69b8c9dcd9bb827572aadddce6",
+      "layout": {
+        "solcVersion": "0.8.19",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)1266_storage)",
+            "contract": "AccessControl",
+            "src": "@openzeppelin/contracts/access/AccessControl.sol:56"
+          },
+          {
+            "label": "_nftManager",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:40"
+          },
+          {
+            "label": "nftPreviousManager",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:41"
+          },
+          {
+            "label": "nftManagerGraceTimeStart",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:42"
+          },
+          {
+            "label": "operatorWhitelist",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:47"
+          },
+          {
+            "label": "_minters",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_mapping(t_address,t_struct(AddressSet)6851_storage)",
+            "contract": "TokenGateway",
+            "src": "contracts/basic-tokens/management/TokenGateway.sol:53"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(AddressSet)6851_storage)": {
+            "label": "mapping(address => struct EnumerableSet.AddressSet)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)1266_storage)": {
+            "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AddressSet)6851_storage": {
+            "label": "struct EnumerableSet.AddressSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)6536_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(RoleData)1266_storage": {
+            "label": "struct AccessControl.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Set)6536_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    }
+  }
+}
