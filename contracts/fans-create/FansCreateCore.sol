@@ -304,7 +304,7 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         uint256 workId,
         uint256 amount,
         uint256 minPriceAfterFee
-    ) public payable {
+    ) public {
         address creator = workCreator[workId];
         require(
             creator != address(0),
@@ -376,6 +376,11 @@ abstract contract FansCreateCore is AccessControl, ERC1155Supply {
         uint256 _projectFeeRatio,
         uint256 _creatorFeeRatio
     ) external onlyRole(MANAGER_ROLE) {
+        require(
+            _protocolFeeRatio + _projectFeeRatio + _creatorFeeRatio <
+                FEE_RATIO_DENOMINATOR,
+            "FansCreateCore: invalid fee ratio"
+        );
         protocolFeeRatio = _protocolFeeRatio;
         projectFeeRatio = _projectFeeRatio;
         creatorFeeRatio = _creatorFeeRatio;
