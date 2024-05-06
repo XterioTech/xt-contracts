@@ -156,7 +156,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         );
 
         require(
-            msg.value == unitPrice * share && share <= maxShare,
+            msg.value == unitPrice * share && share > 0 && share <= maxShare,
             "DepositRaffleMinter: payment mismatch"
         );
 
