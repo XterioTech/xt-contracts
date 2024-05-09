@@ -118,8 +118,9 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         );
         require(
             block.timestamp < auctionStartTime ||
-                (_amt > 0 && _amt < nftAmount),
-            "DepositRaffleMinter: nftAmount can not increase once started"
+                (_amt > 0 &&
+                    (_amt < nftAmount || winStart + _amt <= bids.length)),
+            "DepositRaffleMinter: nftAmount invalid"
         );
         nftAmount = _amt;
     }
@@ -178,7 +179,11 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
             bidIndex[newBid.id] = oldBidsLength;
         } else {
             // shuffle newBid insertion position
-            uint256 to = generateRandomInRange(0, oldBidsLength - 1, _idCounter);
+            uint256 to = generateRandomInRange(
+                0,
+                oldBidsLength - 1,
+                _idCounter
+            );
             Bid memory temp = bids[to];
             bids[to] = newBid;
             bids.push(temp);
