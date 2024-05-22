@@ -303,8 +303,21 @@ describe("DepositRaffleMinter", function () {
       expect(await depositRaffleMinter.nftAmount()).to.equal(newNftAmount);
 
       expect(depositRaffleMinter.connect(admin).setNftAmount(10000)).to.be.revertedWith(
-        "DepositRaffleMinter: nftAmount can not increase"
+        "DepositRaffleMinter: nftAmount invalid"
       );
+
+      const newBigNftAmount = 6;
+      const TotalDepositCnt = 50
+      const share = 2
+      // deposit 
+      const users = [];
+      for (let i = 0; i < TotalDepositCnt; i++) {
+        const u = await randomUser();
+        users.push(u);
+        await deposit({ depositRaffleMinter, user: u, share: share })
+      }
+      // High probability of success: _amt >= nftAmount && winStart + _amt <= bids.length
+      await depositRaffleMinter.connect(admin).setNftAmount(newBigNftAmount);
     });
   });
 });
