@@ -14,8 +14,7 @@ const PROJECT_ID = 666;
 describe("Test FansCreate Contract", function () {
   async function basicFixture() {
     const [admin, signer, p1, c1, c2, u1, u2, u3] = await hre.ethers.getSigners();
-    const fansCreate = await deployFansCreate(admin.address, URI);
-    await fansCreate.grantRole(await fansCreate.SIGNER_ROLE(), signer);
+    const fansCreate = await deployFansCreate(admin.address, signer.address, admin.address, URI);
     return {
       fansCreate,
       admin,
@@ -49,13 +48,13 @@ describe("Test FansCreate Contract", function () {
     expect(await fansCreate.supportsInterface(IERC1155InterfaceID)).equal(true);
     expect(await fansCreate.supportsInterface(getInterfaceID(IAccessControl__factory.createInterface()))).equal(true);
 
-    const c = hre.ethers.parseEther("0.0008");
+    const c = hre.ethers.parseEther("0.0002");
     expect(await fansCreate.calcPrice(0, 1)).equal(0);
     expect(await fansCreate.calcPrice(0, 2)).equal(c);
     expect(await fansCreate.calcPrice(1, 1)).equal(c);
-    expect(await fansCreate.calcPrice(2, 1)).equal(c * BigInt(2 * 2));
-    expect(await fansCreate.calcPrice(3, 1)).equal(c * BigInt(3 * 3));
-    expect(await fansCreate.calcPrice(2, 2)).equal(c * BigInt(2 * 2 + 3 * 3));
+    expect(await fansCreate.calcPrice(2, 1)).equal(c * BigInt(2));
+    expect(await fansCreate.calcPrice(3, 1)).equal(c * BigInt(3));
+    expect(await fansCreate.calcPrice(2, 2)).equal(c * BigInt(2 + 3));
   });
 
   it("Publish and buy", async function () {
