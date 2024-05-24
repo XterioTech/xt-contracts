@@ -234,76 +234,51 @@ contract PrizeClaimer is AccessControl, ReentrancyGuard {
         address _prizeDioAddress,
         uint256 _prizeDioAmount
     ) internal {
-        PrizeType prize = _toPrizeType(_prizeType);
-        // 1 - Mining: _prizeMultiplier = 1, _prizePayFee = 0, _prizeNftAmount = 0
-        // 2 - Chest
-        // 3 - MiniGame: _prizePayFee = 0
-
         // Update Status
         mintedOpenIds[msg.sender].push(_prizeOpenId);
         openIdMintedStatus[_prizeOpenId] = true;
 
-        if (prize == PrizeType.Type1) {
-            if (_prizeDamAmount > 0) {
-                IGateway(gateway).ERC20_mint(
-                    _prizeDamAddress,
-                    msg.sender,
-                    _prizeDamAmount
-                );
-            }
+        if (_prizeMultiplier == 1) {
+            // Check Hammer NFT to Multiple
 
-            if (_prizeDioAmount > 0) {
-                IGateway(gateway).ERC20_mint(
-                    _prizeDioAddress,
+            if (checkCanMintWithHammerNft(msg.sender)) {
+                // Transfer ERC1155 to signerAddress
+                IERC1155(hammerNftAddress).safeTransferFrom(
                     msg.sender,
-                    _prizeDioAmount
+                    signerAddress,
+                    1,
+                    1,
+                    ""
                 );
-            }
-        } else if (prize == PrizeType.Type2 || prize == PrizeType.Type3) {
-            if (_prizeMultiplier == 1 && prize == PrizeType.Type3) {
-                // Check Hammer NFT to Multiple
 
-                if (checkCanMintWithHammerNft(msg.sender)) {
-                    // Transfer ERC1155 to signerAddress
-                    IERC1155(hammerNftAddress).safeTransferFrom(
-                        msg.sender,
-                        signerAddress,
-                        1,
-                        1,
-                        ""
-                    );
+                _prizeMultiplier = 200;
+                _prizeDamAmount = _prizeDamAmount * _prizeMultiplier;
+                _prizeDioAmount = _prizeDioAmount * _prizeMultiplier;
+            }
+        }
 
-                    _prizeMultiplier = 200;
-                    _prizeDamAmount = _prizeDamAmount * _prizeMultiplier;
-                    _prizeDioAmount = _prizeDioAmount * _prizeMultiplier;
-                }
-            }
-
-            if (_prizeNftAmount > 0) {
-                IGateway(gateway).ERC1155_mint(
-                    _prizeNftAddress,
-                    msg.sender,
-                    _prizeNftTokenId,
-                    _prizeNftAmount,
-                    "0x"
-                );
-            }
-            if (_prizeDamAmount > 0) {
-                IGateway(gateway).ERC20_mint(
-                    _prizeDamAddress,
-                    msg.sender,
-                    _prizeDamAmount
-                );
-            }
-            if (_prizeDioAmount > 0) {
-                IGateway(gateway).ERC20_mint(
-                    _prizeDioAddress,
-                    msg.sender,
-                    _prizeDioAmount
-                );
-            }
-        } else {
-            revert("Unknown prize type");
+        if (_prizeNftAmount > 0) {
+            IGateway(gateway).ERC1155_mint(
+                _prizeNftAddress,
+                msg.sender,
+                _prizeNftTokenId,
+                _prizeNftAmount,
+                "0x"
+            );
+        }
+        if (_prizeDamAmount > 0) {
+            IGateway(gateway).ERC20_mint(
+                _prizeDamAddress,
+                msg.sender,
+                _prizeDamAmount
+            );
+        }
+        if (_prizeDioAmount > 0) {
+            IGateway(gateway).ERC20_mint(
+                _prizeDioAddress,
+                msg.sender,
+                _prizeDioAmount
+            );
         }
 
         emit ClaimPrize(
@@ -344,7 +319,7 @@ contract PrizeClaimer is AccessControl, ReentrancyGuard {
         address _prizeDioAddress,
         uint256 _prizeDioAmount,
         uint32 _deadline
-    ) internal returns (bytes32) {
+    ) internal view returns (bytes32) {
         return
             keccak256(
                 abi.encodePacked(
