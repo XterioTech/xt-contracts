@@ -94,7 +94,8 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuard {
         require(!paymentSent, "DepositRaffleMinter: payment already sent");
         paymentSent = true;
 
-        uint256 value = nftPrice * nftAmount;
+        uint256 value = nftPrice *
+            (nftAmount > bids.length ? bids.length : nftAmount);
         (bool success, ) = paymentRecipient.call{value: value}("");
         require(success, "DepositRaffleMinter: failed to send payment");
     }
