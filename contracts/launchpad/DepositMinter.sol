@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "../basic-tokens/interfaces/IGateway.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
+contract DepositMinter is AccessControl, ReentrancyGuard {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     struct Bid {
         uint32 id;
@@ -70,7 +70,8 @@ contract DepositMinter is AccessControl, ReentrancyGuardUpgradeable {
         );
         require(!paymentSent, "DepositMinter: payment already sent");
 
-        uint256 value = unitPrice * nftAmount;
+        uint256 value = unitPrice *
+            (nftAmount > _idCounter ? _idCounter : nftAmount);
         (bool success, ) = paymentRecipient.call{value: value}("");
         require(success, "DepositMinter: failed to send payment");
         paymentSent = true;
