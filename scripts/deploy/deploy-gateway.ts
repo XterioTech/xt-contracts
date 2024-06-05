@@ -1,18 +1,18 @@
 import hre from "hardhat";
-import { Color, colorize } from "../../lib/utils";
+import { Color, colorize, infoAboutDeployer } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployGateway } from "../../lib/deploy";
 import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
-  const [admin] = await hre.ethers.getSigners();
+  const [deployer] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let verifyAddress = process.env.verifyAddress;
   let gatewayAdmin = process.env.gatewayAdmin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
 
   if (!verifyAddress) {
     console.info(colorize(Color.blue, `Deploy TokenGateway`));
-    console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
+    await infoAboutDeployer(hre, deployer);
     console.info(colorize(Color.yellow, `Gateway Admin: ${gatewayAdmin}`));
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
