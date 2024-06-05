@@ -30,7 +30,7 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
   polygon: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
   bsc: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
   xterio: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
-  xterioEth: "",
+  xterioEth: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
   base: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
   // Testnets
   goerli: "0xDbE4F513dBc79dEF048Df54D870EfB3B2edE01cB",
