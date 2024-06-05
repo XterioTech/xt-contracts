@@ -1,17 +1,17 @@
 import hre from "hardhat";
-import { Color, colorize } from "../../lib/utils";
+import { Color, colorize, infoAboutDeployer } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployForwarder } from "../../lib/deploy";
 import { getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
-  const [admin] = await hre.ethers.getSigners();
+  const [deployer] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
 
   if (!address) {
     console.info(colorize(Color.blue, `Deploy Forwarder`));
-    console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
+    await infoAboutDeployer(hre, deployer);
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;

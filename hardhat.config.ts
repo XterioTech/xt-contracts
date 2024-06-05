@@ -80,6 +80,10 @@ const config: HardhatUserConfig = {
     xterio: {
       url: "https://xterio-fullnode.alt.technology/",
       accounts: privateKey != "" ? [privateKey] : [],
+    },
+    xterioEth: {
+      url: "https://xterio-eth.alt.technology/",
+      accounts: privateKey != "" ? [privateKey] : [],
     }
   },
   solidity: {
@@ -105,6 +109,7 @@ const config: HardhatUserConfig = {
       base: process.env.API_KEY_ETHERSCAN_BASE || "",
       xterioTestnet: "no need",
       xterio: "no need",
+      xterioEth: "no need",
     },
     customChains: [
       {
@@ -135,8 +140,16 @@ const config: HardhatUserConfig = {
         network: "xterio",
         chainId: 112358,
         urls: {
-          apiURL: `https://xterscan.io/api`,
-          browserURL: "https://xterscan.io/",
+          apiURL: `https://bnb.xterscan.io/api`,
+          browserURL: "https://bnb.xterscan.io/",
+        },
+      },
+      {
+        network: "xterioEth",
+        chainId: 2702128,
+        urls: {
+          apiURL: `https://eth.xterscan.io/api`,
+          browserURL: "https://eth.xterscan.io/",
         },
       },
       {

@@ -1,4 +1,6 @@
 import { ethers, Interface } from "ethers";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export enum Color {
   reset = "\x1b[0m",
@@ -26,3 +28,9 @@ export const getInterfaceID = (contractInterface: Interface) => {
 export const IERC721InterfaceID = "0x80ac58cd";
 export const IERC1155InterfaceID = "0xd9b67a26";
 export const IERC2981InterfaceID = "0x2a55205a";
+
+
+export const infoAboutDeployer = async (hre: HardhatRuntimeEnvironment, deployer: HardhatEthersSigner) => {
+  const nonce = await hre.ethers.provider.getTransactionCount(deployer.address, "pending")
+  console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}, Nonce: ${nonce}`));  
+}
