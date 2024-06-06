@@ -43,7 +43,7 @@ contract ERC1155MintToSessionValidationModule {
                 (address, uint256, bytes)
             );
             require(
-                _tokenAddress == 0x909E30bdBCb728131E3F8d17150eaE740C904649,
+                _tokenAddress == 0xBa739E856137D318254416883e5a1Ed01C7f2A3d,
                 "ERC1155MT Wrong Token"
             );
             require(callValue == 0, "ERC1155MT Non Zero Value");
