@@ -12,6 +12,7 @@
     "solidity-coverage": "^0.8.4"
   },
   "dependencies": {
+    "@account-abstraction/contracts": "^0.7.0",
     "@limitbreak/creator-token-contracts": "^1.1.2",
     "@openzeppelin/contracts": "^4.9.3",
     "@openzeppelin/contracts-upgradeable": "^4.9.3",
