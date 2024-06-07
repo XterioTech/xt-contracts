@@ -19,6 +19,8 @@ abstract contract WhitelistClaim is AccessControl, ReentrancyGuard {
         deadline = _deadline;
     }
 
+    receive() external payable {}
+
     function isWhitelisted(
         address account,
         uint256 amount,
