@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-abstract contract WhitelistClaim is AccessControl, ReentrancyGuard {
+abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     bytes32 public merkleRoot;
     mapping(bytes32 => bool) public claimed;
     uint256 public deadline;
 
     event Claimed(address indexed account, uint256 amount);
-    event Withdrawn(address indexed admin, uint256 amount);
+    event MerkleRootUpdated(bytes32 newMerkleRoot);
 
-    constructor(address admin, bytes32 _merkleRoot, uint256 _deadline) {
-        _setupRole(DEFAULT_ADMIN_ROLE, admin);
+    constructor(bytes32 _merkleRoot, uint256 _deadline) {
         merkleRoot = _merkleRoot;
         deadline = _deadline;
     }
@@ -27,9 +26,7 @@ abstract contract WhitelistClaim is AccessControl, ReentrancyGuard {
         bytes32[] memory proof
     ) public view returns (bool) {
         bytes32 leaf = keccak256(abi.encodePacked(account, amount));
-        return
-            MerkleProof.verify(proof, merkleRoot, leaf) &&
-            block.timestamp <= deadline;
+        return MerkleProof.verify(proof, merkleRoot, leaf);
     }
 
     function claim(
@@ -38,12 +35,16 @@ abstract contract WhitelistClaim is AccessControl, ReentrancyGuard {
         bytes32[] memory proof
     ) external nonReentrant {
         require(
+            block.timestamp <= deadline,
+            "WhitelistClaim: deadline exceeded"
+        );
+        require(
             isWhitelisted(account, amount, proof),
-            "WhitelistClaim: Not whitelisted or after deadline"
+            "WhitelistClaim: not whitelisted"
         );
 
         bytes32 proofHash = keccak256(abi.encodePacked(account, amount, proof));
-        require(!claimed[proofHash], "WhitelistClaim: Already claimed");
+        require(!claimed[proofHash], "WhitelistClaim: already claimed");
         claimed[proofHash] = true;
 
         _payOut(amount, account);
@@ -57,17 +58,20 @@ abstract contract WhitelistClaim is AccessControl, ReentrancyGuard {
     function _withdraw(address to) internal virtual;
 
     /****************** Admin Functions ******************/
-    function withdraw(
-        address to
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+    function withdraw(address to) external onlyOwner nonReentrant {
         require(
             block.timestamp >= deadline,
-            "WhitelistClaim: Cannot withdraw before or at deadline"
+            "WhitelistClaim: cannot withdraw before or at deadline"
         );
         _withdraw(to);
     }
 
-    function setDeadline(uint256 _t) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
+        merkleRoot = newMerkleRoot;
+        emit MerkleRootUpdated(newMerkleRoot);
+    }
+
+    function setDeadline(uint256 _t) external onlyOwner {
         deadline = _t;
     }
 }
