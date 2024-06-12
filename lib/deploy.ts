@@ -255,7 +255,10 @@ export const deployWhitelistClaimETH = async (
   amounts: BigNumberish[],
   deadline: number
 ) => {
-  const leafNodes = whitelist.map((addr, index) => keccak256(addr + amounts[index].toString()));
+  const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
+    ["address", "uint256"],
+    [addr, amounts[index]]
+  ));
   const merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
   const merkleRoot = merkleTree.getHexRoot();
 
@@ -274,7 +277,10 @@ export const deployWhitelistClaimERC20 = async (
   deadline: number,
   paymentToken: AddressLike,
 ) => {
-  const leafNodes = whitelist.map((addr, index) => keccak256(addr + amounts[index].toString()));
+  const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
+    ["address", "uint256"],
+    [addr, amounts[index]]
+  ));
   const merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
   const merkleRoot = merkleTree.getHexRoot();
 

@@ -7,11 +7,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     bytes32 public merkleRoot;
-    mapping(bytes32 => bool) public claimed;
+    mapping(address => bool) public claimed;
     uint256 public deadline;
 
-    event Claimed(address indexed account, uint256 amount);
-    event MerkleRootUpdated(bytes32 newMerkleRoot);
+    event Claim(address indexed account, uint256 amount);
+    event UpdateMerkleRoot(bytes32 newMerkleRoot);
 
     constructor(bytes32 _merkleRoot, uint256 _deadline) {
         merkleRoot = _merkleRoot;
@@ -30,7 +30,6 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     }
 
     function claim(
-        address account,
         uint256 amount,
         bytes32[] memory proof
     ) external nonReentrant {
@@ -39,17 +38,15 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
             "WhitelistClaim: deadline exceeded"
         );
         require(
-            isWhitelisted(account, amount, proof),
+            isWhitelisted(msg.sender, amount, proof),
             "WhitelistClaim: not whitelisted"
         );
+        require(!claimed[msg.sender], "WhitelistClaim: already claimed");
+        claimed[msg.sender] = true;
 
-        bytes32 proofHash = keccak256(abi.encodePacked(account, amount, proof));
-        require(!claimed[proofHash], "WhitelistClaim: already claimed");
-        claimed[proofHash] = true;
+        _payOut(amount, msg.sender);
 
-        _payOut(amount, account);
-
-        emit Claimed(account, amount);
+        emit Claim(msg.sender, amount);
     }
 
     /// @dev This virtual function should transfer the specified `amount` of the payment token to the `to` address
@@ -68,7 +65,7 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
 
     function updateMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
         merkleRoot = newMerkleRoot;
-        emit MerkleRootUpdated(newMerkleRoot);
+        emit UpdateMerkleRoot(newMerkleRoot);
     }
 
     function setDeadline(uint256 _t) external onlyOwner {
