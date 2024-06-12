@@ -6,8 +6,9 @@ import "./WhitelistClaim.sol";
 contract WhitelistClaimETH is WhitelistClaim {
     constructor(
         bytes32 _merkleRoot,
+        uint256 _startTime,
         uint256 _deadline
-    ) WhitelistClaim(_merkleRoot, _deadline) {}
+    ) WhitelistClaim(_merkleRoot, _startTime, _deadline) {}
 
     function _payOut(uint256 amount, address to) internal override {
         (bool success, ) = to.call{value: amount}("");

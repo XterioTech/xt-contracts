@@ -12,10 +12,11 @@ contract WhitelistClaimERC20 is WhitelistClaim {
 
     constructor(
         bytes32 _merkleRoot,
+        uint256 _startTime,
         uint256 _deadline,
         address _token,
         address _vault
-    ) WhitelistClaim(_merkleRoot, _deadline) {
+    ) WhitelistClaim(_merkleRoot, _startTime, _deadline) {
         token = IERC20(_token);
         if (_vault != address(0)) {
             vault = _vault;

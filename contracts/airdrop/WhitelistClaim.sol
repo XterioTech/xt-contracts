@@ -8,13 +8,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     bytes32 public merkleRoot;
     mapping(address => bool) public claimed;
+    uint256 public startTime;
     uint256 public deadline;
 
     event Claim(address indexed account, uint256 amount);
     event UpdateMerkleRoot(bytes32 newMerkleRoot);
 
-    constructor(bytes32 _merkleRoot, uint256 _deadline) {
+    constructor(bytes32 _merkleRoot, uint256 _startTime, uint256 _deadline) {
         merkleRoot = _merkleRoot;
+        startTime = _startTime;
         deadline = _deadline;
     }
 
@@ -33,6 +35,10 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
         uint256 amount,
         bytes32[] memory proof
     ) external nonReentrant {
+        require(
+            block.timestamp >= startTime,
+            "WhitelistClaim: claiming has not started yet"
+        );
         require(
             block.timestamp <= deadline,
             "WhitelistClaim: deadline exceeded"
@@ -56,10 +62,6 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
 
     /****************** Admin Functions ******************/
     function withdraw(address to) external onlyOwner nonReentrant {
-        require(
-            block.timestamp >= deadline,
-            "WhitelistClaim: cannot withdraw before or at deadline"
-        );
         _withdraw(to);
     }
 
@@ -68,7 +70,10 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
         emit UpdateMerkleRoot(newMerkleRoot);
     }
 
-    function setDeadline(uint256 _t) external onlyOwner {
+    function updateDeadline(uint256 _t) external onlyOwner {
         deadline = _t;
+    }
+    function updateStartTime(uint256 _t) external onlyOwner {
+        startTime = _t;
     }
 }

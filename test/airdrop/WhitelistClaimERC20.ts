@@ -2,19 +2,21 @@
 import hre, { ethers } from "hardhat";
 import { expect } from "chai";
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { deployWhitelistClaimETH } from "../../lib/deploy";
+import { deployWhitelistClaimERC20, deployMajorToken } from "../../lib/deploy";
 import MerkleTree from "merkletreejs";
 import keccak256 from "keccak256";
 
-describe("WhitelistClaimETH", function () {
+describe("WhitelistClaimERC20", function () {
   async function basicFixture() {
-    const [owner, u1, u2, u3] = await hre.ethers.getSigners();
+    const [owner, vault, u1, u2, u3] = await hre.ethers.getSigners();
     const whitelist = [u1.address, u2.address, u3.address];
     const amounts = [ethers.parseEther("1"), ethers.parseEther("2"), ethers.parseEther("3")]; // Replace with actual amounts
-    const startTime = (await time.latest()) - 3600;
-    const deadline = (await time.latest()) + 3600; // Set deadline to one hour from now
+    const startTime = (await time.latest()) - 3600; 
+    const deadline = (await time.latest()) + 3600;
 
-    const wc = await deployWhitelistClaimETH(whitelist, amounts, startTime, deadline);
+    const paymentToken = await deployMajorToken(vault.address, vault.address);
+
+    const wc = await deployWhitelistClaimERC20(whitelist, amounts, startTime, deadline, paymentToken, vault.address);
     const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
       ["address", "uint256"],
       [addr, amounts[index]]
@@ -22,11 +24,8 @@ describe("WhitelistClaimETH", function () {
     const merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
     const merkleRoot = merkleTree.getHexRoot();
 
-    const amount = hre.ethers.parseEther("50");
-    await owner.sendTransaction({
-      to: await wc.getAddress(),
-      value: amount,
-    });
+    // vault approve wc first
+    await paymentToken.connect(vault).approve(await wc.getAddress(), ethers.parseEther('1000000'));
 
     return {
       wc,
@@ -37,7 +36,9 @@ describe("WhitelistClaimETH", function () {
       merkleRoot,
       deadline,
       merkleTree,
-      amounts
+      amounts,
+      paymentToken,
+      vault
     };
   }
 
@@ -48,19 +49,19 @@ describe("WhitelistClaimETH", function () {
   });
 
   it("Should allow whitelisted address to claim", async function () {
-    const { wc, u1, u2, merkleTree, amounts, merkleRoot } = await loadFixture(basicFixture);
+    const { wc, u1, u2, merkleTree, amounts, paymentToken } = await loadFixture(basicFixture);
     const leaf = ethers.solidityPackedKeccak256(
       ["address", "uint256"],
       [u1.address, amounts[0]]
     )
     const proof = merkleTree.getHexProof(leaf);
-    const initialBalance = await hre.ethers.provider.getBalance(u1.address);
+    const initialBalance = await paymentToken.balanceOf(u1.address);
     const isWhitelisted = await wc.connect(u1).isWhitelisted(u1.address, amounts[0], proof);
     expect(isWhitelisted).to.equal(true);
     const tx = await wc.connect(u1).claim(amounts[0], proof);
     const receipt = await tx.wait();
-    const finalBalance = await hre.ethers.provider.getBalance(u1.address);
-    expect((finalBalance - initialBalance) + BigInt((receipt?.gasUsed ?? 0)) * BigInt((receipt?.gasPrice ?? 0))).to.equal(amounts[0]);
+    const finalBalance = await paymentToken.balanceOf(u1.address);
+    expect((finalBalance - initialBalance)).to.equal(amounts[0]);
   });
 
   it("Should not allow non-whitelisted address to claim", async function () {

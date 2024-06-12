@@ -253,6 +253,7 @@ export const deployPalioVoter = async (
 export const deployWhitelistClaimETH = async (
   whitelist: string[],
   amounts: BigNumberish[],
+  startTime: number,
   deadline: number
 ) => {
   const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
@@ -265,6 +266,7 @@ export const deployWhitelistClaimETH = async (
   const WhitelistClaimETH = await ethers.getContractFactory("WhitelistClaimETH");
   const whitelistClaimETH = await WhitelistClaimETH.deploy(
     merkleRoot,
+    startTime,
     deadline
   );
   await whitelistClaimETH.waitForDeployment();
@@ -274,8 +276,10 @@ export const deployWhitelistClaimETH = async (
 export const deployWhitelistClaimERC20 = async (
   whitelist: string[],
   amounts: BigNumberish[],
+  startTime: number,
   deadline: number,
   paymentToken: AddressLike,
+  vault: AddressLike,
 ) => {
   const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
     ["address", "uint256"],
@@ -287,8 +291,10 @@ export const deployWhitelistClaimERC20 = async (
   const WhitelistClaimERC20 = await ethers.getContractFactory("WhitelistClaimERC20");
   const whitelistClaimERC20 = await WhitelistClaimERC20.deploy(
     merkleRoot,
+    startTime,
     deadline,
-    paymentToken
+    paymentToken,
+    vault
   );
   await whitelistClaimERC20.waitForDeployment();
   return whitelistClaimERC20;
