@@ -1,7 +1,9 @@
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 import { MarketplaceV2, TokenGateway } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
+import MerkleTree from "merkletreejs";
+import keccak256 from "keccak256";
 
 export const deployMajorToken = async (
   admin: AddressLike,
@@ -246,4 +248,54 @@ export const deployPalioVoter = async (
   const contract = await Contract.deploy(signer, eventStartTime, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
+};
+
+export const deployWhitelistClaimETH = async (
+  whitelist: string[],
+  amounts: BigNumberish[],
+  startTime: number,
+  deadline: number
+) => {
+  const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
+    ["address", "uint256"],
+    [addr, amounts[index]]
+  ));
+  const merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
+  const merkleRoot = merkleTree.getHexRoot();
+
+  const WhitelistClaimETH = await ethers.getContractFactory("WhitelistClaimETH");
+  const whitelistClaimETH = await WhitelistClaimETH.deploy(
+    merkleRoot,
+    startTime,
+    deadline
+  );
+  await whitelistClaimETH.waitForDeployment();
+  return whitelistClaimETH;
+};
+
+export const deployWhitelistClaimERC20 = async (
+  whitelist: string[],
+  amounts: BigNumberish[],
+  startTime: number,
+  deadline: number,
+  paymentToken: AddressLike,
+  vault: AddressLike,
+) => {
+  const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
+    ["address", "uint256"],
+    [addr, amounts[index]]
+  ));
+  const merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
+  const merkleRoot = merkleTree.getHexRoot();
+
+  const WhitelistClaimERC20 = await ethers.getContractFactory("WhitelistClaimERC20");
+  const whitelistClaimERC20 = await WhitelistClaimERC20.deploy(
+    merkleRoot,
+    startTime,
+    deadline,
+    paymentToken,
+    vault
+  );
+  await whitelistClaimERC20.waitForDeployment();
+  return whitelistClaimERC20;
 };
