@@ -70,7 +70,8 @@ contract DepositMinter is AccessControl, ReentrancyGuard {
         );
         require(!paymentSent, "DepositMinter: payment already sent");
 
-        uint256 value = unitPrice * nftAmount;
+        uint256 value = unitPrice *
+            (nftAmount > _idCounter ? _idCounter : nftAmount);
         (bool success, ) = paymentRecipient.call{value: value}("");
         require(success, "DepositMinter: failed to send payment");
         paymentSent = true;

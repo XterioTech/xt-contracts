@@ -13,6 +13,8 @@ export const tokenGatewayAddressMap: NetworkAddressMap = {
   polygon: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   bsc: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   xterio: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+  xterioEth: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
+  base: "0x7127f0FEaEF8143241A5FaC62aC5b7be02Ef26A9",
   // Testnets
   sepolia: "0x38f9e50EBF26e4E01db00aE5238e725d8647b115",
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
@@ -27,6 +29,9 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
   arbitrumOne: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
   polygon: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
   bsc: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
+  xterio: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
+  xterioEth: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
+  base: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
   // Testnets
   goerli: "0xDbE4F513dBc79dEF048Df54D870EfB3B2edE01cB",
   bscTestnet: "0x2973fAe1Db21e3f30dF115d43094E7B2d83251c5",
@@ -36,8 +41,8 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
 
 export const fansCreateAddressMap: NetworkAddressMap = {
   // Testnets
-  // bscTestnet: "0x99209b34A57c843EC4B18E10e1bf543fB06242E6",
-  bscTestnet: "0xe0E63afFfab9Ef380CF1d057300C033734650252",
+  xterioTestnet: "0xccc2508CE3C6cD3C10306aeb11D5201Dcb95e09B",
+  xterio: "0x70D75ae4b40Ac5A8E1f2AbE888978Ba28329C00F"
 };
 
 export const safeManagerAddressMap: NetworkAddressMap = {
@@ -46,7 +51,9 @@ export const safeManagerAddressMap: NetworkAddressMap = {
   arbitrumOne: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
   polygon: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
   bsc: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
-  xterio: "0x9b5D0Ccb7C95e448B742BA83D85282a38944b3E9", // Safe not available on xterio chain, use XterAdmin1 address
+  xterio: "0x9b5D0Ccb7C95e448B742BA83D85282a38944b3E9", // Safe not available on xterio chain (BNB), use XterAdmin1 address
+  xterioEth: "0x9b5D0Ccb7C95e448B742BA83D85282a38944b3E9", // Safe not available on xterio chain (ETH), use XterAdmin1 address
+  base: "0xB5472ffef665d1a27538FAa35a5c40cb5f11e28A", // Base has a different official factory address, so the safe address is different
   // Testnets
   sepolia: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
   goerli: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",

@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "../basic-tokens/interfaces/IGateway.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
+contract DepositRaffleMinter is AccessControl, ReentrancyGuard {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     struct Bid {
         uint32 id;
@@ -94,7 +94,8 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         require(!paymentSent, "DepositRaffleMinter: payment already sent");
         paymentSent = true;
 
-        uint256 value = nftPrice * nftAmount;
+        uint256 value = nftPrice *
+            (nftAmount > bids.length ? bids.length : nftAmount);
         (bool success, ) = paymentRecipient.call{value: value}("");
         require(success, "DepositRaffleMinter: failed to send payment");
     }
@@ -118,8 +119,9 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         );
         require(
             block.timestamp < auctionStartTime ||
-                (_amt > 0 && _amt < nftAmount),
-            "DepositRaffleMinter: nftAmount can not increase once started"
+                (_amt > 0 &&
+                    (_amt < nftAmount || winStart + _amt <= bids.length)),
+            "DepositRaffleMinter: nftAmount invalid"
         );
         nftAmount = _amt;
     }
@@ -156,7 +158,7 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
         );
 
         require(
-            msg.value == unitPrice * share && share <= maxShare,
+            msg.value == unitPrice * share && share > 0 && share <= maxShare,
             "DepositRaffleMinter: payment mismatch"
         );
 
@@ -178,7 +180,11 @@ contract DepositRaffleMinter is AccessControl, ReentrancyGuardUpgradeable {
             bidIndex[newBid.id] = oldBidsLength;
         } else {
             // shuffle newBid insertion position
-            uint256 to = generateRandomInRange(0, oldBidsLength - 1, _idCounter);
+            uint256 to = generateRandomInRange(
+                0,
+                oldBidsLength - 1,
+                _idCounter
+            );
             Bid memory temp = bids[to];
             bids[to] = newBid;
             bids.push(temp);

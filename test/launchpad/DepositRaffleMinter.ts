@@ -303,8 +303,54 @@ describe("DepositRaffleMinter", function () {
       expect(await depositRaffleMinter.nftAmount()).to.equal(newNftAmount);
 
       expect(depositRaffleMinter.connect(admin).setNftAmount(10000)).to.be.revertedWith(
-        "DepositRaffleMinter: nftAmount can not increase"
+        "DepositRaffleMinter: nftAmount invalid"
       );
+
+      const newBigNftAmount = 6;
+      const TotalDepositCnt = 50
+      const share = 2
+      // deposit 
+      const users = [];
+      for (let i = 0; i < TotalDepositCnt; i++) {
+        const u = await randomUser();
+        users.push(u);
+        await deposit({ depositRaffleMinter, user: u, share: share })
+      }
+      // High probability of success: _amt >= nftAmount && winStart + _amt <= bids.length
+      await depositRaffleMinter.connect(admin).setNftAmount(newBigNftAmount);
+    });
+  });
+
+  describe("DepositRaffleMinter - Claim with 50 Deposits for 10 Users", function () {
+    this.timeout(14400000);
+    it.skip("should allow each user to claim after 50 deposits", async function () {
+      const { depositRaffleMinter, admin } = await loadFixture(largeFixture);
+      const largeDepositCnt = 50;
+      const userCnt = 10;
+      await depositRaffleMinter.connect(admin).setLimitForBuyerAmount(largeDepositCnt);
+
+      const users = [];
+      for (let i = 0; i < userCnt; i++) {
+        const user = await randomUser();
+        users.push(user);
+      }
+
+      const share = 1;
+
+      for (let i = 0; i < userCnt; i++) {
+        for (let j = 0; j < largeDepositCnt; j++) {
+          await deposit({ depositRaffleMinter, user: users[i], share });
+        }
+        console.log(`user[${i}] deposit [${largeDepositCnt}]times done`);
+      }
+
+      await time.increase(duration + 600);
+
+      for (let j = 0; j < userCnt; j++) {
+        const tx = await depositRaffleMinter.connect(users[j]).claimAndRefund();
+        const receipt = await tx.wait();
+        console.log(`ClaimAndRefund gas used by user[${j}]: ${receipt?.gasUsed.toString()}`);
+      }
     });
   });
 });
