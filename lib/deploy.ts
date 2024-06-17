@@ -310,11 +310,11 @@ export const deployWhitelistClaimERC20 = async (
   return whitelistClaimERC20;
 };
 
-export const deployDistribute = async (
+export const deployTokenDistribute = async (
   defaultOwner: AddressLike,
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
-  const Contract = await hre.ethers.getContractFactory("Distribute");
+  const Contract = await hre.ethers.getContractFactory("TokenDistribute");
   const contract = await Contract.deploy(defaultOwner, txOverrides || {})
   await contract.waitForDeployment();
   return contract;

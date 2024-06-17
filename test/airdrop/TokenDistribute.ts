@@ -2,11 +2,11 @@
 import { expect } from "chai";
 import ethers from "ethers";
 import hre from "hardhat";
-import { deployDistribute, deployMajorToken } from "../lib/deploy";
-import { Distribute } from "../typechain-types";
+import { deployTokenDistribute, deployMajorToken } from "../../lib/deploy";
+import { Distribute } from "../../typechain-types";
 
 
-describe("Distribute", function () {
+describe("TokenDistribute", function () {
   let distribute: Distribute;
   let owner: ethers.Signer;
   let sender: ethers.Signer;
@@ -17,7 +17,7 @@ describe("Distribute", function () {
   before(async function () {
     [owner, sender, recipient1, recipient2, recipient3] = await hre.ethers.getSigners();
 
-    distribute = await deployDistribute(await owner.getAddress());
+    distribute = await deployTokenDistribute(await owner.getAddress());
   });
 
   ///// distribute ERC20 token

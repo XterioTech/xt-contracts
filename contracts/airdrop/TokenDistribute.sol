@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Distribute is Ownable {
+contract TokenDistribute is Ownable {
     using SafeERC20 for IERC20;
 
     receive() external payable {}
@@ -22,28 +22,41 @@ contract Distribute is Ownable {
         uint8 decimals,
         address sender
     ) public onlyOwner {
-        uint8 tokenDecimals = (decimals > 0) ? decimals : IERC20Metadata(tokenAddress).decimals();
+        uint8 tokenDecimals = (decimals > 0)
+            ? decimals
+            : IERC20Metadata(tokenAddress).decimals();
 
         require(recipients.length == amounts.length, "Arrays length mismatch");
 
         for (uint256 i = 0; i < recipients.length; i++) {
-            uint256 amountWithDecimals = amounts[i] * (10 ** uint256(tokenDecimals));
+            uint256 amountWithDecimals = amounts[i] *
+                (10 ** uint256(tokenDecimals));
             if (sender == address(0)) {
-                IERC20(tokenAddress).safeTransfer(recipients[i], amountWithDecimals);
+                IERC20(tokenAddress).safeTransfer(
+                    recipients[i],
+                    amountWithDecimals
+                );
             } else {
-                IERC20(tokenAddress).safeTransferFrom(sender, recipients[i], amountWithDecimals);
+                IERC20(tokenAddress).safeTransferFrom(
+                    sender,
+                    recipients[i],
+                    amountWithDecimals
+                );
             }
         }
     }
 
-    function withdrawTokens(address tokenAddress, address _to) public onlyOwner {
+    function withdrawTokens(
+        address tokenAddress,
+        address _to
+    ) public onlyOwner {
         IERC20 token = IERC20(tokenAddress);
         uint256 balance = token.balanceOf(address(this));
         require(balance > 0, "Insufficient contract token balance");
         token.transfer(_to, balance);
     }
 
-     function distributeETH(
+    function distributeETH(
         address[] memory recipients,
         uint256[] memory amounts
     ) public onlyOwner {

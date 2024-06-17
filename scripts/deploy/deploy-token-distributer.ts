@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
-import { deployDistribute } from "../../lib/deploy";
+import { deployTokenDistribute } from "../../lib/deploy";
 import { getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
@@ -21,7 +21,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`===================== Deploy Distributer ===================`);
     console.info(`============================================================`);
-    const Distributer = await deployDistribute(await admin.getAddress(), getTxOverridesForNetwork(hre.network.name));
+    const Distributer = await deployTokenDistribute(await admin.getAddress(), getTxOverridesForNetwork(hre.network.name));
     address = await Distributer.getAddress();
     console.info(`Distributer @ ${address}`);
   }
@@ -30,7 +30,7 @@ const main = async () => {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/Distribute.sol:Distribute",
+        contract: "contracts/airdrop/TokenDistribute.sol:TokenDistribute",
         constructorArguments: [await admin.getAddress()],
       });
     } catch (e) {
