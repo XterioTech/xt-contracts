@@ -250,6 +250,23 @@ export const deployPalioVoter = async (
   return contract;
 };
 
+export const deployWhitelistClaim = async (
+  merkleRoot: string,
+  startTime: number,
+  deadline: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const WhitelistClaimETH = await ethers.getContractFactory("WhitelistClaimETH");
+  const whitelistClaimETH = await WhitelistClaimETH.deploy(
+    merkleRoot,
+    startTime,
+    deadline,
+    txOverrides || {}
+  );
+  await whitelistClaimETH.waitForDeployment();
+  return whitelistClaimETH;
+};
+
 export const deployWhitelistClaimETH = async (
   whitelist: string[],
   amounts: BigNumberish[],
