@@ -155,13 +155,6 @@ export const deployRaffleAuctionMinter = async (
   return contract;
 };
 
-export const deployRefund = async (defaultOwner: AddressLike) => {
-  const Contract = await hre.ethers.getContractFactory("Refund");
-  const contract = await Contract.deploy(defaultOwner);
-  await contract.waitForDeployment();
-  return contract;
-};
-
 export const deployDepositMinter = async (
   admin: AddressLike,
   gateway: AddressLike,
@@ -315,4 +308,14 @@ export const deployWhitelistClaimERC20 = async (
   );
   await whitelistClaimERC20.waitForDeployment();
   return whitelistClaimERC20;
+};
+
+export const deployDistribute = async (
+  defaultOwner: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("Distribute");
+  const contract = await Contract.deploy(defaultOwner, txOverrides || {})
+  await contract.waitForDeployment();
+  return contract;
 };
