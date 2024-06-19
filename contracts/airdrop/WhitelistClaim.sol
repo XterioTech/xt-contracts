@@ -73,7 +73,13 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     function updateDeadline(uint256 _t) external onlyOwner {
         deadline = _t;
     }
+
     function updateStartTime(uint256 _t) external onlyOwner {
         startTime = _t;
+    }
+
+    /****************** View Functions ******************/
+    function isTimeValid() external view returns (bool) {
+        return block.timestamp >= startTime && block.timestamp <= deadline;
     }
 }
