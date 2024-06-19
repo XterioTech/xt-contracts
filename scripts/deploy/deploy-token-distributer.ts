@@ -1,15 +1,17 @@
 import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
-import { deployRefund } from "../../lib/deploy";
+import { deployTokenDistribute } from "../../lib/deploy";
+import { getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [admin] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
+  address = "0x58E1F246467dc8F0fEaa3bDD0B0784394F49766c"
 
   if (!address) {
-    console.info(colorize(Color.blue, `Deploy Refunder`));
+    console.info(colorize(Color.blue, `Deploy Distributer`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${admin.address}`));
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
@@ -17,18 +19,18 @@ const main = async () => {
     }
 
     console.info(`============================================================`);
-    console.info(`===================== Deploy Refunder ======================`);
+    console.info(`===================== Deploy Distributer ===================`);
     console.info(`============================================================`);
-    const refunder = await deployRefund(await admin.getAddress());
-    address = await refunder.getAddress();
-    console.info(`Refunder @ ${address}`);
+    const Distributer = await deployTokenDistribute(await admin.getAddress(), getTxOverridesForNetwork(hre.network.name));
+    address = await Distributer.getAddress();
+    console.info(`Distributer @ ${address}`);
   }
 
   if (!skipVerify) {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/launchpad/Refund.sol:Refund",
+        contract: "contracts/airdrop/TokenDistribute.sol:TokenDistribute",
         constructorArguments: [await admin.getAddress()],
       });
     } catch (e) {

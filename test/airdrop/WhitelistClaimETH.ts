@@ -14,13 +14,15 @@ describe("WhitelistClaimETH", function () {
     const startTime = (await time.latest()) - 3600;
     const deadline = (await time.latest()) + 3600; // Set deadline to one hour from now
 
-    const wc = await deployWhitelistClaimETH(whitelist, amounts, startTime, deadline);
+
     const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
       ["address", "uint256"],
       [addr, amounts[index]]
     ));
     const merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
     const merkleRoot = merkleTree.getHexRoot();
+
+    const wc = await deployWhitelistClaimETH(merkleRoot, startTime, deadline);
 
     const amount = hre.ethers.parseEther("50");
     await owner.sendTransaction({
