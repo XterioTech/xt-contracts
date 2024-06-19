@@ -11,7 +11,7 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     uint256 public startTime;
     uint256 public deadline;
 
-    event Claim(address indexed account, uint256 amount);
+    event XClaim(address indexed account, uint256 amount);
     event UpdateMerkleRoot(bytes32 newMerkleRoot);
 
     constructor(bytes32 _merkleRoot, uint256 _startTime, uint256 _deadline) {
@@ -52,7 +52,7 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
 
         _payOut(amount, msg.sender);
 
-        emit Claim(msg.sender, amount);
+        emit XClaim(msg.sender, amount);
     }
 
     /// @dev This virtual function should transfer the specified `amount` of the payment token to the `to` address
@@ -73,7 +73,13 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     function updateDeadline(uint256 _t) external onlyOwner {
         deadline = _t;
     }
+
     function updateStartTime(uint256 _t) external onlyOwner {
         startTime = _t;
+    }
+
+    /****************** View Functions ******************/
+    function isTimeValid() external view returns (bool) {
+        return block.timestamp >= startTime && block.timestamp <= deadline;
     }
 }

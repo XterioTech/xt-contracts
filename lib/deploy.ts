@@ -155,13 +155,6 @@ export const deployRaffleAuctionMinter = async (
   return contract;
 };
 
-export const deployRefund = async (defaultOwner: AddressLike) => {
-  const Contract = await hre.ethers.getContractFactory("Refund");
-  const contract = await Contract.deploy(defaultOwner);
-  await contract.waitForDeployment();
-  return contract;
-};
-
 export const deployDepositMinter = async (
   admin: AddressLike,
   gateway: AddressLike,
@@ -251,51 +244,49 @@ export const deployPalioVoter = async (
 };
 
 export const deployWhitelistClaimETH = async (
-  whitelist: string[],
-  amounts: BigNumberish[],
+  merkleRoot: string,
   startTime: number,
-  deadline: number
+  deadline: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
-  const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
-    ["address", "uint256"],
-    [addr, amounts[index]]
-  ));
-  const merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
-  const merkleRoot = merkleTree.getHexRoot();
-
   const WhitelistClaimETH = await ethers.getContractFactory("WhitelistClaimETH");
   const whitelistClaimETH = await WhitelistClaimETH.deploy(
     merkleRoot,
     startTime,
-    deadline
+    deadline,
+    txOverrides || {}
   );
   await whitelistClaimETH.waitForDeployment();
   return whitelistClaimETH;
 };
 
 export const deployWhitelistClaimERC20 = async (
-  whitelist: string[],
-  amounts: BigNumberish[],
+  merkleRoot: string,
   startTime: number,
   deadline: number,
   paymentToken: AddressLike,
   vault: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
-  const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
-    ["address", "uint256"],
-    [addr, amounts[index]]
-  ));
-  const merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
-  const merkleRoot = merkleTree.getHexRoot();
-
   const WhitelistClaimERC20 = await ethers.getContractFactory("WhitelistClaimERC20");
   const whitelistClaimERC20 = await WhitelistClaimERC20.deploy(
     merkleRoot,
     startTime,
     deadline,
     paymentToken,
-    vault
+    vault,
+    txOverrides || {}
   );
   await whitelistClaimERC20.waitForDeployment();
   return whitelistClaimERC20;
+};
+
+export const deployTokenDistribute = async (
+  defaultOwner: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("TokenDistribute");
+  const contract = await Contract.deploy(defaultOwner, txOverrides || {})
+  await contract.waitForDeployment();
+  return contract;
 };
