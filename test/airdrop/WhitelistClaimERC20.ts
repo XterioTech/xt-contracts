@@ -11,18 +11,18 @@ describe("WhitelistClaimERC20", function () {
     const [owner, vault, u1, u2, u3] = await hre.ethers.getSigners();
     const whitelist = [u1.address, u2.address, u3.address];
     const amounts = [ethers.parseEther("1"), ethers.parseEther("2"), ethers.parseEther("3")]; // Replace with actual amounts
-    const startTime = (await time.latest()) - 3600; 
+    const startTime = (await time.latest()) - 3600;
     const deadline = (await time.latest()) + 3600;
 
     const paymentToken = await deployMajorToken(vault.address, vault.address);
-
-    const wc = await deployWhitelistClaimERC20(whitelist, amounts, startTime, deadline, paymentToken, vault.address);
     const leafNodes = whitelist.map((addr, index) => ethers.solidityPackedKeccak256(
       ["address", "uint256"],
       [addr, amounts[index]]
     ));
     const merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
     const merkleRoot = merkleTree.getHexRoot();
+
+    const wc = await deployWhitelistClaimERC20(merkleRoot, startTime, deadline, paymentToken, vault.address);
 
     // vault approve wc first
     await paymentToken.connect(vault).approve(await wc.getAddress(), ethers.parseEther('1000000'));

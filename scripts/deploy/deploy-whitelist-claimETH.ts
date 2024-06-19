@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
-import { deployWhitelistClaim } from "../../lib/deploy";
+import { deployWhitelistClaimETH } from "../../lib/deploy";
 import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
@@ -37,7 +37,7 @@ const main = async () => {
     console.info(`============================================================`);
     console.info(`================ Deploy WhitelistClaimETH ==================`);
     console.info(`============================================================`);
-    const WhitelistClaimETH = await deployWhitelistClaim(
+    const WhitelistClaimETH = await deployWhitelistClaimETH(
       claimMerkleRoot, claimStartTime, claimEndTime,
       getTxOverridesForNetwork(hre.network.name)
     );
