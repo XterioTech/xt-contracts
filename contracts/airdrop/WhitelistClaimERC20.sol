@@ -30,4 +30,8 @@ contract WhitelistClaimERC20 is WhitelistClaim {
     function _withdraw(address to) internal override {
         token.safeTransfer(to, token.balanceOf(address(this)));
     }
+
+    function setVault(address _vault) external onlyOwner {
+        vault = _vault;
+    }
 }
