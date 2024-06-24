@@ -13,7 +13,7 @@ const main = async () => {
   let claimStartTime = Number.parseInt(process.env.claimStartTime || "0");
   let claimEndTime = Number.parseInt(process.env.claimEndTime || "0");
   let paymentToken = process.env.paymentToken;
-  let valut = process.env.valut ?? ethers.ZeroAddress;
+  let vault = process.env.vault ?? ethers.ZeroAddress;
 
 
   if (!claimMerkleRoot) {
@@ -44,7 +44,7 @@ const main = async () => {
     console.info(`================ Deploy WhitelistClaimERC20 ================`);
     console.info(`============================================================`);
     const WhitelistClaimERC20 = await deployWhitelistClaimERC20(
-      claimMerkleRoot, claimStartTime, claimEndTime, paymentToken, valut,
+      claimMerkleRoot, claimStartTime, claimEndTime, paymentToken, vault,
       getTxOverridesForNetwork(hre.network.name)
     );
     address = await WhitelistClaimERC20.getAddress();
@@ -56,7 +56,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/airdrop/WhitelistClaimERC20.sol:WhitelistClaimERC20",
-        constructorArguments: [claimMerkleRoot, claimStartTime, claimEndTime, paymentToken, valut],
+        constructorArguments: [claimMerkleRoot, claimStartTime, claimEndTime, paymentToken, vault],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);

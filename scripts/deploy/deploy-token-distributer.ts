@@ -8,7 +8,6 @@ const main = async () => {
   const [admin] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
-  address = "0x58E1F246467dc8F0fEaa3bDD0B0784394F49766c"
 
   if (!address) {
     console.info(colorize(Color.blue, `Deploy Distributer`));

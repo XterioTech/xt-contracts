@@ -24,10 +24,18 @@ contract WhitelistClaimERC20 is WhitelistClaim {
     }
 
     function _payOut(uint256 amount, address to) internal override {
-        token.safeTransferFrom(vault, to, amount);
+        if (vault == address(this)) {
+            token.safeTransfer(to, amount);
+        } else {
+            token.safeTransferFrom(vault, to, amount);
+        }
     }
 
     function _withdraw(address to) internal override {
         token.safeTransfer(to, token.balanceOf(address(this)));
+    }
+
+    function setVault(address _vault) external onlyOwner {
+        vault = _vault;
     }
 }

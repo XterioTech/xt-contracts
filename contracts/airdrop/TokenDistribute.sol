@@ -53,7 +53,7 @@ contract TokenDistribute is Ownable {
         IERC20 token = IERC20(tokenAddress);
         uint256 balance = token.balanceOf(address(this));
         require(balance > 0, "Insufficient contract token balance");
-        token.transfer(_to, balance);
+        token.safeTransfer(_to, balance);
     }
 
     function distributeETH(
