@@ -5,10 +5,14 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-contract OnchainIAP is AccessControl {
+contract OnchainIAP is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.UintSet;
+
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     struct Product {
@@ -20,7 +24,7 @@ contract OnchainIAP is AccessControl {
     }
 
     struct SKU {
-        uint32 skuIndex;
+        uint32 skuId;
         uint32 amount;
         bool disabled;
         uint256 price;
@@ -38,10 +42,14 @@ contract OnchainIAP is AccessControl {
 
     mapping(uint32 => Product) public products;
 
+    EnumerableSet.UintSet productIds;
+
+    mapping(uint32 => EnumerableSet.UintSet) productSKUIds;
+
     event PurchaseSuccess(
         address indexed buyer,
         uint32 indexed productId,
-        uint32 indexed skuIndex,
+        uint32 indexed skuId,
         address paymentTokenAddress,
         uint256 paymentAmount,
         uint32 amount
@@ -57,9 +65,22 @@ contract OnchainIAP is AccessControl {
         uint32 _productId,
         uint32 _priceDecimals,
         address _paymentRecipient
-    ) external onlyRole(MANAGER_ROLE) {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         products[_productId].productId = _productId;
         products[_productId].priceDecimals = _priceDecimals;
+        products[_productId].paymentRecipient = _paymentRecipient;
+
+        productIds.add(_productId);
+    }
+
+    function updateProductPaymentRecipient(
+        uint32 _productId,
+        address _paymentRecipient
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(
+            productIds.contains(_productId),
+            "OnchainIAP: productId not exist"
+        );
         products[_productId].paymentRecipient = _paymentRecipient;
     }
 
@@ -69,13 +90,15 @@ contract OnchainIAP is AccessControl {
         uint256 _price,
         uint32 _amount,
         bool _disabled
-    ) external onlyRole(MANAGER_ROLE) {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         products[_productId].skus[_skuId] = SKU(
             _skuId,
             _amount,
             _disabled,
             _price
         );
+
+        productSKUIds[_productId].add(_skuId);
     }
 
     function setDisableSKU(
@@ -83,6 +106,10 @@ contract OnchainIAP is AccessControl {
         uint32 _skuId,
         bool isDisable
     ) external onlyRole(MANAGER_ROLE) {
+        require(
+            productSKUIds[_productId].contains(_skuId),
+            "OnchainIAP: SKU does not exist"
+        );
         products[_productId].skus[_skuId].disabled = isDisable;
     }
 
@@ -94,7 +121,11 @@ contract OnchainIAP is AccessControl {
         uint256 _denominator,
         address _numeratorOracle,
         address _denominatorOracle
-    ) external onlyRole(MANAGER_ROLE) {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(
+            productIds.contains(_productId),
+            "OnchainIAP: productId not exist"
+        );
         products[_productId].paymentMethods[
             _paymentTokenAddress
         ] = PaymentMethod(
@@ -123,28 +154,43 @@ contract OnchainIAP is AccessControl {
         uint32 _productId,
         uint32 _skuId,
         address _paymentTokenAddress
-    ) public payable {
+    ) external payable nonReentrant {
+        require(
+            productIds.contains(_productId),
+            "OnchainIAP: Product does not exist"
+        );
         Product storage product = products[_productId];
         SKU memory sku = product.skus[_skuId];
+        require(
+            productSKUIds[_productId].contains(_skuId) && !sku.disabled,
+            "OnchainIAP: SKU does not exist or disabled"
+        );
         PaymentMethod memory _pay = product.paymentMethods[
             _paymentTokenAddress
         ];
-
-        require(!sku.disabled, "SKU is disabled");
-        require(!_pay.paused, "Payment method is paused");
+        require(!_pay.paused, "OnchainIAP: Payment method is paused");
 
         (uint256 totalPrice, ) = getPriceForSKU(
             _productId,
             _skuId,
             _paymentTokenAddress
         );
-        require(totalPrice > 0, "Invalid totalPrice");
+        require(totalPrice > 0, "OnchainIAP: Invalid totalPrice");
 
         address recipient = product.paymentRecipient;
         if (_paymentTokenAddress == address(0)) {
-            require(msg.value >= totalPrice, "Insufficient payment");
+            require(
+                msg.value >= totalPrice,
+                "OnchainIAP: Insufficient payment"
+            );
             (bool success, ) = recipient.call{value: totalPrice}("");
-            require(success, "Transfer failed");
+            require(success, "OnchainIAP: Transfer failed");
+
+            uint256 excess = msg.value - totalPrice;
+            if (excess > 0) {
+                (bool refundSuccess, ) = msg.sender.call{value: excess}("");
+                require(refundSuccess, "OnchainIAP: Refund failed");
+            }
         } else {
             IERC20(_paymentTokenAddress).safeTransferFrom(
                 msg.sender,
@@ -249,7 +295,7 @@ contract OnchainIAP is AccessControl {
         uint32 _skuId
     ) public view returns (uint32, uint32, bool, uint256) {
         SKU memory sku = products[_productId].skus[_skuId];
-        return (sku.skuIndex, sku.amount, sku.disabled, sku.price);
+        return (sku.skuId, sku.amount, sku.disabled, sku.price);
     }
 
     function getProductPaymentMethodInfo(
