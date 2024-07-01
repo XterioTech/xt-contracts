@@ -40,6 +40,11 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         address denominatorOracle;
     }
 
+    struct PriceInfo {
+        uint256 totalPrice;
+        uint8 decimals;
+    }
+
     mapping(uint32 => Product) public products;
 
     EnumerableSet.UintSet productIds;
@@ -252,6 +257,30 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
             decimals = IERC20Metadata(_paymentTokenAddress).decimals();
         }
         return (totalPrice, decimals);
+    }
+
+    function getBatchPricesForSKU(
+        uint32 _productId,
+        uint32 _skuId,
+        address[] calldata _paymentTokenAddresses
+    ) public view returns (PriceInfo[] memory) {
+        PriceInfo[] memory priceInfos = new PriceInfo[](
+            _paymentTokenAddresses.length
+        );
+
+        for (uint i = 0; i < _paymentTokenAddresses.length; i++) {
+            (uint256 totalPrice, uint8 decimals) = getPriceForSKU(
+                _productId,
+                _skuId,
+                _paymentTokenAddresses[i]
+            );
+            priceInfos[i] = PriceInfo({
+                totalPrice: totalPrice,
+                decimals: decimals
+            });
+        }
+
+        return priceInfos;
     }
 
     /**
