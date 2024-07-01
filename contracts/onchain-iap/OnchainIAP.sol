@@ -182,13 +182,13 @@ contract OnchainIAP is AccessControl {
                 ? 1
                 : getOracleLatestAnswer(_pay.numeratorOracle);
             uint256 numeratorDecimals = _pay.numeratorOracle == address(0)
-                ? 1
+                ? 0
                 : getOracleDecimals(_pay.numeratorOracle);
             uint256 denominator = _pay.denominatorOracle == address(0)
                 ? 1
                 : getOracleLatestAnswer(_pay.denominatorOracle);
             uint256 denominatorDecimals = _pay.denominatorOracle == address(0)
-                ? 1
+                ? 0
                 : getOracleDecimals(_pay.denominatorOracle);
             priceRaw =
                 (sku.price * numerator * (10 ** denominatorDecimals)) /
