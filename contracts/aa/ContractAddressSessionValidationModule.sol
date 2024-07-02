@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {PackedUserOperation} from "@account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
-contract ClaimSessionValidationModule {
+contract ContractAddressSessionValidationModule {
     // execute(address,uint256,bytes)
     bytes4 public constant EXECUTE_SELECTOR = 0xb61d27f6;
     // execute_ncC(address,uint256,bytes)
@@ -28,22 +28,33 @@ contract ClaimSessionValidationModule {
         require(
             bytes4(_op.callData[0:4]) == EXECUTE_OPTIMIZED_SELECTOR ||
                 bytes4(_op.callData[0:4]) == EXECUTE_SELECTOR,
-            "ClaimSV Invalid Selector"
+            "CASV Invalid Selector"
         );
 
-        (address sessionKey, address claimContractAddress) = abi.decode(_sessionKeyData,(address, address));
+        (address sessionKey, address[] memory ContractAddresses) = abi.decode(
+            _sessionKeyData,
+            (address, address[])
+        );
 
         {
             // we expect _op.callData to be `SmartAccount.execute(to, value, calldata)` calldata
-            (address _claimContractAddress, uint256 callValue, ) = abi.decode(
+            (address TargetContractAddress, uint256 callValue, ) = abi.decode(
                 _op.callData[4:], // skip selector
                 (address, uint256, bytes)
             );
-            require(
-                claimContractAddress == _claimContractAddress,
-                "ClaimSV Wrong Token"
-            );
-            require(callValue == 0, "ClaimSV Non Zero Value");
+            uint256 len = ContractAddresses.length;
+            bool exist;
+            for (uint256 i; i < len; ) {
+                if (ContractAddresses[i] == TargetContractAddress) {
+                    exist = true;
+                    break;
+                }
+                unchecked {
+                    ++i;
+                }
+            }
+            require(exist, "CASV Wrong Target Contract Address");
+            require(callValue == 0, "CASV Non Zero Value");
         }
 
         return
