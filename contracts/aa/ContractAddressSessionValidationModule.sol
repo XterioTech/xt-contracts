@@ -41,7 +41,7 @@ contract ContractAddressSessionValidationModule {
         require(
             bytes4(_op.callData[0:4]) == EXECUTE_OPTIMIZED_SELECTOR ||
                 bytes4(_op.callData[0:4]) == EXECUTE_SELECTOR,
-            "CASV Invalid Selector"
+            "ContractAddressSessionValidationModule: invalid selector"
         );
 
         (address sessionKey, address[] memory contractAddresses) = abi.decode(
@@ -56,7 +56,10 @@ contract ContractAddressSessionValidationModule {
                 (address, uint256, bytes)
             );
 
-            require(callValue == 0, "CASV Non Zero Value");
+            require(
+                callValue == 0,
+                "ContractAddressSessionValidationModule: non zero value"
+            );
 
             bool exist;
             for (uint256 i; i < contractAddresses.length; ) {
@@ -68,7 +71,10 @@ contract ContractAddressSessionValidationModule {
                     ++i;
                 }
             }
-            require(exist, "CASV Wrong Target Contract Address");
+            require(
+                exist,
+                "ContractAddressSessionValidationModule: wrong target contract address"
+            );
         }
 
         return
