@@ -31,14 +31,14 @@ contract ContractAddressSessionValidationModule {
             "CASV Invalid Selector"
         );
 
-        (address sessionKey, address[] memory ContractAddresses) = abi.decode(
+        (address sessionKey, address[] memory contractAddresses) = abi.decode(
             _sessionKeyData,
             (address, address[])
         );
 
         {
             // we expect _op.callData to be `SmartAccount.execute(to, value, calldata)` calldata
-            (address TargetContractAddress, uint256 callValue, ) = abi.decode(
+            (address targetContractAddress, uint256 callValue, ) = abi.decode(
                 _op.callData[4:], // skip selector
                 (address, uint256, bytes)
             );
@@ -46,8 +46,8 @@ contract ContractAddressSessionValidationModule {
             require(callValue == 0, "CASV Non Zero Value");
 
             bool exist;
-            for (uint256 i; i < ContractAddresses.length; ) {
-                if (ContractAddresses[i] == TargetContractAddress) {
+            for (uint256 i; i < contractAddresses.length; ) {
+                if (contractAddresses[i] == targetContractAddress) {
                     exist = true;
                     break;
                 }
