@@ -42,9 +42,11 @@ contract ContractAddressSessionValidationModule {
                 _op.callData[4:], // skip selector
                 (address, uint256, bytes)
             );
-            uint256 len = ContractAddresses.length;
+
+            require(callValue == 0, "CASV Non Zero Value");
+
             bool exist;
-            for (uint256 i; i < len; ) {
+            for (uint256 i; i < ContractAddresses.length; ) {
                 if (ContractAddresses[i] == TargetContractAddress) {
                     exist = true;
                     break;
@@ -54,7 +56,6 @@ contract ContractAddressSessionValidationModule {
                 }
             }
             require(exist, "CASV Wrong Target Contract Address");
-            require(callValue == 0, "CASV Non Zero Value");
         }
 
         return
