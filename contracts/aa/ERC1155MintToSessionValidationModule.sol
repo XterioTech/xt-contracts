@@ -1,13 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {PackedUserOperation} from "@account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 contract ERC1155MintToSessionValidationModule {
     // execute(address,uint256,bytes)
     bytes4 public constant EXECUTE_SELECTOR = 0xb61d27f6;
     // execute_ncC(address,uint256,bytes)
     bytes4 public constant EXECUTE_OPTIMIZED_SELECTOR = 0x0000189a;
+
+    struct UserOperation {
+        address sender;
+        uint256 nonce;
+        bytes initCode;
+        bytes callData;
+        uint256 callGasLimit;
+        uint256 verificationGasLimit;
+        uint256 preVerificationGas;
+        uint256 maxFeePerGas;
+        uint256 maxPriorityFeePerGas;
+        bytes paymasterAndData;
+        bytes signature;
+    }
 
     /**
      * @dev validates if the _op (UserOperation) matches the SessionKey permissions
@@ -20,7 +33,7 @@ contract ERC1155MintToSessionValidationModule {
      * @return true if the _op is valid, false otherwise.
      */
     function validateSessionUserOp(
-        PackedUserOperation calldata _op,
+        UserOperation calldata _op,
         bytes32 _userOpHash,
         bytes calldata _sessionKeyData,
         bytes calldata _sessionKeySignature
