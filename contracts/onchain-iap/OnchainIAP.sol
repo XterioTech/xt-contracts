@@ -32,7 +32,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
 
     struct PaymentMethod {
         address paymentTokenAddress;
-        bool paused;
+        bool valid;
         bool isFixedRate;
         uint256 numerator;
         uint256 denominator;
@@ -135,7 +135,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
             _paymentTokenAddress
         ] = PaymentMethod(
             _paymentTokenAddress,
-            false,
+            true,
             _isFixedRate,
             _numerator,
             _denominator,
@@ -144,14 +144,14 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         );
     }
 
-    function setPausePaymentMethod(
+    function setPaymentMethodValid(
         uint32 _productId,
         address _paymentTokenAddress,
-        bool _pause
+        bool _isValid
     ) external onlyRole(MANAGER_ROLE) {
         products[_productId]
             .paymentMethods[_paymentTokenAddress]
-            .paused = _pause;
+            .valid = _isValid;
     }
 
     /****************** Core Func ******************/
@@ -173,7 +173,10 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         PaymentMethod memory _pay = product.paymentMethods[
             _paymentTokenAddress
         ];
-        require(!_pay.paused, "OnchainIAP: Payment method is paused");
+        require(
+            _pay.valid,
+            "OnchainIAP: Payment method not registered or invalid"
+        );
 
         (uint256 totalPrice, ) = getPriceForSKU(
             _productId,
@@ -335,7 +338,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
             _paymentTokenAddress
         ];
         return (
-            _pay.paused,
+            _pay.valid,
             _pay.isFixedRate,
             _pay.numerator,
             _pay.denominator,
