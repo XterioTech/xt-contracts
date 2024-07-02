@@ -16,7 +16,6 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     struct Product {
-        uint32 productId;
         uint32 priceDecimals;
         address paymentRecipient;
         mapping(uint256 => SKU) skus;
@@ -24,14 +23,12 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
     }
 
     struct SKU {
-        uint32 skuId;
         uint32 amount;
         bool disabled;
         uint256 price;
     }
 
     struct PaymentMethod {
-        address paymentTokenAddress;
         bool valid;
         bool isFixedRate;
         uint256 numerator;
@@ -71,7 +68,6 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _priceDecimals,
         address _paymentRecipient
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        products[_productId].productId = _productId;
         products[_productId].priceDecimals = _priceDecimals;
         products[_productId].paymentRecipient = _paymentRecipient;
 
@@ -96,12 +92,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _amount,
         bool _disabled
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        products[_productId].skus[_skuId] = SKU(
-            _skuId,
-            _amount,
-            _disabled,
-            _price
-        );
+        products[_productId].skus[_skuId] = SKU(_amount, _disabled, _price);
 
         productSKUIds[_productId].add(_skuId);
     }
@@ -134,7 +125,6 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         products[_productId].paymentMethods[
             _paymentTokenAddress
         ] = PaymentMethod(
-            _paymentTokenAddress,
             true,
             _isFixedRate,
             _numerator,
@@ -313,21 +303,17 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
     /****************** View Func ******************/
     function getProductInfo(
         uint32 _productId
-    ) public view returns (uint32, uint32, address) {
+    ) public view returns (uint32, address) {
         Product storage product = products[_productId];
-        return (
-            product.productId,
-            product.priceDecimals,
-            product.paymentRecipient
-        );
+        return (product.priceDecimals, product.paymentRecipient);
     }
 
     function getProductSKUInfo(
         uint32 _productId,
         uint32 _skuId
-    ) public view returns (uint32, uint32, bool, uint256) {
+    ) public view returns (uint32, bool, uint256) {
         SKU memory sku = products[_productId].skus[_skuId];
-        return (sku.skuId, sku.amount, sku.disabled, sku.price);
+        return (sku.amount, sku.disabled, sku.price);
     }
 
     function getProductPaymentMethodInfo(
