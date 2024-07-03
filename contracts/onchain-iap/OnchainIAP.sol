@@ -16,6 +16,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     struct Product {
+        bool disabled;
         uint32 priceDecimals;
         address paymentRecipient;
         mapping(uint256 => SKU) skus;
@@ -23,8 +24,8 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
     }
 
     struct SKU {
-        uint32 amount;
         bool disabled;
+        uint32 amount;
         uint256 price;
     }
 
@@ -62,6 +63,24 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         _grantRole(MANAGER_ROLE, admin);
     }
 
+    /****************** Modifiers ******************/
+
+    modifier productExists(uint32 _productId) {
+        require(
+            productIds.contains(_productId),
+            "OnchainIAP: productId not exist"
+        );
+        _;
+    }
+
+    modifier skuExists(uint32 _productId, uint32 _skuId) {
+        require(
+            productSKUIds[_productId].contains(_skuId),
+            "OnchainIAP: SKU does not exist"
+        );
+        _;
+    }
+
     /****************** Admin Func ******************/
     function registerProduct(
         uint32 _productId,
@@ -74,14 +93,17 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         productIds.add(_productId);
     }
 
+    function setDisableProduct(
+        uint32 _productId,
+        bool isDisable
+    ) external onlyRole(MANAGER_ROLE) productExists(_productId) {
+        products[_productId].disabled = isDisable;
+    }
+
     function updateProductPaymentRecipient(
         uint32 _productId,
         address _paymentRecipient
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(
-            productIds.contains(_productId),
-            "OnchainIAP: productId not exist"
-        );
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) productExists(_productId) {
         products[_productId].paymentRecipient = _paymentRecipient;
     }
 
@@ -89,10 +111,9 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _productId,
         uint32 _skuId,
         uint256 _price,
-        uint32 _amount,
-        bool _disabled
+        uint32 _amount
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        products[_productId].skus[_skuId] = SKU(_amount, _disabled, _price);
+        products[_productId].skus[_skuId] = SKU(false, _amount, _price);
 
         productSKUIds[_productId].add(_skuId);
     }
@@ -101,11 +122,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _productId,
         uint32 _skuId,
         bool isDisable
-    ) external onlyRole(MANAGER_ROLE) {
-        require(
-            productSKUIds[_productId].contains(_skuId),
-            "OnchainIAP: SKU does not exist"
-        );
+    ) external onlyRole(MANAGER_ROLE) skuExists(_productId, _skuId) {
         products[_productId].skus[_skuId].disabled = isDisable;
     }
 
@@ -117,11 +134,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint256 _denominator,
         address _numeratorOracle,
         address _denominatorOracle
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(
-            productIds.contains(_productId),
-            "OnchainIAP: productId not exist"
-        );
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) productExists(_productId) {
         products[_productId].paymentMethods[
             _paymentTokenAddress
         ] = PaymentMethod(
@@ -149,24 +162,21 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _productId,
         uint32 _skuId,
         address _paymentTokenAddress
-    ) external payable nonReentrant {
-        require(
-            productIds.contains(_productId),
-            "OnchainIAP: Product does not exist"
-        );
+    )
+        external
+        payable
+        nonReentrant
+        productExists(_productId)
+        skuExists(_productId, _skuId)
+    {
         Product storage product = products[_productId];
+        require(!product.disabled, "OnchainIAP: Product disabled");
         SKU memory sku = product.skus[_skuId];
-        require(
-            productSKUIds[_productId].contains(_skuId) && !sku.disabled,
-            "OnchainIAP: SKU does not exist or disabled"
-        );
+        require(!sku.disabled, "OnchainIAP: SKU disabled");
         PaymentMethod memory _pay = product.paymentMethods[
             _paymentTokenAddress
         ];
-        require(
-            _pay.valid,
-            "OnchainIAP: Payment method not registered or invalid"
-        );
+        require(_pay.valid, "OnchainIAP: Invalid payment method");
 
         (uint256 totalPrice, ) = getPriceForSKU(
             _productId,
@@ -331,5 +341,15 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
             _pay.numeratorOracle,
             _pay.denominatorOracle
         );
+    }
+
+    function listProductIds() public view returns (uint256[] memory) {
+        return productIds.values();
+    }
+
+    function listSKUIds(
+        uint32 _productId
+    ) public view productExists(_productId) returns (uint256[] memory) {
+        return productSKUIds[_productId].values();
     }
 }
