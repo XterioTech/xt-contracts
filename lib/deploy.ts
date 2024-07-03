@@ -290,3 +290,15 @@ export const deployTokenDistribute = async (
   await contract.waitForDeployment();
   return contract;
 };
+
+export const deployAggregator = async (
+  decimals: number,
+  description: string,
+  version: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("Aggregator");
+  const contract = await Contract.deploy(decimals, description, version, txOverrides || {})
+  await contract.waitForDeployment();
+  return contract;
+};
