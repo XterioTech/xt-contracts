@@ -21,6 +21,7 @@ contract Aggregator is AggregatorV3Interface, Ownable {
     uint80 private _latestRoundId;
 
     constructor(
+        address _owner,
         uint8 decimals_,
         string memory description_,
         uint256 version_
@@ -28,6 +29,7 @@ contract Aggregator is AggregatorV3Interface, Ownable {
         _decimals = decimals_;
         _description = description_;
         _version = version_;
+        transferOwnership(_owner);
     }
 
     function decimals() external view returns (uint8) {

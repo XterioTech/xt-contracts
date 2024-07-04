@@ -292,13 +292,14 @@ export const deployTokenDistribute = async (
 };
 
 export const deployAggregator = async (
+  defaultOwner: AddressLike,
   decimals: number,
   description: string,
   version: number,
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("Aggregator");
-  const contract = await Contract.deploy(decimals, description, version, txOverrides || {})
+  const contract = await Contract.deploy(defaultOwner, decimals, description, version, txOverrides || {})
   await contract.waitForDeployment();
   return contract;
 };

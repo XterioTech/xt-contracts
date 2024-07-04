@@ -28,7 +28,7 @@ const main = async () => {
     console.info(`=========================================================`);
     console.info(`===================== Deploy Aggregator =================`);
     console.info(`=========================================================`);
-    const Aggregator = await deployAggregator(decimals, description, version, getTxOverridesForNetwork(hre.network.name));
+    const Aggregator = await deployAggregator(admin, decimals, description, version, getTxOverridesForNetwork(hre.network.name));
     address = await Aggregator.getAddress();
     console.info(`Aggregator @ ${address}`);
   }
@@ -38,7 +38,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/onchain-iap/Aggregator.sol:Aggregator",
-        constructorArguments: [decimals, description, version],
+        constructorArguments: [admin, decimals, description, version],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);
