@@ -1,8 +1,111 @@
 // Sources flattened with hardhat v2.12.4 https://hardhat.org
 
-// File contracts/interfaces/UserOperation.sol
+// File contracts/core/Helpers.sol
 
 // SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.12;
+
+/* solhint-disable no-inline-assembly */
+
+/**
+ * returned data from validateUserOp.
+ * validateUserOp returns a uint256, with is created by `_packedValidationData` and parsed by `_parseValidationData`
+ * @param aggregator - address(0) - the account validated the signature by itself.
+ *              address(1) - the account failed to validate the signature.
+ *              otherwise - this is an address of a signature aggregator that must be used to validate the signature.
+ * @param validAfter - this UserOp is valid only after this timestamp.
+ * @param validaUntil - this UserOp is valid only up to this timestamp.
+ */
+struct ValidationData {
+    address aggregator;
+    uint48 validAfter;
+    uint48 validUntil;
+}
+
+//extract sigFailed, validAfter, validUntil.
+// also convert zero validUntil to type(uint48).max
+function _parseValidationData(
+    uint validationData
+) pure returns (ValidationData memory data) {
+    address aggregator = address(uint160(validationData));
+    uint48 validUntil = uint48(validationData >> 160);
+    if (validUntil == 0) {
+        validUntil = type(uint48).max;
+    }
+    uint48 validAfter = uint48(validationData >> (48 + 160));
+    return ValidationData(aggregator, validAfter, validUntil);
+}
+
+// intersect account and paymaster ranges.
+function _intersectTimeRange(
+    uint256 validationData,
+    uint256 paymasterValidationData
+) pure returns (ValidationData memory) {
+    ValidationData memory accountValidationData = _parseValidationData(
+        validationData
+    );
+    ValidationData memory pmValidationData = _parseValidationData(
+        paymasterValidationData
+    );
+    address aggregator = accountValidationData.aggregator;
+    if (aggregator == address(0)) {
+        aggregator = pmValidationData.aggregator;
+    }
+    uint48 validAfter = accountValidationData.validAfter;
+    uint48 validUntil = accountValidationData.validUntil;
+    uint48 pmValidAfter = pmValidationData.validAfter;
+    uint48 pmValidUntil = pmValidationData.validUntil;
+
+    if (validAfter < pmValidAfter) validAfter = pmValidAfter;
+    if (validUntil > pmValidUntil) validUntil = pmValidUntil;
+    return ValidationData(aggregator, validAfter, validUntil);
+}
+
+/**
+ * helper to pack the return value for validateUserOp
+ * @param data - the ValidationData to pack
+ */
+function _packValidationData(
+    ValidationData memory data
+) pure returns (uint256) {
+    return
+        uint160(data.aggregator) |
+        (uint256(data.validUntil) << 160) |
+        (uint256(data.validAfter) << (160 + 48));
+}
+
+/**
+ * helper to pack the return value for validateUserOp, when not using an aggregator
+ * @param sigFailed - true for signature failure, false for success
+ * @param validUntil last timestamp this UserOperation is valid (or zero for infinite)
+ * @param validAfter first timestamp this UserOperation is valid
+ */
+function _packValidationData(
+    bool sigFailed,
+    uint48 validUntil,
+    uint48 validAfter
+) pure returns (uint256) {
+    return
+        (sigFailed ? 1 : 0) |
+        (uint256(validUntil) << 160) |
+        (uint256(validAfter) << (160 + 48));
+}
+
+/**
+ * keccak function over calldata.
+ * @dev copy calldata into memory, do keccak and drop allocated memory. Strangely, this is more efficient than letting solidity do it.
+ */
+function calldataKeccak(bytes calldata data) pure returns (bytes32 ret) {
+    assembly {
+        let mem := mload(0x40)
+        let len := data.length
+        calldatacopy(mem, data.offset, len)
+        ret := keccak256(mem, len)
+    }
+}
+
+// File contracts/interfaces/UserOperation.sol
+
 pragma solidity ^0.8.12;
 
 /* solhint-disable no-inline-assembly */
@@ -69,19 +172,30 @@ library UserOperationLib {
     function pack(
         UserOperation calldata userOp
     ) internal pure returns (bytes memory ret) {
-        //lighter signature scheme. must match UserOp.ts#packUserOp
-        bytes calldata sig = userOp.signature;
-        // copy directly the userOp from calldata up to (but not including) the signature.
-        // this encoding depends on the ABI encoding of calldata, but is much lighter to copy
-        // than referencing each field separately.
-        assembly {
-            let ofs := userOp
-            let len := sub(sub(sig.offset, ofs), 32)
-            ret := mload(0x40)
-            mstore(0x40, add(ret, add(len, 32)))
-            mstore(ret, len)
-            calldatacopy(add(ret, 32), ofs, len)
-        }
+        address sender = getSender(userOp);
+        uint256 nonce = userOp.nonce;
+        bytes32 hashInitCode = calldataKeccak(userOp.initCode);
+        bytes32 hashCallData = calldataKeccak(userOp.callData);
+        uint256 callGasLimit = userOp.callGasLimit;
+        uint256 verificationGasLimit = userOp.verificationGasLimit;
+        uint256 preVerificationGas = userOp.preVerificationGas;
+        uint256 maxFeePerGas = userOp.maxFeePerGas;
+        uint256 maxPriorityFeePerGas = userOp.maxPriorityFeePerGas;
+        bytes32 hashPaymasterAndData = calldataKeccak(userOp.paymasterAndData);
+
+        return
+            abi.encode(
+                sender,
+                nonce,
+                hashInitCode,
+                hashCallData,
+                callGasLimit,
+                verificationGasLimit,
+                preVerificationGas,
+                maxFeePerGas,
+                maxPriorityFeePerGas,
+                hashPaymasterAndData
+            );
     }
 
     function hash(
@@ -93,6 +207,140 @@ library UserOperationLib {
     function min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }
+}
+
+// File contracts/interfaces/IAccount.sol
+
+pragma solidity ^0.8.12;
+
+interface IAccount {
+    /**
+     * Validate user's signature and nonce
+     * the entryPoint will make the call to the recipient only if this validation call returns successfully.
+     * signature failure should be reported by returning SIG_VALIDATION_FAILED (1).
+     * This allows making a "simulation call" without a valid signature
+     * Other failures (e.g. nonce mismatch, or invalid signature format) should still revert to signal failure.
+     *
+     * @dev Must validate caller is the entryPoint.
+     *      Must validate the signature and nonce
+     * @param userOp the operation that is about to be executed.
+     * @param userOpHash hash of the user's request data. can be used as the basis for signature.
+     * @param missingAccountFunds missing funds on the account's deposit in the entrypoint.
+     *      This is the minimum amount to transfer to the sender(entryPoint) to be able to make the call.
+     *      The excess is left as a deposit in the entrypoint, for future calls.
+     *      can be withdrawn anytime using "entryPoint.withdrawTo()"
+     *      In case there is a paymaster in the request (or the current deposit is high enough), this value will be zero.
+     * @return validationData packaged ValidationData structure. use `_packValidationData` and `_unpackValidationData` to encode and decode
+     *      <20-byte> sigAuthorizer - 0 for valid signature, 1 to mark signature failure,
+     *         otherwise, an address of an "authorizer" contract.
+     *      <6-byte> validUntil - last timestamp this operation is valid. 0 for "indefinite"
+     *      <6-byte> validAfter - first timestamp this operation is valid
+     *      If an account doesn't use time-range, it is enough to return SIG_VALIDATION_FAILED value (1) for signature failure.
+     *      Note that the validation code cannot use block.timestamp (or block.number) directly.
+     */
+    function validateUserOp(
+        UserOperation calldata userOp,
+        bytes32 userOpHash,
+        uint256 missingAccountFunds
+    ) external returns (uint256 validationData);
+}
+
+// File contracts/interfaces/IPaymaster.sol
+
+pragma solidity ^0.8.12;
+
+/**
+ * the interface exposed by a paymaster contract, who agrees to pay the gas for user's operations.
+ * a paymaster must hold a stake to cover the required entrypoint stake and also the gas for the transaction.
+ */
+interface IPaymaster {
+    enum PostOpMode {
+        opSucceeded, // user op succeeded
+        opReverted, // user op reverted. still has to pay for gas.
+        postOpReverted //user op succeeded, but caused postOp to revert. Now it's a 2nd call, after user's op was deliberately reverted.
+    }
+
+    /**
+     * payment validation: check if paymaster agrees to pay.
+     * Must verify sender is the entryPoint.
+     * Revert to reject this request.
+     * Note that bundlers will reject this method if it changes the state, unless the paymaster is trusted (whitelisted)
+     * The paymaster pre-pays using its deposit, and receive back a refund after the postOp method returns.
+     * @param userOp the user operation
+     * @param userOpHash hash of the user's request data.
+     * @param maxCost the maximum cost of this transaction (based on maximum gas and gas price from userOp)
+     * @return context value to send to a postOp
+     *      zero length to signify postOp is not required.
+     * @return validationData signature and time-range of this operation, encoded the same as the return value of validateUserOperation
+     *      <20-byte> sigAuthorizer - 0 for valid signature, 1 to mark signature failure,
+     *         otherwise, an address of an "authorizer" contract.
+     *      <6-byte> validUntil - last timestamp this operation is valid. 0 for "indefinite"
+     *      <6-byte> validAfter - first timestamp this operation is valid
+     *      Note that the validation code cannot use block.timestamp (or block.number) directly.
+     */
+    function validatePaymasterUserOp(
+        UserOperation calldata userOp,
+        bytes32 userOpHash,
+        uint256 maxCost
+    ) external returns (bytes memory context, uint256 validationData);
+
+    /**
+     * post-operation handler.
+     * Must verify sender is the entryPoint
+     * @param mode enum with the following options:
+     *      opSucceeded - user operation succeeded.
+     *      opReverted  - user op reverted. still has to pay for gas.
+     *      postOpReverted - user op succeeded, but caused postOp (in mode=opSucceeded) to revert.
+     *                       Now this is the 2nd call, after user's op was deliberately reverted.
+     * @param context - the context value returned by validatePaymasterUserOp
+     * @param actualGasCost - actual gas used so far (without this postOp call).
+     */
+    function postOp(
+        PostOpMode mode,
+        bytes calldata context,
+        uint256 actualGasCost
+    ) external;
+}
+
+// File contracts/interfaces/IAggregator.sol
+
+pragma solidity ^0.8.12;
+
+/**
+ * Aggregated Signatures validator.
+ */
+interface IAggregator {
+    /**
+     * validate aggregated signature.
+     * revert if the aggregated signature does not match the given list of operations.
+     */
+    function validateSignatures(
+        UserOperation[] calldata userOps,
+        bytes calldata signature
+    ) external view;
+
+    /**
+     * validate signature of a single userOp
+     * This method is should be called by bundler after EntryPoint.simulateValidation() returns (reverts) with ValidationResultWithAggregation
+     * First it validates the signature over the userOp. Then it returns data to be used when creating the handleOps.
+     * @param userOp the userOperation received from the user.
+     * @return sigForUserOp the value to put into the signature field of the userOp when calling handleOps.
+     *    (usually empty, unless account and aggregator support some kind of "multisig"
+     */
+    function validateUserOpSignature(
+        UserOperation calldata userOp
+    ) external view returns (bytes memory sigForUserOp);
+
+    /**
+     * aggregate multiple signatures into a single value.
+     * This method is called off-chain to calculate the signature to pass with handleOps()
+     * bundler MAY use optimized custom code perform this aggregation
+     * @param userOps array of UserOperations to collect the signatures from.
+     * @return aggregatedSignature the aggregated signature
+     */
+    function aggregateSignatures(
+        UserOperation[] calldata userOps
+    ) external view returns (bytes memory aggregatedSignature);
 }
 
 // File contracts/interfaces/IStakeManager.sol
@@ -199,45 +447,34 @@ interface IStakeManager {
     ) external;
 }
 
-// File contracts/interfaces/IAggregator.sol
+// File contracts/interfaces/INonceManager.sol
 
 pragma solidity ^0.8.12;
 
-/**
- * Aggregated Signatures validator.
- */
-interface IAggregator {
+interface INonceManager {
     /**
-     * validate aggregated signature.
-     * revert if the aggregated signature does not match the given list of operations.
+     * Return the next nonce for this sender.
+     * Within a given key, the nonce values are sequenced (starting with zero, and incremented by one on each userop)
+     * But UserOp with different keys can come with arbitrary order.
+     *
+     * @param sender the account address
+     * @param key the high 192 bit of the nonce
+     * @return nonce a full nonce to pass for next UserOp with this sender.
      */
-    function validateSignatures(
-        UserOperation[] calldata userOps,
-        bytes calldata signature
-    ) external view;
+    function getNonce(
+        address sender,
+        uint192 key
+    ) external view returns (uint256 nonce);
 
     /**
-     * validate signature of a single userOp
-     * This method is should be called by bundler after EntryPoint.simulateValidation() returns (reverts) with ValidationResultWithAggregation
-     * First it validates the signature over the userOp. Then it returns data to be used when creating the handleOps.
-     * @param userOp the userOperation received from the user.
-     * @return sigForUserOp the value to put into the signature field of the userOp when calling handleOps.
-     *    (usually empty, unless account and aggregator support some kind of "multisig"
+     * Manually increment the nonce of the sender.
+     * This method is exposed just for completeness..
+     * Account does NOT need to call it, neither during validation, nor elsewhere,
+     * as the EntryPoint will update the nonce regardless.
+     * Possible use-case is call it with various keys to "initialize" their nonces to one, so that future
+     * UserOperations will not pay extra for the first transaction with a given key.
      */
-    function validateUserOpSignature(
-        UserOperation calldata userOp
-    ) external view returns (bytes memory sigForUserOp);
-
-    /**
-     * aggregate multiple signatures into a single value.
-     * This method is called off-chain to calculate the signature to pass with handleOps()
-     * bundler MAY use optimized custom code perform this aggregation
-     * @param userOps array of UserOperations to collect the signatures from.
-     * @return aggregatedSignature the aggregated signature
-     */
-    function aggregateSignatures(
-        UserOperation[] calldata userOps
-    ) external view returns (bytes memory aggregatedSignature);
+    function incrementNonce(uint192 key) external;
 }
 
 // File contracts/interfaces/IEntryPoint.sol
@@ -252,7 +489,7 @@ pragma solidity ^0.8.12;
 /* solhint-disable no-inline-assembly */
 /* solhint-disable reason-string */
 
-interface IEntryPoint is IStakeManager {
+interface IEntryPoint is IStakeManager, INonceManager {
     /***
      * An event emitted after each successful request
      * @param userOpHash - unique identifier for the request (hash its entire content, except signature).
@@ -300,6 +537,12 @@ interface IEntryPoint is IStakeManager {
         uint256 nonce,
         bytes revertReason
     );
+
+    /**
+     * an event emitted by handleOps(), before starting the execution loop.
+     * any event emitted before this event, is part of the validation.
+     */
+    event BeforeExecution();
 
     /**
      * signature aggregator used by the following UserOperationEvents within this bundle.
@@ -472,99 +715,6 @@ interface IEntryPoint is IStakeManager {
         address target,
         bytes calldata targetCallData
     ) external;
-}
-
-// File contracts/interfaces/IPaymaster.sol
-
-pragma solidity ^0.8.12;
-
-/**
- * the interface exposed by a paymaster contract, who agrees to pay the gas for user's operations.
- * a paymaster must hold a stake to cover the required entrypoint stake and also the gas for the transaction.
- */
-interface IPaymaster {
-    enum PostOpMode {
-        opSucceeded, // user op succeeded
-        opReverted, // user op reverted. still has to pay for gas.
-        postOpReverted //user op succeeded, but caused postOp to revert. Now it's a 2nd call, after user's op was deliberately reverted.
-    }
-
-    /**
-     * payment validation: check if paymaster agrees to pay.
-     * Must verify sender is the entryPoint.
-     * Revert to reject this request.
-     * Note that bundlers will reject this method if it changes the state, unless the paymaster is trusted (whitelisted)
-     * The paymaster pre-pays using its deposit, and receive back a refund after the postOp method returns.
-     * @param userOp the user operation
-     * @param userOpHash hash of the user's request data.
-     * @param maxCost the maximum cost of this transaction (based on maximum gas and gas price from userOp)
-     * @return context value to send to a postOp
-     *      zero length to signify postOp is not required.
-     * @return validationData signature and time-range of this operation, encoded the same as the return value of validateUserOperation
-     *      <20-byte> sigAuthorizer - 0 for valid signature, 1 to mark signature failure,
-     *         otherwise, an address of an "authorizer" contract.
-     *      <6-byte> validUntil - last timestamp this operation is valid. 0 for "indefinite"
-     *      <6-byte> validAfter - first timestamp this operation is valid
-     *      Note that the validation code cannot use block.timestamp (or block.number) directly.
-     */
-    function validatePaymasterUserOp(
-        UserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 maxCost
-    ) external returns (bytes memory context, uint256 validationData);
-
-    /**
-     * post-operation handler.
-     * Must verify sender is the entryPoint
-     * @param mode enum with the following options:
-     *      opSucceeded - user operation succeeded.
-     *      opReverted  - user op reverted. still has to pay for gas.
-     *      postOpReverted - user op succeeded, but caused postOp (in mode=opSucceeded) to revert.
-     *                       Now this is the 2nd call, after user's op was deliberately reverted.
-     * @param context - the context value returned by validatePaymasterUserOp
-     * @param actualGasCost - actual gas used so far (without this postOp call).
-     */
-    function postOp(
-        PostOpMode mode,
-        bytes calldata context,
-        uint256 actualGasCost
-    ) external;
-}
-
-// File contracts/interfaces/IAccount.sol
-
-pragma solidity ^0.8.12;
-
-interface IAccount {
-    /**
-     * Validate user's signature and nonce
-     * the entryPoint will make the call to the recipient only if this validation call returns successfully.
-     * signature failure should be reported by returning SIG_VALIDATION_FAILED (1).
-     * This allows making a "simulation call" without a valid signature
-     * Other failures (e.g. nonce mismatch, or invalid signature format) should still revert to signal failure.
-     *
-     * @dev Must validate caller is the entryPoint.
-     *      Must validate the signature and nonce
-     * @param userOp the operation that is about to be executed.
-     * @param userOpHash hash of the user's request data. can be used as the basis for signature.
-     * @param missingAccountFunds missing funds on the account's deposit in the entrypoint.
-     *      This is the minimum amount to transfer to the sender(entryPoint) to be able to make the call.
-     *      The excess is left as a deposit in the entrypoint, for future calls.
-     *      can be withdrawn anytime using "entryPoint.withdrawTo()"
-     *      In case there is a paymaster in the request (or the current deposit is high enough), this value will be zero.
-     * @return validationData packaged ValidationData structure. use `_packValidationData` and `_unpackValidationData` to encode and decode
-     *      <20-byte> sigAuthorizer - 0 for valid signature, 1 to mark signature failure,
-     *         otherwise, an address of an "authorizer" contract.
-     *      <6-byte> validUntil - last timestamp this operation is valid. 0 for "indefinite"
-     *      <6-byte> validAfter - first timestamp this operation is valid
-     *      If an account doesn't use time-range, it is enough to return SIG_VALIDATION_FAILED value (1) for signature failure.
-     *      Note that the validation code cannot use block.timestamp (or block.number) directly.
-     */
-    function validateUserOp(
-        UserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 missingAccountFunds
-    ) external returns (uint256 validationData);
 }
 
 // File contracts/utils/Exec.sol
@@ -833,92 +983,117 @@ contract SenderCreator {
     }
 }
 
-// File contracts/core/Helpers.sol
+// File contracts/core/NonceManager.sol
 
 pragma solidity ^0.8.12;
 
 /**
- * returned data from validateUserOp.
- * validateUserOp returns a uint256, with is created by `_packedValidationData` and parsed by `_parseValidationData`
- * @param aggregator - address(0) - the account validated the signature by itself.
- *              address(1) - the account failed to validate the signature.
- *              otherwise - this is an address of a signature aggregator that must be used to validate the signature.
- * @param validAfter - this UserOp is valid only after this timestamp.
- * @param validaUntil - this UserOp is valid only up to this timestamp.
+ * nonce management functionality
  */
-struct ValidationData {
-    address aggregator;
-    uint48 validAfter;
-    uint48 validUntil;
-}
+contract NonceManager is INonceManager {
+    /**
+     * The next valid sequence number for a given nonce key.
+     */
+    mapping(address => mapping(uint192 => uint256)) public nonceSequenceNumber;
 
-//extract sigFailed, validAfter, validUntil.
-// also convert zero validUntil to type(uint48).max
-function _parseValidationData(
-    uint validationData
-) pure returns (ValidationData memory data) {
-    address aggregator = address(uint160(validationData));
-    uint48 validUntil = uint48(validationData >> 160);
-    if (validUntil == 0) {
-        validUntil = type(uint48).max;
+    function getNonce(
+        address sender,
+        uint192 key
+    ) public view override returns (uint256 nonce) {
+        return nonceSequenceNumber[sender][key] | (uint256(key) << 64);
     }
-    uint48 validAfter = uint48(validationData >> (48 + 160));
-    return ValidationData(aggregator, validAfter, validUntil);
-}
 
-// intersect account and paymaster ranges.
-function _intersectTimeRange(
-    uint256 validationData,
-    uint256 paymasterValidationData
-) pure returns (ValidationData memory) {
-    ValidationData memory accountValidationData = _parseValidationData(
-        validationData
-    );
-    ValidationData memory pmValidationData = _parseValidationData(
-        paymasterValidationData
-    );
-    address aggregator = accountValidationData.aggregator;
-    if (aggregator == address(0)) {
-        aggregator = pmValidationData.aggregator;
+    // allow an account to manually increment its own nonce.
+    // (mainly so that during construction nonce can be made non-zero,
+    // to "absorb" the gas cost of first nonce increment to 1st transaction (construction),
+    // not to 2nd transaction)
+    function incrementNonce(uint192 key) public override {
+        nonceSequenceNumber[msg.sender][key]++;
     }
-    uint48 validAfter = accountValidationData.validAfter;
-    uint48 validUntil = accountValidationData.validUntil;
-    uint48 pmValidAfter = pmValidationData.validAfter;
-    uint48 pmValidUntil = pmValidationData.validUntil;
 
-    if (validAfter < pmValidAfter) validAfter = pmValidAfter;
-    if (validUntil > pmValidUntil) validUntil = pmValidUntil;
-    return ValidationData(aggregator, validAfter, validUntil);
+    /**
+     * validate nonce uniqueness for this account.
+     * called just after validateUserOp()
+     */
+    function _validateAndUpdateNonce(
+        address sender,
+        uint256 nonce
+    ) internal returns (bool) {
+        uint192 key = uint192(nonce >> 64);
+        uint64 seq = uint64(nonce);
+        return nonceSequenceNumber[sender][key]++ == seq;
+    }
 }
+
+// File @openzeppelin/contracts/security/ReentrancyGuard.sol@v4.8.0
+
+// OpenZeppelin Contracts (last updated v4.8.0) (security/ReentrancyGuard.sol)
+
+pragma solidity ^0.8.0;
 
 /**
- * helper to pack the return value for validateUserOp
- * @param data - the ValidationData to pack
+ * @dev Contract module that helps prevent reentrant calls to a function.
+ *
+ * Inheriting from `ReentrancyGuard` will make the {nonReentrant} modifier
+ * available, which can be applied to functions to make sure there are no nested
+ * (reentrant) calls to them.
+ *
+ * Note that because there is a single `nonReentrant` guard, functions marked as
+ * `nonReentrant` may not call one another. This can be worked around by making
+ * those functions `private`, and then adding `external` `nonReentrant` entry
+ * points to them.
+ *
+ * TIP: If you would like to learn more about reentrancy and alternative ways
+ * to protect against it, check out our blog post
+ * https://blog.openzeppelin.com/reentrancy-after-istanbul/[Reentrancy After Istanbul].
  */
-function _packValidationData(
-    ValidationData memory data
-) pure returns (uint256) {
-    return
-        uint160(data.aggregator) |
-        (uint256(data.validUntil) << 160) |
-        (uint256(data.validAfter) << (160 + 48));
-}
+abstract contract ReentrancyGuard {
+    // Booleans are more expensive than uint256 or any type that takes up a full
+    // word because each write operation emits an extra SLOAD to first read the
+    // slot's contents, replace the bits taken up by the boolean, and then write
+    // back. This is the compiler's defense against contract upgrades and
+    // pointer aliasing, and it cannot be disabled.
 
-/**
- * helper to pack the return value for validateUserOp, when not using an aggregator
- * @param sigFailed - true for signature failure, false for success
- * @param validUntil last timestamp this UserOperation is valid (or zero for infinite)
- * @param validAfter first timestamp this UserOperation is valid
- */
-function _packValidationData(
-    bool sigFailed,
-    uint48 validUntil,
-    uint48 validAfter
-) pure returns (uint256) {
-    return
-        (sigFailed ? 1 : 0) |
-        (uint256(validUntil) << 160) |
-        (uint256(validAfter) << (160 + 48));
+    // The values being non-zero value makes deployment a bit more expensive,
+    // but in exchange the refund on every call to nonReentrant will be lower in
+    // amount. Since refunds are capped to a percentage of the total
+    // transaction's gas, it is best to keep them low in cases like this one, to
+    // increase the likelihood of the full refund coming into effect.
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+
+    uint256 private _status;
+
+    constructor() {
+        _status = _NOT_ENTERED;
+    }
+
+    /**
+     * @dev Prevents a contract from calling itself, directly or indirectly.
+     * Calling a `nonReentrant` function from another `nonReentrant`
+     * function is not supported. It is possible to prevent this from happening
+     * by making the `nonReentrant` function external, and making it call a
+     * `private` function that does the actual work.
+     */
+    modifier nonReentrant() {
+        _nonReentrantBefore();
+        _;
+        _nonReentrantAfter();
+    }
+
+    function _nonReentrantBefore() private {
+        // On the first call to nonReentrant, _status will be _NOT_ENTERED
+        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
+
+        // Any calls to nonReentrant after this point will fail
+        _status = _ENTERED;
+    }
+
+    function _nonReentrantAfter() private {
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        _status = _NOT_ENTERED;
+    }
 }
 
 // File contracts/core/EntryPoint.sol
@@ -932,7 +1107,12 @@ pragma solidity ^0.8.12;
 /* solhint-disable avoid-low-level-calls */
 /* solhint-disable no-inline-assembly */
 
-contract EntryPoint is IEntryPoint, StakeManager {
+contract EntryPoint is
+    IEntryPoint,
+    StakeManager,
+    NonceManager,
+    ReentrancyGuard
+{
     using UserOperationLib for UserOperation;
 
     SenderCreator private immutable senderCreator = new SenderCreator();
@@ -1016,7 +1196,7 @@ contract EntryPoint is IEntryPoint, StakeManager {
     function handleOps(
         UserOperation[] calldata ops,
         address payable beneficiary
-    ) public {
+    ) public nonReentrant {
         uint256 opslen = ops.length;
         UserOpInfo[] memory opInfos = new UserOpInfo[](opslen);
 
@@ -1036,6 +1216,7 @@ contract EntryPoint is IEntryPoint, StakeManager {
             }
 
             uint256 collected = 0;
+            emit BeforeExecution();
 
             for (uint256 i = 0; i < opslen; i++) {
                 collected += _executeUserOp(i, ops[i], opInfos[i]);
@@ -1053,7 +1234,7 @@ contract EntryPoint is IEntryPoint, StakeManager {
     function handleAggregatedOps(
         UserOpsPerAggregator[] calldata opsPerAggregator,
         address payable beneficiary
-    ) public {
+    ) public nonReentrant {
         uint256 opasLen = opsPerAggregator.length;
         uint256 totalOps = 0;
         for (uint256 i = 0; i < opasLen; i++) {
@@ -1078,6 +1259,8 @@ contract EntryPoint is IEntryPoint, StakeManager {
         }
 
         UserOpInfo[] memory opInfos = new UserOpInfo[](totalOps);
+
+        emit BeforeExecution();
 
         uint256 opIndex = 0;
         for (uint256 a = 0; a < opasLen; a++) {
@@ -1378,7 +1561,8 @@ contract EntryPoint is IEntryPoint, StakeManager {
      * @param initCode the constructor code to be passed into the UserOperation.
      */
     function getSenderAddress(bytes calldata initCode) public {
-        revert SenderAddressResult(senderCreator.createSender(initCode));
+        address sender = senderCreator.createSender(initCode);
+        revert SenderAddressResult(sender);
     }
 
     function _simulationOnlyValidations(
@@ -1616,6 +1800,11 @@ contract EntryPoint is IEntryPoint, StakeManager {
             outOpInfo,
             requiredPreFund
         );
+
+        if (!_validateAndUpdateNonce(mUserOp.sender, mUserOp.nonce)) {
+            revert FailedOp(opIndex, "AA25 invalid account nonce");
+        }
+
         //a "marker" where account opcode validation is done and paymaster opcode validation is about to start
         // (used only by off-chain simulateValidation)
         numberMarker();
