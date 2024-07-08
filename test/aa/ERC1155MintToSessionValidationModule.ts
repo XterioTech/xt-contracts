@@ -20,6 +20,7 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             deployerSigner,
             smartAccountOwnerSigner,
             sessionKeySigner,
+            bobSigner,
         ] = await ethers.getSigners();
 
         const entryPoint = await getEntryPoint();
@@ -47,20 +48,22 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
         await entryPoint.handleOps([userOp], await smartAccountOwnerSigner.getAddress());
 
         // 
-        const contractAddressSVM = await (await ethers.getContractFactory("ContractAddressSessionValidationModule")).deploy();
+        const ERC1155MintToSVM = await (await ethers.getContractFactory("ERC1155MintToSessionValidationModule")).deploy();
 
-        const ERC721NFT = await (await ethers.getContractFactory("ERC721NFT")).deploy();
+        const ERC1155NFT = await (await ethers.getContractFactory("ERC1155NFT")).deploy();
 
         const sessionKey = await sessionKeySigner.getAddress();
-        const targetAddresses = [ERC721NFT.target];
+        const recipient = await bobSigner.getAddress();
+        const tokenId = 1;
+        const ERC1155NFTAddress = await ERC1155NFT.getAddress();
         const sessionKeyData = ethers.AbiCoder.defaultAbiCoder().encode(
-            ["address", "address[]"],
-            [sessionKey, targetAddresses]
+            ["address", "address", "uint256", "address",],
+            [sessionKey, recipient, tokenId, ERC1155NFTAddress]
         );
 
         const leafData = ethers.solidityPacked(
             ["uint48", "uint48", "address", "bytes"],
-            [0, 0, contractAddressSVM.target, sessionKeyData]
+            [0, 0, ERC1155MintToSVM.target, sessionKeyData]
         );
 
         const merkleTree = await enableNewTreeForSmartAccountViaEcdsa([ethers.keccak256(leafData)], await sessionKeyManager.getAddress(), await userSA.getAddress(), smartAccountOwnerSigner, entryPoint, await ecdsaOwnershipRegistryModule.getAddress());
@@ -76,34 +79,38 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             sessionKeyData,
             leafData,
             merkleTree,
-            contractAddressSVM,
-            ERC721NFT
+            ERC1155MintToSVM,
+            ERC1155NFT,
+            recipient,
+            tokenId
         }
     }
 
-    it("should be able to process Session with specified contract address", async () => {
+    it("should be able to process Session key mint to nft", async () => {
         const {
             deployerSigner,
             entryPoint,
             userSA,
             sessionKeyManager,
-            contractAddressSVM,
+            ERC1155MintToSVM,
             sessionKeyData,
             leafData,
             merkleTree,
-            ERC721NFT,
+            ERC1155NFT,
             sessionKeySigner,
+            recipient,
+            tokenId
         } = await loadFixture(setUp);
-        const ERC721NFTContract = await ethers.getContractFactory("ERC721NFT");
-
-        const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
+        const ERC1155NFTContract = await ethers.getContractFactory("ERC1155NFT");
+        const mintToUserOp = await makeEcdsaSessionKeySignedUserOp(
             "execute",
             [
-                await ERC721NFT.getAddress(),
+                await ERC1155NFT.getAddress(),
                 0,
-                ERC721NFTContract.interface.encodeFunctionData("setApprovalForAll", [
-                    await deployerSigner.getAddress(),
-                    true,
+                ERC1155NFTContract.interface.encodeFunctionData("mintTo", [
+                    recipient,
+                    tokenId,
+                    1,
                 ]),
             ],
             await userSA.getAddress(),
@@ -112,46 +119,50 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             await sessionKeyManager.getAddress(),
             0,
             0,
-            await contractAddressSVM.getAddress(),
+            await ERC1155MintToSVM.getAddress(),
             sessionKeyData,
             merkleTree.getHexProof(ethers.keccak256(leafData))
         );
 
         expect(
-            await ERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
-        ).to.equal(false);
-        await entryPoint.handleOps([approvalUserOp], await deployerSigner.getAddress());
+            await ERC1155NFT.balanceOf(recipient, tokenId)
+        ).to.equal(0);
+        await entryPoint.handleOps([mintToUserOp], await deployerSigner.getAddress());
         expect(
-            await ERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
-        ).to.equal(true);
+            await ERC1155NFT.balanceOf(recipient, tokenId)
+        ).to.equal(1);
     });
 
-    it("should revert if trying to use wrong contract address", async () => {
+    it("should revert if trying to use wrong ERC1155NFT contract address", async () => {
         const {
             deployerSigner,
             entryPoint,
             userSA,
             sessionKeyManager,
-            contractAddressSVM,
+            ERC1155MintToSVM,
             sessionKeyData,
             leafData,
             merkleTree,
-            ERC721NFT,
+            ERC1155NFT,
             sessionKeySigner,
+            recipient,
+            tokenId
         } = await loadFixture(setUp);
-        const ERC721NFTContract = await ethers.getContractFactory("ERC721NFT");
-        const WrongERC721NFT = await (
-            await ethers.getContractFactory("ERC721NFT")
+        const ERC1155NFTContract = await ethers.getContractFactory("ERC1155NFT");
+
+        const WrongERC1155NFT = await (
+            await ethers.getContractFactory("ERC1155NFT")
         ).deploy();
 
-        const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
+        const mintToUserOp = await makeEcdsaSessionKeySignedUserOp(
             "execute",
             [
-                await WrongERC721NFT.getAddress(),
+                await WrongERC1155NFT.getAddress(),
                 0,
-                ERC721NFTContract.interface.encodeFunctionData("setApprovalForAll", [
-                    await deployerSigner.getAddress(),
-                    true,
+                ERC1155NFTContract.interface.encodeFunctionData("mintTo", [
+                    recipient,
+                    tokenId,
+                    1,
                 ]),
             ],
             await userSA.getAddress(),
@@ -160,25 +171,25 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             await sessionKeyManager.getAddress(),
             0,
             0,
-            await contractAddressSVM.getAddress(),
+            await ERC1155MintToSVM.getAddress(),
             sessionKeyData,
             merkleTree.getHexProof(ethers.keccak256(leafData))
         );
 
         await expect(
-            entryPoint.handleOps([approvalUserOp], await deployerSigner.getAddress(), {
+            entryPoint.handleOps([mintToUserOp], await deployerSigner.getAddress(), {
                 gasLimit: 10000000,
             })
         )
             .to.be.rejectedWith(
-                "AA23 reverted: ContractAddressSessionValidationModule: wrong target contract address"
+                "AA23 reverted: ERC1155MT Wrong Token"
             );
 
         expect(
-            await ERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
-        ).to.equal(false);
+            await ERC1155NFT.balanceOf(recipient, tokenId)
+        ).to.equal(0);
         expect(
-            await WrongERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
-        ).to.equal(false);
+            await WrongERC1155NFT.balanceOf(recipient, tokenId)
+        ).to.equal(0);
     });
 });

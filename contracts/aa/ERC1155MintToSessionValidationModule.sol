@@ -58,21 +58,19 @@ contract ERC1155MintToSessionValidationModule {
             "ERC1155MT Invalid Selector"
         );
 
-        (address sessionKey, address recipient, uint256 tokenId) = abi.decode(
-            _sessionKeyData,
-            (address, address, uint256)
-        );
-
+        (
+            address sessionKey,
+            address recipient,
+            uint256 tokenId,
+            address tokenAddress
+        ) = abi.decode(_sessionKeyData, (address, address, uint256, address));
         {
             // we expect _op.callData to be `SmartAccount.execute(to, value, calldata)` calldata
             (address _tokenAddress, uint256 callValue, ) = abi.decode(
                 _op.callData[4:], // skip selector
                 (address, uint256, bytes)
             );
-            require(
-                _tokenAddress == 0xBa739E856137D318254416883e5a1Ed01C7f2A3d,
-                "ERC1155MT Wrong Token"
-            );
+            require(_tokenAddress == tokenAddress, "ERC1155MT Wrong Token");
             require(callValue == 0, "ERC1155MT Non Zero Value");
         }
 
