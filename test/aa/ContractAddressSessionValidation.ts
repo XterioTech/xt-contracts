@@ -1,209 +1,182 @@
-// import { expect } from "chai";
-// import {
-//     makeEcdsaSessionKeySignedUserOp,
-//     enableNewTreeForSmartAccountViaEcdsa,
-// } from "./utils/sessionKey";
-// import { ethers, deployments, waffle } from "hardhat";
-// import { makeEcdsaModuleUserOp } from "./utils/userOp";
-// import {
-//     getEntryPoint,
-//     getEcdsaOwnershipRegistryModule,
-//     getSmartAccountWithModule,
-// } from "./utils/setupHelper";
-// import { hexZeroPad, hexConcat } from "ethers/lib/utils";
+import { expect } from "chai";
+import {
+    makeEcdsaSessionKeySignedUserOp,
+    enableNewTreeForSmartAccountViaEcdsa,
+} from "./utils/sessionKey";
+import { ethers } from "hardhat";
+import { makeUserOp } from "./utils/userOp";
+import {
+    getEntryPoint,
+    getEcdsaOwnershipRegistryModule,
+    getSessionKeyManager,
+    getSmartAccountImplementation,
+    getSmartAccountFactory
+} from "./utils/setupHelper";
+import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 
-// describe("SessionKey: Contract Address Session Validation Module", async () => {
-//     const [
-//         deployer,
-//         smartAccountOwner,
-//         alice,
-//         charlie,
-//         sessionKey,
-//     ] = waffle.provider.getWallets();
+describe("SessionKey: Contract Address Session Validation Module", function () {
+    async function setUp() {
+        const [
+            deployer,
+            smartAccountOwner,
+            sessionKey,
+        ] = await ethers.getSigners();
 
-//     const setupTests = deployments.createFixture(
-//         async ({ deployments }) => {
-//             await deployments.fixture();
-//             const mockNFT = await (
-//                 await ethers.getContractFactory("MockNFT")
-//             ).deploy();
-//             const entryPoint = await getEntryPoint();
-//             const ecdsaModule = await getEcdsaOwnershipRegistryModule();
-//             const EcdsaOwnershipRegistryModule = await ethers.getContractFactory(
-//                 "EcdsaOwnershipRegistryModule"
-//             );
-//             const ecdsaOwnershipSetupData =
-//                 EcdsaOwnershipRegistryModule.interface.encodeFunctionData(
-//                     "initForSmartAccount",
-//                     [await smartAccountOwner.getAddress()]
-//                 );
-//             const smartAccountDeploymentIndex = 0;
-//             const userSA = await getSmartAccountWithModule(
-//                 ecdsaModule.address,
-//                 ecdsaOwnershipSetupData,
-//                 smartAccountDeploymentIndex
-//             );
+        const entryPoint = await getEntryPoint();
 
-//             // send funds to userSA and mint tokens
-//             await deployer.sendTransaction({
-//                 to: userSA.address,
-//                 value: ethers.utils.parseEther("10"),
-//             });
-//             await mockNFT.mintNext(userSA.address);
+        const ecdsaOwnershipRegistryModule = await getEcdsaOwnershipRegistryModule();
 
-//             // deploy session key manager module and enable it in the smart account
-//             const sessionKeyManager = await (
-//                 await ethers.getContractFactory("SessionKeyManager")
-//             ).deploy();
-//             const userOp = await makeEcdsaModuleUserOp(
-//                 "enableModule",
-//                 [sessionKeyManager.address],
-//                 userSA.address,
-//                 smartAccountOwner,
-//                 entryPoint,
-//                 ecdsaModule.address
-//             );
-//             await entryPoint.handleOps([userOp], alice.address);
+        const smartAccountImplementation = await getSmartAccountImplementation(entryPoint.target);
 
-//             const contractAddressSVM = await (
-//                 await ethers.getContractFactory(
-//                     "ContractAddressSessionValidationModule"
-//                 )
-//             ).deploy();
+        const smartAccountFactory = await getSmartAccountFactory(smartAccountImplementation.target, await deployer.getAddress());
 
-//             const sessionKeyData = ethers.utils.defaultAbiCoder.encode(
-//                 ["address", "address[]"],
-//                 [sessionKey.address, [mockNFT.address]]
-//             );
+        const initForSmartAccountData = ecdsaOwnershipRegistryModule.interface.encodeFunctionData("initForSmartAccount", [await smartAccountOwner.getAddress()]);
+        const index = 0;
+        const expectedSmartAccountAddress = await smartAccountFactory.getAddressForCounterFactualAccount(ecdsaOwnershipRegistryModule.target, initForSmartAccountData, index);
+        await smartAccountFactory.deployCounterFactualAccount(ecdsaOwnershipRegistryModule.target, initForSmartAccountData, index);
+        const userSA = await ethers.getContractAt("SmartAccount", expectedSmartAccountAddress);
 
-//             const leafData = hexConcat([
-//                 hexZeroPad(ethers.utils.hexlify(0), 6),
-//                 hexZeroPad(ethers.utils.hexlify(0), 6),
-//                 hexZeroPad(contractAddressSVM.address, 20),
-//                 sessionKeyData,
-//             ]);
+        await deployer.sendTransaction({
+            to: userSA.target,
+            value: ethers.parseEther("100"),
+        });
 
-//             const merkleTree = await enableNewTreeForSmartAccountViaEcdsa(
-//                 [ethers.utils.keccak256(leafData)],
-//                 sessionKeyManager,
-//                 userSA.address,
-//                 smartAccountOwner,
-//                 entryPoint,
-//                 ecdsaModule.address
-//             );
 
-//             return {
-//                 entryPoint: entryPoint,
-//                 ecdsaModule: ecdsaModule,
-//                 userSA: userSA,
-//                 mockNFT: mockNFT,
-//                 sessionKeyManager: sessionKeyManager,
-//                 contractAddressSVM: contractAddressSVM,
-//                 sessionKeyData: sessionKeyData,
-//                 leafData: leafData,
-//                 merkleTree: merkleTree,
-//             };
-//         }
-//     );
+        const sessionKeyManager = await getSessionKeyManager();
 
-//     it("should be able to process Session Key signed userOp", async () => {
-//         const {
-//             entryPoint,
-//             userSA,
-//             sessionKeyManager,
-//             contractAddressSVM,
-//             sessionKeyData,
-//             leafData,
-//             merkleTree,
-//             mockNFT,
-//         } = await setupTests();
-//         const Erc721 = await ethers.getContractFactory("MockNFT");
+        const userOp = await makeUserOp("enableModule", [sessionKeyManager.target], await userSA.getAddress(), smartAccountOwner, entryPoint, await ecdsaOwnershipRegistryModule.getAddress());
+        await entryPoint.handleOps([userOp], await smartAccountOwner.getAddress());
 
-//         const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
-//             "execute",
-//             [
-//                 mockNFT.address,
-//                 0,
-//                 Erc721.interface.encodeFunctionData("setApprovalForAll", [
-//                     charlie.address,
-//                     true,
-//                 ]),
-//             ],
-//             userSA.address,
-//             sessionKey,
-//             entryPoint,
-//             sessionKeyManager.address,
-//             0,
-//             0,
-//             contractAddressSVM.address,
-//             sessionKeyData,
-//             merkleTree.getHexProof(ethers.utils.keccak256(leafData))
-//         );
+        // 
+        const contractAddressSVM = await (await ethers.getContractFactory("ContractAddressSessionValidationModule")).deploy();
 
-//         expect(
-//             await mockNFT.isApprovedForAll(userSA.address, charlie.address)
-//         ).to.equal(false);
-//         await entryPoint.handleOps([approvalUserOp], alice.address, {
-//             gasLimit: 10000000,
-//         });
-//         expect(
-//             await mockNFT.isApprovedForAll(userSA.address, charlie.address)
-//         ).to.equal(true);
-//     });
+        const mockNFT = await (await ethers.getContractFactory("MockNFT")).deploy();
 
-//     it("should revert if trying to approve wrong NFTs", async () => {
-//         const {
-//             entryPoint,
-//             userSA,
-//             sessionKeyManager,
-//             contractAddressSVM,
-//             sessionKeyData,
-//             leafData,
-//             merkleTree,
-//             mockNFT,
-//         } = await setupTests();
-//         const Erc721 = await ethers.getContractFactory("MockNFT");
-//         const randomNFT = await (
-//             await ethers.getContractFactory("MockNFT")
-//         ).deploy();
+        const sessionKeyData = ethers.AbiCoder.defaultAbiCoder().encode(
+            ["address", "address[]"],
+            [await sessionKey.getAddress(), [mockNFT.target]]
+        );
+        const leafData = ethers.solidityPacked(
+            ["uint48", "uint48", "address", "bytes"],
+            [0, 0, contractAddressSVM.target, sessionKeyData]
+        );
 
-//         const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
-//             "execute",
-//             [
-//                 randomNFT.address,
-//                 0,
-//                 Erc721.interface.encodeFunctionData("setApprovalForAll", [
-//                     charlie.address,
-//                     true,
-//                 ]),
-//             ],
-//             userSA.address,
-//             sessionKey,
-//             entryPoint,
-//             sessionKeyManager.address,
-//             0,
-//             0,
-//             contractAddressSVM.address,
-//             sessionKeyData,
-//             merkleTree.getHexProof(ethers.utils.keccak256(leafData))
-//         );
+        const merkleTree = await enableNewTreeForSmartAccountViaEcdsa([ethers.keccak256(leafData)], await sessionKeyManager.getAddress(), await userSA.getAddress(), smartAccountOwner, entryPoint, await ecdsaOwnershipRegistryModule.getAddress());
 
-//         await expect(
-//             entryPoint.handleOps([approvalUserOp], alice.address, {
-//                 gasLimit: 10000000,
-//             })
-//         )
-//             .to.be.revertedWith("FailedOp")
-//             .withArgs(
-//                 0,
-//                 "AA23 reverted: ContractAddressSessionValidationModule: wrong target contract address"
-//             );
+        return {
+            entryPoint,
+            ecdsaOwnershipRegistryModule,
+            userSA,
+            sessionKeyManager,
+            deployer,
+            smartAccountOwner,
+            sessionKey,
+            sessionKeyData,
+            leafData,
+            merkleTree,
+            contractAddressSVM,
+            mockNFT
+        }
+    }
 
-//         expect(
-//             await mockNFT.isApprovedForAll(userSA.address, charlie.address)
-//         ).to.equal(false);
-//         expect(
-//             await randomNFT.isApprovedForAll(userSA.address, charlie.address)
-//         ).to.equal(false);
-//     });
-// });
+    it("should be able to process Session with specified contract address", async () => {
+        const {
+            deployer,
+            entryPoint,
+            userSA,
+            sessionKeyManager,
+            contractAddressSVM,
+            sessionKeyData,
+            leafData,
+            merkleTree,
+            mockNFT,
+            sessionKey,
+        } = await loadFixture(setUp);
+        const Erc721 = await ethers.getContractFactory("MockNFT");
+
+        const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
+            "execute",
+            [
+                await mockNFT.getAddress(),
+                0,
+                Erc721.interface.encodeFunctionData("setApprovalForAll", [
+                    await deployer.getAddress(),
+                    true,
+                ]),
+            ],
+            await userSA.getAddress(),
+            sessionKey,
+            entryPoint,
+            await sessionKeyManager.getAddress(),
+            0,
+            0,
+            await contractAddressSVM.getAddress(),
+            sessionKeyData,
+            merkleTree.getHexProof(ethers.keccak256(leafData))
+        );
+
+        expect(
+            await mockNFT.isApprovedForAll(await userSA.getAddress(), await deployer.getAddress())
+        ).to.equal(false);
+        await entryPoint.handleOps([approvalUserOp], await deployer.getAddress());
+        expect(
+            await mockNFT.isApprovedForAll(await userSA.getAddress(), await deployer.getAddress())
+        ).to.equal(true);
+    });
+
+    it("should revert if trying to use wrong contract address", async () => {
+        const {
+            deployer,
+            entryPoint,
+            userSA,
+            sessionKeyManager,
+            contractAddressSVM,
+            sessionKeyData,
+            leafData,
+            merkleTree,
+            mockNFT,
+            sessionKey,
+        } = await loadFixture(setUp);
+        const Erc721 = await ethers.getContractFactory("MockNFT");
+        const randomNFT = await (
+            await ethers.getContractFactory("MockNFT")
+        ).deploy();
+
+        const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
+            "execute",
+            [
+                await randomNFT.getAddress(),
+                0,
+                Erc721.interface.encodeFunctionData("setApprovalForAll", [
+                    await deployer.getAddress(),
+                    true,
+                ]),
+            ],
+            await userSA.getAddress(),
+            sessionKey,
+            entryPoint,
+            await sessionKeyManager.getAddress(),
+            0,
+            0,
+            await contractAddressSVM.getAddress(),
+            sessionKeyData,
+            merkleTree.getHexProof(ethers.keccak256(leafData))
+        );
+
+        await expect(
+            entryPoint.handleOps([approvalUserOp], await deployer.getAddress(), {
+                gasLimit: 10000000,
+            })
+        )
+            .to.be.rejectedWith(
+                "AA23 reverted: ContractAddressSessionValidationModule: wrong target contract address"
+            );
+
+        expect(
+            await mockNFT.isApprovedForAll(await userSA.getAddress(), await deployer.getAddress())
+        ).to.equal(false);
+        expect(
+            await randomNFT.isApprovedForAll(await userSA.getAddress(), await deployer.getAddress())
+        ).to.equal(false);
+    });
+});
