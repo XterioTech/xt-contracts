@@ -78,7 +78,7 @@ describe("OnchainIAP", function () {
     });
   });
 
-  describe("Purchase", function () {
+  describe("Purchase with ERC20 FixedRate", function () {
     it("Should successfully purchase an SKU", async function () {
       const { onchainIAP, paymentToken, owner, user, vault, paymentTokenAddress } = await loadFixture(basicFixture);
       await onchainIAP.registerProduct(1, 0, owner.address);
@@ -104,4 +104,76 @@ describe("OnchainIAP", function () {
         .to.be.revertedWith("OnchainIAP: SKU disabled");
     });
   });
+
+  describe("Purchase with ETH FixedRate", function () {
+    it("Should successfully purchase an SKU using ETH", async function () {
+      const { onchainIAP, owner, user } = await loadFixture(basicFixture);
+      const productId = 1;
+      const skuId = 1;
+      const ethPrice = ethers.parseEther("0.1"); // 0.1 ETH
+
+      // Register product and SKU
+      await onchainIAP.registerProduct(productId, 18, owner.address);
+      await onchainIAP.registerSKU(productId, skuId, ethPrice, 100);
+
+      // Register ETH as a payment method (address(0) represents ETH)
+      await onchainIAP.registerPaymentMethod(productId, ethers.ZeroAddress, true, 1, 1, ethers.ZeroAddress, ethers.ZeroAddress);
+
+      // Get the initial balance of the owner
+      const initialOwnerBalance = await ethers.provider.getBalance(owner.address);
+
+      // Purchase SKU with ETH
+      await expect(onchainIAP.connect(user).purchaseSKU(productId, skuId, ethers.ZeroAddress, { value: ethPrice }))
+        .to.emit(onchainIAP, "PurchaseSuccess")
+        .withArgs(user.address, productId, skuId, ethers.ZeroAddress, ethPrice, 100);
+
+      // Check if the owner received the correct amount of ETH
+      const finalOwnerBalance = await ethers.provider.getBalance(owner.address);
+      expect(finalOwnerBalance - initialOwnerBalance).to.equal(ethPrice);
+
+      // Attempt to purchase SKU with insufficient ETH 
+      // Should fail to purchase an SKU with insufficient ETH
+      await expect(onchainIAP.connect(user).purchaseSKU(productId, skuId, ethers.ZeroAddress, { value: ethers.parseEther("0.05") }))
+        .to.be.revertedWith("OnchainIAP: Insufficient payment");
+    });
+
+    it("Should refund excess ETH when overpaying", async function () {
+      const { onchainIAP, owner, user } = await loadFixture(basicFixture);
+      const productId = 1;
+      const skuId = 1;
+      const ethPrice = ethers.parseEther("0.1"); // 0.1 ETH
+      const overpayment = ethers.parseEther("0.15"); // 0.15 ETH
+
+      // Register product and SKU
+      await onchainIAP.registerProduct(productId, 18, owner.address);
+      await onchainIAP.registerSKU(productId, skuId, ethPrice, 100);
+
+      // Register ETH as a payment method
+      await onchainIAP.registerPaymentMethod(productId, ethers.ZeroAddress, true, 1, 1, ethers.ZeroAddress, ethers.ZeroAddress);
+
+      // Get initial balances
+      const initialOwnerBalance = await ethers.provider.getBalance(owner.address);
+      const initialUserBalance = await ethers.provider.getBalance(user.address);
+
+      // Purchase SKU with excess ETH
+      const tx = await onchainIAP.connect(user).purchaseSKU(productId, skuId, ethers.ZeroAddress, { value: overpayment });
+      const receipt = await tx.wait();
+
+      // Calculate gas cost
+      const gasCost = BigInt((receipt?.gasUsed ?? 0)) * BigInt((receipt?.gasPrice ?? 0))
+
+      // Check final balances
+      const finalOwnerBalance = await ethers.provider.getBalance(owner.address);
+      const finalUserBalance = await ethers.provider.getBalance(user.address);
+
+      // Owner should receive exact price
+      expect(finalOwnerBalance - initialOwnerBalance).to.equal(ethPrice);
+
+      // User should be refunded the excess minus gas costs
+      const expectedUserBalance = initialUserBalance - ethPrice - gasCost;
+      expect(finalUserBalance).to.be.closeTo(expectedUserBalance, ethers.parseEther("0.0001")); // Allow for small rounding errors
+    });
+  });
+
+  
 });
