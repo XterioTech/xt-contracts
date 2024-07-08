@@ -303,3 +303,14 @@ export const deployAggregator = async (
   await contract.waitForDeployment();
   return contract;
 };
+
+
+export const deployOnchainIAP = async (
+  admin: string,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await ethers.getContractFactory("OnchainIAP");
+  const contract = await Contract.deploy(admin, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
