@@ -5,7 +5,7 @@ import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } fr
 import { NonPayableOverrides } from "../../typechain-types/common";
 
 
-export const deployERC1155MintToSessionValidationModule = async (
+const deployERC1155MintToSessionValidationModule = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const ERC1155MintToSessionValidationModule = await hre.ethers.getContractFactory("ERC1155MintToSessionValidationModule");

@@ -4,8 +4,7 @@ import { inputConfirm } from "../../lib/input";
 import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
 import { NonPayableOverrides } from "../../typechain-types/common";
 
-
-export const deployContractAddressSessionValidationModule = async (
+const deployContractAddressSessionValidationModule = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const ContractAddressSessionValidationModule = await hre.ethers.getContractFactory("ContractAddressSessionValidationModule");
