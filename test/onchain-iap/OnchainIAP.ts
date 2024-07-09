@@ -1,7 +1,7 @@
 import hre, { ethers } from "hardhat";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { deployOnchainIAP, deployMajorToken } from "../../lib/deploy";
+import { deployOnchainIAP, deployMajorToken, deployAggregator } from "../../lib/deploy";
 
 describe("OnchainIAP", function () {
   async function basicFixture() {
@@ -12,10 +12,28 @@ describe("OnchainIAP", function () {
 
     await onchainIAP.grantRole(await onchainIAP.MANAGER_ROLE(), manager.address);
 
+    // Deploy Aggregator with 8 decimals
+    const aggregator = await deployAggregator(
+      owner.address,
+      8,  // 8 decimals
+      "ETH / USD",
+      1
+    );
+
+    // Set initial answer for the aggregator (2000 USD with 8 decimals)
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    await aggregator.updateRoundData(
+      1, // roundId
+      200000000000, // 2000.00000000
+      currentTimestamp,
+      currentTimestamp
+    );
+
     return {
       onchainIAP,
       paymentToken,
       paymentTokenAddress,
+      aggregator,
       owner,
       vault,
       manager,
@@ -175,5 +193,51 @@ describe("OnchainIAP", function () {
     });
   });
 
-  
+  describe("Payment Method Management with Non-Fixed Rate", function () {
+    it("Should register a new non-fixed rate payment method", async function () {
+      const { onchainIAP, paymentTokenAddress, aggregator, owner } = await loadFixture(basicFixture);
+      await onchainIAP.registerProduct(1, 18, owner.address);
+      await onchainIAP.registerPaymentMethod(1, paymentTokenAddress, false, 1, 1, await aggregator.getAddress(), ethers.ZeroAddress);
+      const [valid, isFixedRate, numerator, denominator, numeratorOracle, denominatorOracle] = await onchainIAP.getProductPaymentMethodInfo(1, paymentTokenAddress);
+      expect(valid).to.be.true;
+      expect(isFixedRate).to.be.false;
+      expect(numerator).to.equal(1);
+      expect(denominator).to.equal(1);
+      expect(numeratorOracle).to.equal(await aggregator.getAddress());
+      expect(denominatorOracle).to.equal(ethers.ZeroAddress);
+    });
+  });
+
+  describe("Purchase with Non-Fixed Rate Payment Method ERC20", function () {
+    it("Should successfully purchase an SKU using a non-fixed rate payment method", async function () {
+      const { onchainIAP, paymentToken, paymentTokenAddress, aggregator, owner, user, vault } = await loadFixture(basicFixture);
+      const productId = 1;
+      const skuId = 1;
+      const priceInUSD = ethers.parseUnits("10", 18); // SKU price in USD (18 decimals)
+
+      // Register product and SKU
+      await onchainIAP.registerProduct(productId, 18, owner.address);
+      await onchainIAP.registerSKU(productId, skuId, priceInUSD, 100);
+
+      // Register non-fixed rate payment method
+      await onchainIAP.registerPaymentMethod(productId, paymentTokenAddress, false, 1, 1, await aggregator.getAddress(), ethers.ZeroAddress);
+
+      // Transfer tokens to user and approve contract
+      const initialUserBalance = ethers.parseUnits("10000", 18);
+      await paymentToken.connect(vault).transfer(user.address, initialUserBalance);
+      await paymentToken.connect(user).approve(await onchainIAP.getAddress(), initialUserBalance);
+
+      // Calculate expected price in payment token
+      const [, aggregatorAnswer, , ,] = await aggregator.latestRoundData();
+      const [priceForSKU, priceForSKUDecimals] = await onchainIAP.getPriceForSKU(productId, skuId, paymentTokenAddress)
+
+      // Purchase SKU with payment token
+      await expect(onchainIAP.connect(user).purchaseSKU(productId, skuId, paymentTokenAddress))
+        .to.emit(onchainIAP, "PurchaseSuccess")
+        .withArgs(user.address, productId, skuId, paymentTokenAddress, priceForSKU, 100);
+
+      expect(await paymentToken.balanceOf(user.address)).to.equal(initialUserBalance - priceForSKU);
+      expect(await paymentToken.balanceOf(owner.address)).to.equal(priceForSKU);
+    });
+  });
 });
