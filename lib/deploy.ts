@@ -1,7 +1,9 @@
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 import { MarketplaceV2, TokenGateway } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
+import MerkleTree from "merkletreejs";
+import keccak256 from "keccak256";
 
 export const deployMajorToken = async (
   admin: AddressLike,
@@ -153,13 +155,6 @@ export const deployRaffleAuctionMinter = async (
   return contract;
 };
 
-export const deployRefund = async (defaultOwner: AddressLike) => {
-  const Contract = await hre.ethers.getContractFactory("Refund");
-  const contract = await Contract.deploy(defaultOwner);
-  await contract.waitForDeployment();
-  return contract;
-};
-
 export const deployDepositMinter = async (
   admin: AddressLike,
   gateway: AddressLike,
@@ -244,6 +239,54 @@ export const deployPalioVoter = async (
 ) => {
   const Contract = await hre.ethers.getContractFactory("PalioVoter");
   const contract = await Contract.deploy(signer, eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployWhitelistClaimETH = async (
+  merkleRoot: string,
+  startTime: number,
+  deadline: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const WhitelistClaimETH = await ethers.getContractFactory("WhitelistClaimETH");
+  const whitelistClaimETH = await WhitelistClaimETH.deploy(
+    merkleRoot,
+    startTime,
+    deadline,
+    txOverrides || {}
+  );
+  await whitelistClaimETH.waitForDeployment();
+  return whitelistClaimETH;
+};
+
+export const deployWhitelistClaimERC20 = async (
+  merkleRoot: string,
+  startTime: number,
+  deadline: number,
+  paymentToken: AddressLike,
+  vault: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const WhitelistClaimERC20 = await ethers.getContractFactory("WhitelistClaimERC20");
+  const whitelistClaimERC20 = await WhitelistClaimERC20.deploy(
+    merkleRoot,
+    startTime,
+    deadline,
+    paymentToken,
+    vault,
+    txOverrides || {}
+  );
+  await whitelistClaimERC20.waitForDeployment();
+  return whitelistClaimERC20;
+};
+
+export const deployTokenDistribute = async (
+  defaultOwner: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("TokenDistribute");
+  const contract = await Contract.deploy(defaultOwner, txOverrides || {})
   await contract.waitForDeployment();
   return contract;
 };

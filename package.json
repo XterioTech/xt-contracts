@@ -1,21 +1,20 @@
 {
   "name": "hardhat-project",
   "devDependencies": {
+    "@limitbreak/creator-token-contracts": "^1.1.2",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/contracts-upgradeable": "^4.9.3",
+    "@openzeppelin/hardhat-upgrades": "^2.2.1",
     "@types/readline-sync": "^1.4.4",
     "dotenv": "^16.3.1",
     "hardhat": "^2.17.2",
     "hardhat-abi-exporter": "^2.10.1",
     "hardhat-gas-reporter": "^1.0.10",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.3.11",
     "readline-sync": "^1.4.10",
     "solidity-coverage": "^0.8.4"
-  },
-  "dependencies": {
-    "@account-abstraction/contracts": "^0.7.0",
-    "@limitbreak/creator-token-contracts": "^1.1.2",
-    "@openzeppelin/contracts": "^4.9.3",
-    "@openzeppelin/contracts-upgradeable": "^4.9.3",
-    "@openzeppelin/hardhat-upgrades": "^2.2.1"
   }
 }
