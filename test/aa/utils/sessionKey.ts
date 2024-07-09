@@ -23,7 +23,7 @@ export async function makeEcdsaSessionKeySignedUserOp(
 ): Promise<UserOperation> {
     const SmartAccount = await ethers.getContractFactory("SmartAccount");
 
-    const txnDataAA1 = SmartAccount.interface.encodeFunctionData(
+    const callData = SmartAccount.interface.encodeFunctionData(
         functionName,
         functionParams
     );
@@ -31,7 +31,7 @@ export async function makeEcdsaSessionKeySignedUserOp(
     const userOp = await fillAndSign(
         {
             sender: userOpSender,
-            callData: txnDataAA1,
+            callData: callData,
             ...options,
         },
         sessionKey,
