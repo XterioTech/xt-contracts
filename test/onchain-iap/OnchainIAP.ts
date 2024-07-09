@@ -213,17 +213,17 @@ describe("OnchainIAP", function () {
       const { onchainIAP, paymentToken, paymentTokenAddress, aggregator, owner, user, vault } = await loadFixture(basicFixture);
       const productId = 1;
       const skuId = 1;
-      const priceInUSD = ethers.parseUnits("10", 18); // SKU price in USD (18 decimals)
+      const priceInUSD = ethers.parseUnits("10", 6); // SKU price in USDT (6 decimals)
 
       // Register product and SKU
-      await onchainIAP.registerProduct(productId, 18, owner.address);
+      await onchainIAP.registerProduct(productId, 6, owner.address);
       await onchainIAP.registerSKU(productId, skuId, priceInUSD, 100);
 
       // Register non-fixed rate payment method
       await onchainIAP.registerPaymentMethod(productId, paymentTokenAddress, false, 1, 1, await aggregator.getAddress(), ethers.ZeroAddress);
 
-      // Transfer tokens to user and approve contract
-      const initialUserBalance = ethers.parseUnits("10000", 18);
+      // Transfer tokens to user and approve contract 10000USDT
+      const initialUserBalance = ethers.parseUnits("10000", 6);
       await paymentToken.connect(vault).transfer(user.address, initialUserBalance);
       await paymentToken.connect(user).approve(await onchainIAP.getAddress(), initialUserBalance);
 

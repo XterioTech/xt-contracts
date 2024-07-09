@@ -191,13 +191,11 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
                 msg.value >= totalPrice,
                 "OnchainIAP: Insufficient payment"
             );
-            (bool success, ) = recipient.call{value: totalPrice}("");
-            require(success, "OnchainIAP: Transfer failed");
+            payable(recipient).transfer(totalPrice);
 
             uint256 excess = msg.value - totalPrice;
             if (excess > 0) {
-                (bool refundSuccess, ) = msg.sender.call{value: excess}("");
-                require(refundSuccess, "OnchainIAP: Refund failed");
+                payable(msg.sender).transfer(excess);
             }
         } else {
             IERC20(_paymentTokenAddress).safeTransferFrom(
