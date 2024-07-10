@@ -209,7 +209,7 @@ describe("OnchainIAP", function () {
   });
 
   describe("Purchase with Non-Fixed Rate Payment Method ERC20", function () {
-    it.only("Should successfully purchase an SKU using a non-fixed rate payment method", async function () {
+    it.only("Should successfully purchase SKUs using non-fixed rate ERC20 and fixed-rate ETH payment methods", async function () {
       const { onchainIAP, paymentToken, paymentTokenAddress, aggregator, owner, user, vault } = await loadFixture(basicFixture);
       const productId = 1;
       const skuId = 1;
@@ -222,22 +222,40 @@ describe("OnchainIAP", function () {
       // Register non-fixed rate payment method
       await onchainIAP.registerPaymentMethod(productId, paymentTokenAddress, false, 1, 1, await aggregator.getAddress(), ethers.ZeroAddress);
 
+      // Register fixed-rate ETH payment method
+      await onchainIAP.registerPaymentMethod(productId, ethers.ZeroAddress, true, 1, 1, ethers.ZeroAddress, ethers.ZeroAddress);
+
       // Transfer tokens to user and approve contract 10000USDT
-      const initialUserBalance = ethers.parseUnits("10000", 6);
-      await paymentToken.connect(vault).transfer(user.address, initialUserBalance);
-      await paymentToken.connect(user).approve(await onchainIAP.getAddress(), initialUserBalance);
+      const initialUserBalanceUSDT = ethers.parseUnits("10000", 6);
+      await paymentToken.connect(vault).transfer(user.address, initialUserBalanceUSDT);
+      await paymentToken.connect(user).approve(await onchainIAP.getAddress(), initialUserBalanceUSDT);
 
-      // Calculate expected price in payment token
-      const [, aggregatorAnswer, , ,] = await aggregator.latestRoundData();
-      const [priceForSKU, priceForSKUDecimals] = await onchainIAP.getPriceForSKU(productId, skuId, paymentTokenAddress)
+      // Calculate expected prices
+      const [priceForSKUUSDT, priceForSKUDecimalsUSDT] = await onchainIAP.getPriceForSKU(productId, skuId, paymentTokenAddress);
+      const [priceForSKUETH, priceForSKUDecimalsETH] = await onchainIAP.getPriceForSKU(productId, skuId, ethers.ZeroAddress);
 
-      // Purchase SKU with payment token
+      // Purchase SKU with USDT
       await expect(onchainIAP.connect(user).purchaseSKU(productId, skuId, paymentTokenAddress))
         .to.emit(onchainIAP, "PurchaseSuccess")
-        .withArgs(user.address, productId, skuId, paymentTokenAddress, priceForSKU, 100);
+        .withArgs(user.address, productId, skuId, paymentTokenAddress, priceForSKUUSDT, 100);
 
-      expect(await paymentToken.balanceOf(user.address)).to.equal(initialUserBalance - priceForSKU);
-      expect(await paymentToken.balanceOf(owner.address)).to.equal(priceForSKU);
+      expect(await paymentToken.balanceOf(user.address)).to.equal(initialUserBalanceUSDT - priceForSKUUSDT);
+      expect(await paymentToken.balanceOf(owner.address)).to.equal(priceForSKUUSDT);
+
+      // Purchase SKU with ETH
+      const initialOwnerETHBalance = await ethers.provider.getBalance(owner.address);
+      await expect(onchainIAP.connect(user).purchaseSKU(productId, skuId, ethers.ZeroAddress, { value: priceForSKUETH }))
+        .to.emit(onchainIAP, "PurchaseSuccess")
+        .withArgs(user.address, productId, skuId, ethers.ZeroAddress, priceForSKUETH, 100);
+
+      // Test getBatchPricesForSKU function
+      const batchPrices = await onchainIAP.getBatchPricesForSKU(productId, skuId, [paymentTokenAddress, ethers.ZeroAddress]);
+
+      // console.log(batchPrices);
+      expect(batchPrices[0].totalPrice).to.equal(priceForSKUUSDT);
+      expect(batchPrices[0].decimals).to.equal(priceForSKUDecimalsUSDT);
+      expect(batchPrices[1].totalPrice).to.equal(priceForSKUETH);
+      expect(batchPrices[1].decimals).to.equal(priceForSKUDecimalsETH);
     });
   });
 });
