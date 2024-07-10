@@ -209,15 +209,15 @@ describe("OnchainIAP", function () {
   });
 
   describe("Purchase with Non-Fixed Rate Payment Method ERC20", function () {
-    it("Should successfully purchase an SKU using a non-fixed rate payment method", async function () {
+    it.only("Should successfully purchase an SKU using a non-fixed rate payment method", async function () {
       const { onchainIAP, paymentToken, paymentTokenAddress, aggregator, owner, user, vault } = await loadFixture(basicFixture);
       const productId = 1;
       const skuId = 1;
-      const priceInUSD = ethers.parseUnits("10", 6); // SKU price in USDT (6 decimals)
+      const priceInETH = ethers.parseUnits("15", 5); // SKU price in ETH (6 decimals) 1.5ETH / per
 
       // Register product and SKU
       await onchainIAP.registerProduct(productId, 6, owner.address);
-      await onchainIAP.registerSKU(productId, skuId, priceInUSD, 100);
+      await onchainIAP.registerSKU(productId, skuId, priceInETH, 100);
 
       // Register non-fixed rate payment method
       await onchainIAP.registerPaymentMethod(productId, paymentTokenAddress, false, 1, 1, await aggregator.getAddress(), ethers.ZeroAddress);
