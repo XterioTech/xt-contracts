@@ -506,17 +506,15 @@ contract MarketplaceV2 is
     ) internal view returns (bool valid, bytes32 messageHash) {
         messageHash = getMessageHash(transactionType, order, metadata);
         if (isContract(x)) {
-            if (
+            valid =
+                x == msg.sender ||
                 IERC1271(x).isValidSignature(messageHash, sig) ==
-                bytes4(0x1626ba7e)
-            ) {
-                valid = true;
-            }
-            return (valid, messageHash);
+                bytes4(0x1626ba7e);
+        } else {
+            valid =
+                x == msg.sender ||
+                x == ECDSA.recover(getEthSignedMessageHash(messageHash), sig);
         }
-        valid =
-            x == msg.sender ||
-            x == ECDSA.recover(getEthSignedMessageHash(messageHash), sig);
     }
 
     function getEthSignedMessageHash(

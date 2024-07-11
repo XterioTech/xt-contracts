@@ -117,6 +117,7 @@ describe("Test Marketplace Contract", function () {
   let userSA: SmartAccount;
   let entryPoint: EntryPoint;
   let ecdsaOwnershipRegistryModule: EcdsaOwnershipRegistryModule;
+  let smartAccountOwnerSigner: Signer;
 
   this.beforeEach(async () => {
     ({
@@ -134,7 +135,8 @@ describe("Test Marketplace Contract", function () {
       royaltyFeeNumerator,
       userSA,
       entryPoint,
-      ecdsaOwnershipRegistryModule
+      ecdsaOwnershipRegistryModule,
+      smartAccountOwnerSigner
     } = await loadFixture(defaultFixture));
     marketplaceAddr = await marketplace.getAddress();
     erc721Addr = await erc721.getAddress();
@@ -348,7 +350,7 @@ describe("Test Marketplace Contract", function () {
       expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
       expect(await paymentToken.balanceOf(userSA.target)).to.equal(price - platFormFee - managerFee);
     });
-    return
+
     it("Deposit on order matching", async function () {
       const tokenId = 1;
       const price = 1000;
@@ -378,7 +380,9 @@ describe("Test Marketplace Contract", function () {
        * 1. Seller approves the marketplace contract of spending `tokenId`.
        * 2. Buyer approves the marketplace contract of spending `price` amount.
        */
-      await erc721.connect(seller).approve(marketplaceAddr, tokenId);
+      // 替换为 aa 钱包授权
+      await aaApprove(userSA, seller, entryPoint, await ecdsaOwnershipRegistryModule.getAddress(), await erc721.getAddress(), marketplaceAddr, tokenId);
+      // await erc721.connect(seller).approve(marketplaceAddr, tokenId);
       await paymentToken.connect(buyer).approve(marketplaceAddr, price);
 
       // cause deposit, buyer must delegate mkt to transfer
@@ -387,9 +391,9 @@ describe("Test Marketplace Contract", function () {
       await marketplace.atomicMatchAndDeposit(
         transactionType,
         orderBytes,
-        seller.address,
+        await userSA.getAddress(),
         sellerMetadataBytes,
-        sellerSig,
+        hre.ethers.AbiCoder.defaultAbiCoder().encode(["bytes", "address"], [sellerSig, await ecdsaOwnershipRegistryModule.getAddress()]),
         buyer.address,
         buyerMetadataBytes,
         buyerSig
@@ -404,7 +408,7 @@ describe("Test Marketplace Contract", function () {
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
       expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
-      expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
+      expect(await paymentToken.balanceOf(await userSA.getAddress())).to.equal(price - platFormFee - managerFee);
 
       // The token is transferred directly to the nft manager's address.
       expect(await erc721.ownerOf(tokenId)).to.equal(nftManager.address);
@@ -439,21 +443,39 @@ describe("Test Marketplace Contract", function () {
        * 1. Seller approves the marketplace contract of spending `tokenId`.
        * 2. Buyer approves the marketplace contract of spending `price` amount.
        */
-      await erc721.connect(seller).approve(marketplaceAddr, tokenId);
+      // 替换为 aa 钱包授权
+      await aaApprove(userSA, seller, entryPoint, await ecdsaOwnershipRegistryModule.getAddress(), await erc721.getAddress(), marketplaceAddr, tokenId);
+      // await erc721.connect(seller).approve(marketplaceAddr, tokenId);
       await paymentToken.connect(buyer).approve(marketplaceAddr, price);
 
-      await marketplace
-        .connect(seller)
-        .atomicMatch(
+      const userOp = await makeUserOp("execute", [
+        await marketplace.getAddress(),
+        0,
+        marketplace.interface.encodeFunctionData("atomicMatch", [
           transactionType,
           orderBytes,
-          seller.address,
+          await userSA.getAddress(),
           sellerMetadataBytes,
           "0x",
           buyer.address,
           buyerMetadataBytes,
           buyerSig
-        );
+        ]),
+      ], await userSA.getAddress(), smartAccountOwnerSigner, entryPoint, await ecdsaOwnershipRegistryModule.getAddress());
+      await entryPoint.handleOps([userOp], await smartAccountOwnerSigner.getAddress());
+
+      // await marketplace
+      //   .connect(seller)
+      //   .atomicMatch(
+      //     transactionType,
+      //     orderBytes,
+      //     seller.address,
+      //     sellerMetadataBytes,
+      //     "0x",
+      //     buyer.address,
+      //     buyerMetadataBytes,
+      //     buyerSig
+      //   );
 
       /**
        * Checks
@@ -464,8 +486,11 @@ describe("Test Marketplace Contract", function () {
       expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
       expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
       expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
-      expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
+      expect(await paymentToken.balanceOf(await userSA.getAddress())).to.equal(price - platFormFee - managerFee);
     });
+
+    return
+
 
     it("Buyer is taker", async function () {
       const tokenId = 1;
