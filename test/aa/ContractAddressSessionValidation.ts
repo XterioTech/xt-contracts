@@ -49,7 +49,7 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
         // 
         const contractAddressSVM = await (await ethers.getContractFactory("ContractAddressSessionValidationModule")).deploy();
 
-        const ERC721NFT = await (await ethers.getContractFactory("ERC721NFT")).deploy();
+        const ERC721NFT = await (await ethers.getContractFactory("TestERC721PublicMint")).deploy();
 
         const sessionKey = await sessionKeySigner.getAddress();
         const targetAddresses = [ERC721NFT.target];
@@ -94,7 +94,7 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             ERC721NFT,
             sessionKeySigner,
         } = await loadFixture(setUp);
-        const ERC721NFTContract = await ethers.getContractFactory("ERC721NFT");
+        const ERC721NFTContract = await ethers.getContractFactory("TestERC721PublicMint");
 
         const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
             "execute",
@@ -139,9 +139,9 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             ERC721NFT,
             sessionKeySigner,
         } = await loadFixture(setUp);
-        const ERC721NFTContract = await ethers.getContractFactory("ERC721NFT");
+        const ERC721NFTContract = await ethers.getContractFactory("TestERC721PublicMint");
         const WrongERC721NFT = await (
-            await ethers.getContractFactory("ERC721NFT")
+            await ethers.getContractFactory("TestERC721PublicMint")
         ).deploy();
 
         const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
