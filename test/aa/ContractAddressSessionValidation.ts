@@ -49,10 +49,10 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
         // 
         const contractAddressSVM = await (await ethers.getContractFactory("ContractAddressSessionValidationModule")).deploy();
 
-        const ERC721NFT = await (await ethers.getContractFactory("ERC721NFT")).deploy();
+        const ERC1155NFT = await (await ethers.getContractFactory("ERC1155NFT")).deploy();
 
         const sessionKey = await sessionKeySigner.getAddress();
-        const targetAddresses = [ERC721NFT.target];
+        const targetAddresses = [ERC1155NFT.target];
         const sessionKeyData = ethers.AbiCoder.defaultAbiCoder().encode(
             ["address", "address[]"],
             [sessionKey, targetAddresses]
@@ -77,7 +77,7 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             leafData,
             merkleTree,
             contractAddressSVM,
-            ERC721NFT
+            ERC1155NFT
         }
     }
 
@@ -91,17 +91,17 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             sessionKeyData,
             leafData,
             merkleTree,
-            ERC721NFT,
+            ERC1155NFT,
             sessionKeySigner,
         } = await loadFixture(setUp);
-        const ERC721NFTContract = await ethers.getContractFactory("ERC721NFT");
+        const ERC1155NFTContract = await ethers.getContractFactory("ERC1155NFT");
 
         const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
             "execute",
             [
-                await ERC721NFT.getAddress(),
+                await ERC1155NFT.getAddress(),
                 0,
-                ERC721NFTContract.interface.encodeFunctionData("setApprovalForAll", [
+                ERC1155NFTContract.interface.encodeFunctionData("setApprovalForAll", [
                     await deployerSigner.getAddress(),
                     true,
                 ]),
@@ -118,11 +118,11 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
         );
 
         expect(
-            await ERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+            await ERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
         ).to.equal(false);
         await entryPoint.handleOps([approvalUserOp], await deployerSigner.getAddress());
         expect(
-            await ERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+            await ERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
         ).to.equal(true);
     });
 
@@ -136,20 +136,20 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             sessionKeyData,
             leafData,
             merkleTree,
-            ERC721NFT,
+            ERC1155NFT,
             sessionKeySigner,
         } = await loadFixture(setUp);
-        const ERC721NFTContract = await ethers.getContractFactory("ERC721NFT");
-        const WrongERC721NFT = await (
-            await ethers.getContractFactory("ERC721NFT")
+        const ERC1155NFTContract = await ethers.getContractFactory("ERC1155NFT");
+        const WrongERC1155NFT = await (
+            await ethers.getContractFactory("ERC1155NFT")
         ).deploy();
 
         const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
             "execute",
             [
-                await WrongERC721NFT.getAddress(),
+                await WrongERC1155NFT.getAddress(),
                 0,
-                ERC721NFTContract.interface.encodeFunctionData("setApprovalForAll", [
+                ERC1155NFTContract.interface.encodeFunctionData("setApprovalForAll", [
                     await deployerSigner.getAddress(),
                     true,
                 ]),
@@ -175,10 +175,10 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             );
 
         expect(
-            await ERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+            await ERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
         ).to.equal(false);
         expect(
-            await WrongERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+            await WrongERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
         ).to.equal(false);
     });
 });

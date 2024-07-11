@@ -16,6 +16,22 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 import "../basic-tokens/interfaces/IGateway.sol";
 
+/**
+ * @dev Interface of the ERC-1271 standard signature validation method for
+ * contracts as defined in https://eips.ethereum.org/EIPS/eip-1271[ERC-1271].
+ */
+interface IERC1271 {
+    /**
+     * @dev Should return whether the signature provided is valid for the provided data
+     * @param hash      Hash of the data to be signed
+     * @param signature Signature byte array associated with _data
+     */
+    function isValidSignature(
+        bytes32 hash,
+        bytes memory signature
+    ) external view returns (bytes4 magicValue);
+}
+
 contract MarketplaceV2 is
     Initializable,
     OwnableUpgradeable,
@@ -223,7 +239,6 @@ contract MarketplaceV2 is
             sellerSig
         );
         require(sellerSigValid, "MarketplaceV2: invalid seller signature");
-
         (bool buyerSigValid, bytes32 buyerMessageHash) = checkSigValidity(
             buyer,
             transactionType,
@@ -232,7 +247,6 @@ contract MarketplaceV2 is
             buyerSig
         );
         require(buyerSigValid, "MarketplaceV2: invalid buyer signature");
-
         // Decode bytes into structs
         Order memory order = decodeOrder(_order);
         OrderMetadata memory sellerMetadata = decodeOrderMetadata(
@@ -491,6 +505,15 @@ contract MarketplaceV2 is
         bytes memory sig
     ) internal view returns (bool valid, bytes32 messageHash) {
         messageHash = getMessageHash(transactionType, order, metadata);
+        if (isContract(x)) {
+            if (
+                IERC1271(x).isValidSignature(messageHash, sig) ==
+                bytes4(0x1626ba7e)
+            ) {
+                valid = true;
+            }
+            return (valid, messageHash);
+        }
         valid =
             x == msg.sender ||
             x == ECDSA.recover(getEthSignedMessageHash(messageHash), sig);
@@ -884,5 +907,13 @@ contract MarketplaceV2 is
             buyerMetadata.maximumFill - fills[buyer][buyerMessageHash]
         );
         return (buyerMetadata.recipient, fill);
+    }
+
+    function isContract(address account) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
     }
 }
