@@ -8,7 +8,7 @@ const main = async () => {
   const [deployer] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
-  let admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
+  // let admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
   let claimMerkleRoot = process.env.claimMerkleRoot;
   let claimStartTime = Number.parseInt(process.env.claimStartTime || "0");
   let claimEndTime = Number.parseInt(process.env.claimEndTime || "0");
@@ -26,7 +26,7 @@ const main = async () => {
   if (!address) {
     console.info(colorize(Color.blue, `Deploy WhitelistClaimETH`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
-    console.info(colorize(Color.yellow, `Admin: ${admin}`));
+    // console.info(colorize(Color.yellow, `Admin: ${admin}`));
     console.info(colorize(Color.yellow, `Claim Start Time: ${new Date(claimStartTime * 1000)}`));
     console.info(colorize(Color.yellow, `Claim End Time: ${new Date(claimEndTime * 1000)}`));
     if (!inputConfirm("Confirm? ")) {

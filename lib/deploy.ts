@@ -290,3 +290,27 @@ export const deployTokenDistribute = async (
   await contract.waitForDeployment();
   return contract;
 };
+
+export const deployAggregator = async (
+  defaultOwner: AddressLike,
+  decimals: number,
+  description: string,
+  version: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("Aggregator");
+  const contract = await Contract.deploy(defaultOwner, decimals, description, version, txOverrides || {})
+  await contract.waitForDeployment();
+  return contract;
+};
+
+
+export const deployOnchainIAP = async (
+  admin: string,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await ethers.getContractFactory("OnchainIAP");
+  const contract = await Contract.deploy(admin, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};

@@ -87,13 +87,26 @@ const config: HardhatUserConfig = {
     }
   },
   solidity: {
-    version: "0.8.19",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.19",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
       },
-    },
+      {
+        version: "0.8.17",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      }
+    ],
   },
   etherscan: {
     apiKey: {
@@ -181,7 +194,7 @@ const config: HardhatUserConfig = {
   gasReporter: {
     currency: 'USD',
     gasPrice: 21,
-    enabled: true,
+    enabled: !!process.env.ENABLE_GAS_REPORT,
     // outputFile: 'stdout',
     showTimeSpent: true
   }
