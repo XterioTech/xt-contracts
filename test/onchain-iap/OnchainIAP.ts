@@ -209,7 +209,7 @@ describe("OnchainIAP", function () {
   });
 
   describe("Purchase with Non-Fixed Rate Payment Method ERC20", function () {
-    it.only("Should successfully purchase SKUs using non-fixed rate ERC20 and fixed-rate ETH payment methods", async function () {
+    it("Should successfully purchase SKUs using non-fixed rate ERC20 and fixed-rate ETH payment methods", async function () {
       const { onchainIAP, paymentToken, paymentTokenAddress, aggregator, owner, user, vault } = await loadFixture(basicFixture);
       const productId = 1;
       const skuId = 1;
