@@ -32,8 +32,8 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
     struct PaymentMethod {
         bool valid;
         bool isFixedRate;
-        uint256 numerator;
-        uint256 denominator;
+        uint32 numerator;
+        uint32 denominator;
         address numeratorOracle;
         address denominatorOracle;
     }
@@ -130,8 +130,8 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _productId,
         address _paymentTokenAddress,
         bool _isFixedRate,
-        uint256 _numerator,
-        uint256 _denominator,
+        uint32 _numerator,
+        uint32 _denominator,
         address _numeratorOracle,
         address _denominatorOracle
     ) external onlyRole(DEFAULT_ADMIN_ROLE) productExists(_productId) {
