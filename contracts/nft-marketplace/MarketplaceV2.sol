@@ -534,8 +534,16 @@ contract MarketplaceV2 is
         bytes32 transactionType,
         bytes memory order,
         bytes memory metadata
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(transactionType, order, metadata));
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    transactionType,
+                    order,
+                    metadata,
+                    block.chainid
+                )
+            );
     }
 
     /**

@@ -244,10 +244,11 @@ describe("Test Marketplace Contract", function () {
         ]
       );
 
+      let chainid = (await hre.ethers.provider.getNetwork()).chainId;
       // Seller signs
       const sellerMessageHash = hre.ethers.solidityPackedKeccak256(
-        ["bytes32", "bytes", "bytes"],
-        [transactionType, orderBytes, sellerMetadataBytes]
+        ["bytes32", "bytes", "bytes", "uint256"],
+        [transactionType, orderBytes, sellerMetadataBytes, chainid]
       );
       const sellerSig = await seller.signMessage(hre.ethers.getBytes(sellerMessageHash));
 
@@ -276,8 +277,8 @@ describe("Test Marketplace Contract", function () {
 
       // Buyer signs
       const buyerMessageHash = hre.ethers.solidityPackedKeccak256(
-        ["bytes32", "bytes", "bytes"],
-        [transactionType, orderBytes, buyerMetadataBytes]
+        ["bytes32", "bytes", "bytes", "uint256"],
+        [transactionType, orderBytes, buyerMetadataBytes, chainid]
       );
       const buyerSig = await buyer.signMessage(hre.ethers.getBytes(buyerMessageHash));
 
