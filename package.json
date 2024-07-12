@@ -1,6 +1,7 @@
 {
   "name": "hardhat-project",
   "devDependencies": {
+    "@chainlink/contracts": "^1.1.1",
     "@limitbreak/creator-token-contracts": "^1.1.2",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",

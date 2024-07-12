@@ -20,12 +20,12 @@ import { getEntryPoint, getEcdsaOwnershipRegistryModule, getSmartAccountImplemen
 import { makeUserOp } from "./utils/userOp";
 makeUserOp
 
-async function aaApprove(userSA: SmartAccount, smartAccountOwnerSigner: Signer, entryPoint: EntryPoint, ecdsaOwnershipRegistryModule: AddressLike, ERC721NFT: AddressLike, spender: AddressLike, tokenId: BigNumberish) {
-  const ERC721NFTContract = await hre.ethers.getContractFactory("ERC721NFT");
+async function aaApprove(userSA: SmartAccount, smartAccountOwnerSigner: Signer, entryPoint: EntryPoint, ecdsaOwnershipRegistryModule: AddressLike, TestERC721PublicMint: AddressLike, spender: AddressLike, tokenId: BigNumberish) {
+  const TestERC721PublicMintContract = await hre.ethers.getContractFactory("TestERC721PublicMint");
   const userOp = await makeUserOp("execute", [
-    ERC721NFT,
+    TestERC721PublicMint,
     0,
-    ERC721NFTContract.interface.encodeFunctionData("approve", [
+    TestERC721PublicMintContract.interface.encodeFunctionData("approve", [
       spender,
       tokenId,
     ]),

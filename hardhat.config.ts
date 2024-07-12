@@ -194,7 +194,7 @@ const config: HardhatUserConfig = {
   gasReporter: {
     currency: 'USD',
     gasPrice: 21,
-    enabled: true,
+    enabled: !!process.env.ENABLE_GAS_REPORT,
     // outputFile: 'stdout',
     showTimeSpent: true
   }
