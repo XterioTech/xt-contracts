@@ -1,3 +1,5 @@
+import { NonPayableOverrides } from "../typechain-types/common";
+
 type NetworkAddressMap = { [network: string]: string };
 export enum ContractOrAddrName {
   TokenGateway = "TokenGateway",
@@ -42,7 +44,7 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
 export const fansCreateAddressMap: NetworkAddressMap = {
   // Testnets
   xterioTestnet: "0xccc2508CE3C6cD3C10306aeb11D5201Dcb95e09B",
-  xterio: "0x70D75ae4b40Ac5A8E1f2AbE888978Ba28329C00F"
+  xterio: "0x70D75ae4b40Ac5A8E1f2AbE888978Ba28329C00F",
 };
 
 export const safeManagerAddressMap: NetworkAddressMap = {
@@ -78,7 +80,7 @@ export function getAddressForNetwork(contract: ContractOrAddrName, network: stri
   return address;
 }
 
-export function getTxOverridesForNetwork(network: string): { gasPrice?: number } {
+export function getTxOverridesForNetwork(network: string): NonPayableOverrides & { from?: string } {
   switch (network) {
     case "bscTestnet":
       return { gasPrice: 5000000000 };
@@ -88,11 +90,19 @@ export function getTxOverridesForNetwork(network: string): { gasPrice?: number }
       return { gasPrice: 300000000000 };
     case "opbnbTestnet":
       return { gasPrice: 2500000008 };
+    case "xterio":
+      return { maxPriorityFeePerGas: 100000000, maxFeePerGas: 1100000000 };
     default:
       return {};
   }
 }
 
 export function isTestnet(network: string): boolean {
-  return network == "goerli" || network == "sepolia" || network == "bscTestnet" || network == "opbnbTestnet" || network == "xterioTestnet";
+  return (
+    network == "goerli" ||
+    network == "sepolia" ||
+    network == "bscTestnet" ||
+    network == "opbnbTestnet" ||
+    network == "xterioTestnet"
+  );
 }
