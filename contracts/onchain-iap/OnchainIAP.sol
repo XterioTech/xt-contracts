@@ -254,10 +254,10 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
             totalPrice = (priceRaw * 10 ** 18) / (10 ** product.priceDecimals);
             decimals = 18;
         } else {
+            decimals = IERC20Metadata(_paymentTokenAddress).decimals();
             totalPrice =
                 (priceRaw * 10 ** decimals) /
                 (10 ** product.priceDecimals);
-            decimals = IERC20Metadata(_paymentTokenAddress).decimals();
         }
         return (totalPrice, decimals);
     }
