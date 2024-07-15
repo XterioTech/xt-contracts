@@ -99,11 +99,14 @@ describe("OnchainIAP", function () {
   describe("Purchase with ERC20 FixedRate", function () {
     it("Should successfully purchase an SKU", async function () {
       const { onchainIAP, paymentToken, owner, user, vault, paymentTokenAddress } = await loadFixture(basicFixture);
-      await onchainIAP.registerProduct(1, 0, owner.address);
-      await onchainIAP.registerSKU(1, 1, ethers.parseEther("1"), 100);
+      await onchainIAP.registerProduct(1, 18, owner.address);
+      await onchainIAP.registerSKU(1, 1, ethers.parseEther("1"), 100);  // 1 USDT
       await onchainIAP.registerPaymentMethod(1, paymentTokenAddress, true, 1, 1, ethers.ZeroAddress, ethers.ZeroAddress);
       await paymentToken.connect(vault).transfer(user.address, ethers.parseEther("10"));
       await paymentToken.connect(user).approve(await onchainIAP.getAddress(), ethers.parseEther("10"));
+
+      // Calculate expected prices
+      const [priceForSKUUSDT, priceForSKUDecimalsUSDT] = await onchainIAP.getPriceForSKU(1, 1, paymentTokenAddress);
 
       await expect(onchainIAP.connect(user).purchaseSKU(1, 1, paymentTokenAddress))
         .to.emit(onchainIAP, "PurchaseSuccess")
@@ -213,7 +216,7 @@ describe("OnchainIAP", function () {
       const { onchainIAP, paymentToken, paymentTokenAddress, aggregator, owner, user, vault } = await loadFixture(basicFixture);
       const productId = 1;
       const skuId = 1;
-      const priceInETH = ethers.parseUnits("15", 5); // SKU price in ETH (6 decimals) 1.5ETH / per
+      const priceInETH = 1500000; // SKU price in ETH (6 decimals) 1.5ETH / per
 
       // Register product and SKU
       await onchainIAP.registerProduct(productId, 6, owner.address);
@@ -225,14 +228,20 @@ describe("OnchainIAP", function () {
       // Register fixed-rate ETH payment method
       await onchainIAP.registerPaymentMethod(productId, ethers.ZeroAddress, true, 1, 1, ethers.ZeroAddress, ethers.ZeroAddress);
 
-      // Transfer tokens to user and approve contract 10000USDT
-      const initialUserBalanceUSDT = ethers.parseUnits("10000", 6);
+      // Transfer tokens to user and approve contract 10000USDT, real time usdt decimal should be 6, but vault now is 18
+      const initialUserBalanceUSDT = ethers.parseUnits("10000", 18);
       await paymentToken.connect(vault).transfer(user.address, initialUserBalanceUSDT);
       await paymentToken.connect(user).approve(await onchainIAP.getAddress(), initialUserBalanceUSDT);
 
       // Calculate expected prices
       const [priceForSKUUSDT, priceForSKUDecimalsUSDT] = await onchainIAP.getPriceForSKU(productId, skuId, paymentTokenAddress);
       const [priceForSKUETH, priceForSKUDecimalsETH] = await onchainIAP.getPriceForSKU(productId, skuId, ethers.ZeroAddress);
+
+      // console.log('priceForSKUUSDT ==', priceForSKUUSDT)
+      // console.log('priceForSKUDecimalsUSDT ==', priceForSKUDecimalsUSDT)
+      // console.log('priceForSKUETH ==', priceForSKUETH)
+
+
 
       // Purchase SKU with USDT
       await expect(onchainIAP.connect(user).purchaseSKU(productId, skuId, paymentTokenAddress))
