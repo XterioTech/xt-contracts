@@ -25,7 +25,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
 
     struct SKU {
         bool disabled;
-        uint32 amount;
+        uint256 amount;
         uint256 price;
     }
 
@@ -55,7 +55,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 indexed skuId,
         address paymentTokenAddress,
         uint256 paymentAmount,
-        uint32 amount
+        uint256 amount
     );
 
     constructor(address admin) {
@@ -111,7 +111,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _productId,
         uint32 _skuId,
         uint256 _price,
-        uint32 _amount
+        uint256 _amount
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         products[_productId].skus[_skuId] = SKU(false, _amount, _price);
 
@@ -321,7 +321,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
     function getProductSKUInfo(
         uint32 _productId,
         uint32 _skuId
-    ) public view returns (uint32, bool, uint256) {
+    ) public view returns (uint256, bool, uint256) {
         SKU memory sku = products[_productId].skus[_skuId];
         return (sku.amount, sku.disabled, sku.price);
     }
