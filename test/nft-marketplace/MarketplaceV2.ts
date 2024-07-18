@@ -1265,7 +1265,7 @@ describe("Test Marketplace Contract", function () {
       };
     };
 
-    it("Invalid royalty fee", async function () {
+    it("Change the royalty fee on chain, greater than off chain", async function () {
       const tokenId = 1;
       const price = 1000;
       const balance = 1000;
@@ -1306,7 +1306,7 @@ describe("Test Marketplace Contract", function () {
       await erc721WithBasicRoyalties.connect(seller).approve(marketplaceAddr, tokenId);
       await paymentToken.connect(buyer).approve(marketplaceAddr, price);
 
-      await erc721WithBasicRoyalties.setDefaultRoyalty(royaltyReceiver.address, 9999);
+      await erc721WithBasicRoyalties.setDefaultRoyalty(royaltyReceiver.address, 110);
 
       await expect(
         marketplace.atomicMatch(
@@ -1319,7 +1319,138 @@ describe("Test Marketplace Contract", function () {
           buyerMetadataBytes,
           buyerSig
         )
-      ).to.be.revertedWith("MarketplaceV2: wrong royalty fee");
+      ).to.be.revertedWith("MarketplaceV2: wrong on chain royalty fee");
+    });
+
+    it("Change the royalty fee on chain, equal to off chain", async function () {
+      const tokenId = 1;
+      const price = 1000;
+      const balance = 1000;
+      const serviceFee = 100;
+      const royaltyFee = 100;
+      const sellerListingTime = 0;
+      const sellerExpirationTime = 0;
+      const sellerSalt = "0x0000000000000000000000000000000000000000000000000000000000000025";
+      const buyerSalt = "0x0000000000000000000000000000000000000000000000000000000000000026";
+
+      const {
+        transactionType,
+        order,
+        orderBytes,
+        sellerMetadataBytes,
+        sellerSig,
+        sellerMessageHash,
+        buyerMetadataBytes,
+        buyerSig,
+        buyerMessageHash,
+      } = await getOrderInfo({
+        tokenId,
+        price,
+        balance,
+        serviceFee,
+        royaltyFee,
+        sellerListingTime,
+        sellerExpirationTime,
+        sellerSalt,
+        buyerSalt,
+      });
+
+      /**
+       * Transaction preparations.
+       * 1. Seller approves the marketplace contract of spending `tokenId`.
+       * 2. Buyer approves the marketplace contract of spending `price` amount.
+       */
+      await erc721WithBasicRoyalties.connect(seller).approve(marketplaceAddr, tokenId);
+      await paymentToken.connect(buyer).approve(marketplaceAddr, price);
+
+      await erc721WithBasicRoyalties.setDefaultRoyalty(royaltyReceiver.address, 100);
+
+      await marketplace.atomicMatch(
+        transactionType,
+        orderBytes,
+        seller.address,
+        sellerMetadataBytes,
+        sellerSig,
+        buyer.address,
+        buyerMetadataBytes,
+        buyerSig
+      );
+
+      /**
+       * Checks
+       */
+      const platFormFee = (price * order.serviceFee) / BASE;
+      const managerFee = (price * order.royaltyFee) / BASE;
+
+      expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
+      expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
+    });
+
+    it("Change the royalty fee on chain,less than off chain", async function () {
+      const tokenId = 1;
+      const price = 1000;
+      const balance = 1000;
+      const serviceFee = 100;
+      const royaltyFee = 100;
+      const sellerListingTime = 0;
+      const sellerExpirationTime = 0;
+      const sellerSalt = "0x0000000000000000000000000000000000000000000000000000000000000025";
+      const buyerSalt = "0x0000000000000000000000000000000000000000000000000000000000000026";
+
+      const {
+        transactionType,
+        order,
+        orderBytes,
+        sellerMetadataBytes,
+        sellerSig,
+        sellerMessageHash,
+        buyerMetadataBytes,
+        buyerSig,
+        buyerMessageHash,
+      } = await getOrderInfo({
+        tokenId,
+        price,
+        balance,
+        serviceFee,
+        royaltyFee,
+        sellerListingTime,
+        sellerExpirationTime,
+        sellerSalt,
+        buyerSalt,
+      });
+
+      /**
+       * Transaction preparations.
+       * 1. Seller approves the marketplace contract of spending `tokenId`.
+       * 2. Buyer approves the marketplace contract of spending `price` amount.
+       */
+      await erc721WithBasicRoyalties.connect(seller).approve(marketplaceAddr, tokenId);
+      await paymentToken.connect(buyer).approve(marketplaceAddr, price);
+
+      await erc721WithBasicRoyalties.setDefaultRoyalty(royaltyReceiver.address, 10);
+
+      await marketplace.atomicMatch(
+        transactionType,
+        orderBytes,
+        seller.address,
+        sellerMetadataBytes,
+        sellerSig,
+        buyer.address,
+        buyerMetadataBytes,
+        buyerSig
+      );
+      /**
+       * Checks
+       */
+      const platFormFee = (price * order.serviceFee) / BASE;
+      const managerFee = (price * 10) / BASE;
+
+      expect(await paymentToken.balanceOf(buyer.address)).to.equal(0);
+      expect(await paymentToken.balanceOf(platform.address)).to.equal(platFormFee);
+      expect(await paymentToken.balanceOf(royaltyReceiver.address)).to.equal(managerFee);
+      expect(await paymentToken.balanceOf(seller.address)).to.equal(price - platFormFee - managerFee);
     });
 
     it("Manager <> user transaction", async function () {
@@ -1327,7 +1458,7 @@ describe("Test Marketplace Contract", function () {
       const price = 1000;
       const balance = 1000;
       const serviceFee = 100;
-      const royaltyFee = 100;
+      const royaltyFee = 200;
       const sellerListingTime = 0;
       const sellerExpirationTime = 0;
       const sellerSalt = "0x0000000000000000000000000000000000000000000000000000000000000025";

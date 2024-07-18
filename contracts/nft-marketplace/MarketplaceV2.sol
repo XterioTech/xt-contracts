@@ -609,10 +609,16 @@ contract MarketplaceV2 is
             );
 
         if (success && result.length == 64) {
-            (order.royaltyFeeRecipient, royaltyFee) = abi.decode(
+            uint256 royaltyFeeOnChain;
+            (order.royaltyFeeRecipient, royaltyFeeOnChain) = abi.decode(
                 result,
                 (address, uint256)
             );
+            require(
+                royaltyFeeOnChain <= royaltyFee,
+                "MarketplaceV2: wrong on chain royalty fee"
+            );
+            royaltyFee = royaltyFeeOnChain;
             require(
                 totalCost > fee2service + royaltyFee,
                 "MarketplaceV2: wrong royalty fee"
