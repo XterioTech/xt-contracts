@@ -1,4 +1,4 @@
-import { BasicERC1155C, BasicERC721C, FansCreate, MarketplaceV2, TokenGateway } from "./typechain-types";
+import { BasicERC1155C, BasicERC721C, FansCreate, MarketplaceV2, OnchainIAP, TokenGateway } from "./typechain-types";
 import { extendEnvironment } from "hardhat/config";
 import "hardhat/types/runtime";
 import { ContractOrAddrName, getAddressForNetwork } from "./lib/constant";
@@ -7,6 +7,7 @@ interface HelperFuncs {
   loadTokenGateway(): Promise<TokenGateway>;
   loadMarketplace(): Promise<MarketplaceV2>;
   loadFansCreate(): Promise<FansCreate>;
+  loadOnchainIAP(): Promise<OnchainIAP>;
   loadBasicERC721C(address: string): Promise<BasicERC721C>;
   loadBasicERC1155C(address: string): Promise<BasicERC1155C>;
 }
@@ -35,6 +36,12 @@ extendEnvironment((hre) => {
       return hre.ethers.getContractAt(
         "FansCreate",
         getAddressForNetwork(ContractOrAddrName.FansCreate, hre.network.name)
+      );
+    },
+    loadOnchainIAP: () => {
+      return hre.ethers.getContractAt(
+        "OnchainIAP",
+        getAddressForNetwork(ContractOrAddrName.OnchainIAP, hre.network.name)
       );
     },
     loadBasicERC721C: (address: string) => {
