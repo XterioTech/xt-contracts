@@ -439,6 +439,27 @@ abstract contract FansCreateCoreUpgradeable is
     }
 
     /****************** Migrate Admin Functions ******************/
+    function adminBatchPublish(
+        uint256[] calldata workIds,
+        address[] calldata creators,
+        uint256[] calldata projectIds
+    ) external onlyRole(MANAGER_ROLE) {
+        require(
+            workIds.length == creators.length &&
+                workIds.length == projectIds.length,
+            "FansCreateCore: arrays length mismatch"
+        );
+
+        for (uint256 i = 0; i < workIds.length; i++) {
+            uint256 workId = workIds[i];
+            address creator = creators[i];
+            uint256 projectId = projectIds[i];
+
+            workCreator[workId] = creator;
+            workProjectId[workId] = projectId;
+        }
+    }
+
     function adminMint(
         address to,
         uint256 workId,
