@@ -79,6 +79,11 @@ abstract contract FansCreateCoreUpgradeable is
     // mapping from workId to the creator
     mapping(uint256 => address) public workCreator;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         address admin,
         address signer,
@@ -439,44 +444,26 @@ abstract contract FansCreateCoreUpgradeable is
     }
 
     /****************** Migrate Admin Functions ******************/
-    function adminBatchPublish(
+    function migrateBatchPublish(
         uint256[] calldata workIds,
         address[] calldata creators,
-        uint256[] calldata projectIds
+        uint256 projectId
     ) external onlyRole(MANAGER_ROLE) {
         require(
-            workIds.length == creators.length &&
-                workIds.length == projectIds.length,
+            workIds.length == creators.length,
             "FansCreateCore: arrays length mismatch"
         );
 
         for (uint256 i = 0; i < workIds.length; i++) {
             uint256 workId = workIds[i];
             address creator = creators[i];
-            uint256 projectId = projectIds[i];
 
             workCreator[workId] = creator;
             workProjectId[workId] = projectId;
         }
     }
 
-    function adminMint(
-        address to,
-        uint256 workId,
-        uint256 amount
-    ) external onlyRole(MANAGER_ROLE) {
-        _mint(to, workId, amount, "");
-    }
-
-    function adminBurn(
-        address from,
-        uint256 workId,
-        uint256 amount
-    ) external onlyRole(MANAGER_ROLE) {
-        _burn(from, workId, amount);
-    }
-
-    function adminBatchMint(
+    function migrateBatchMint(
         address[] calldata to,
         uint256[] calldata workIds,
         uint256[] calldata amounts
@@ -491,7 +478,7 @@ abstract contract FansCreateCoreUpgradeable is
         }
     }
 
-    function adminBatchBurn(
+    function migrateBatchBurn(
         address[] calldata from,
         uint256[] calldata workIds,
         uint256[] calldata amounts
