@@ -57,10 +57,12 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             ["address", "address[]"],
             [sessionKey, targetAddresses]
         );
+        const validUntil = 0;
+        const validAfter = 0;
 
         const leafData = ethers.solidityPacked(
             ["uint48", "uint48", "address", "bytes"],
-            [0, 0, contractAddressSVM.target, sessionKeyData]
+            [validUntil, validAfter, contractAddressSVM.target, sessionKeyData]
         );
 
         const merkleTree = await enableNewTreeForSmartAccountViaEcdsa([ethers.keccak256(leafData)], await sessionKeyManager.getAddress(), await userSA.getAddress(), smartAccountOwnerSigner, entryPoint, await ecdsaOwnershipRegistryModule.getAddress());
@@ -77,7 +79,9 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             leafData,
             merkleTree,
             contractAddressSVM,
-            ERC1155NFT
+            ERC1155NFT,
+            validUntil,
+            validAfter
         }
     }
 
@@ -93,6 +97,8 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             merkleTree,
             ERC1155NFT,
             sessionKeySigner,
+            validUntil,
+            validAfter,
         } = await loadFixture(setUp);
         const ERC1155NFTContract = await ethers.getContractFactory("ERC1155NFT");
 
@@ -110,8 +116,8 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             sessionKeySigner,
             entryPoint,
             await sessionKeyManager.getAddress(),
-            0,
-            0,
+            validUntil,
+            validAfter,
             await contractAddressSVM.getAddress(),
             sessionKeyData,
             merkleTree.getHexProof(ethers.keccak256(leafData))
@@ -138,6 +144,8 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             merkleTree,
             ERC1155NFT,
             sessionKeySigner,
+            validUntil,
+            validAfter,
         } = await loadFixture(setUp);
         const ERC1155NFTContract = await ethers.getContractFactory("ERC1155NFT");
         const WrongERC1155NFT = await (
@@ -158,8 +166,8 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             sessionKeySigner,
             entryPoint,
             await sessionKeyManager.getAddress(),
-            0,
-            0,
+            validUntil,
+            validAfter,
             await contractAddressSVM.getAddress(),
             sessionKeyData,
             merkleTree.getHexProof(ethers.keccak256(leafData))
