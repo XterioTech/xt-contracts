@@ -229,7 +229,9 @@ abstract contract FansCreateCoreUpgradeable is
         uint256 deadline,
         address signer,
         bytes calldata signature
-    ) external payable {
+    ) external payable nonReentrant {
+        require(creator == msg.sender, "FansCreateCore: not a valid creator");
+
         require(
             hasRole(SIGNER_ROLE, signer),
             "FansCreateCore: not a valid signer"
