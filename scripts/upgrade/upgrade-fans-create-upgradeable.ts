@@ -25,10 +25,10 @@ const main = async () => {
   console.info(`========== Upgrading FansCreateBNBUpgradeable ==============`);
   console.info(`============================================================`);
 
-  const FansCreateBNBUpgradeableV2 = await hre.ethers.getContractFactory("FansCreateBNBUpgradeableV2");
+  const FansCreateBNBUpgradeable = await hre.ethers.getContractFactory("FansCreateBNBUpgradeable");
 
   console.info("Upgrading proxy...");
-  const upgradedProxy = await hre.upgrades.upgradeProxy(proxyAddress, FansCreateBNBUpgradeableV2);
+  const upgradedProxy = await hre.upgrades.upgradeProxy(proxyAddress, FansCreateBNBUpgradeable);
 
   await upgradedProxy.waitForDeployment();
 
@@ -40,7 +40,7 @@ const main = async () => {
     try {
       await hre.run("verify:verify", {
         address: newImplAddress,
-        contract: "contracts/fans-create-upgradeable/FansCreateBNBUpgradeableV2.sol:FansCreateBNBUpgradeableV2",
+        contract: "contracts/fans-create-upgradeable/FansCreateBNBUpgradeable.sol:FansCreateBNBUpgradeable",
       });
       console.info(colorize(Color.green, `New implementation contract verified successfully`));
     } catch (e) {

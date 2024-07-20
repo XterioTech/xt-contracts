@@ -84,6 +84,8 @@ abstract contract FansCreateCoreUpgradeable is
         _disableInitializers();
     }
 
+    receive() external payable {}
+
     function initialize(
         address admin,
         address signer,
