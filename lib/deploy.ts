@@ -4,6 +4,7 @@ import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
 import MerkleTree from "merkletreejs";
 import keccak256 from "keccak256";
+import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 export const deployMajorToken = async (
   admin: AddressLike,
@@ -117,13 +118,14 @@ export const deployFansCreateBNBUpgradeable = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("FansCreateBNBUpgradeable");
+  const deployOptions: DeployProxyOptions = {
+    kind: 'uups' as const,
+    ...txOverrides
+  };
   const contract = (await hre.upgrades.deployProxy(
     Contract,
     [admin, signer, recipient, uri],
-    txOverrides ? {
-      initializer: 'initialize',
-      kind: 'uups', ...txOverrides
-    } : { kind: 'uups' }
+    deployOptions
   )) as unknown as FansCreateBNBUpgradeable;
   await contract.waitForDeployment();
   return contract;
@@ -139,13 +141,15 @@ export const deployFansCreateERC20Upgradeable = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("FansCreateERC20Upgradeable");
+  const deployOptions: DeployProxyOptions = {
+    initializer: "initialize(address,address,address,string,address,uint256)",
+    kind: 'uups' as const,
+    ...txOverrides
+  };
   const contract = (await hre.upgrades.deployProxy(
     Contract,
     [admin, signer, recipient, uri, paymentToken, priceCoef],
-    txOverrides ? {
-      initializer: "initialize(address,address,address,string,address,uint256)",
-      kind: 'uups', ...txOverrides
-    } : { kind: 'uups' }
+    deployOptions
   )) as unknown as FansCreateERC20Upgradeable;
   await contract.waitForDeployment();
   return contract;
