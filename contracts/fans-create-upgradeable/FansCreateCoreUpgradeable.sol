@@ -62,9 +62,9 @@ abstract contract FansCreateCoreUpgradeable is
 
     // fee ratios
     uint256 public constant FEE_RATIO_DENOMINATOR = 10000;
-    uint256 public protocolFeeRatio = 200;
-    uint256 public projectFeeRatio = 200;
-    uint256 public creatorFeeRatio = 600;
+    uint256 public protocolFeeRatio;
+    uint256 public projectFeeRatio;
+    uint256 public creatorFeeRatio;
 
     // protocol fee recipient
     address public protocolFeeRecipient;
@@ -101,6 +101,10 @@ abstract contract FansCreateCoreUpgradeable is
         _grantRole(UPGRADER_ROLE, admin);
 
         protocolFeeRecipient = recipient;
+
+        protocolFeeRatio = 200;
+        projectFeeRatio = 200;
+        creatorFeeRatio = 600;
     }
 
     function _authorizeUpgrade(

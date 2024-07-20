@@ -1,5 +1,5 @@
 import hre, { ethers } from "hardhat";
-import { MarketplaceV2, TokenGateway } from "../typechain-types";
+import { FansCreateBNBUpgradeable, MarketplaceV2, TokenGateway } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
 import MerkleTree from "merkletreejs";
@@ -105,6 +105,23 @@ export const deployFansCreateERC20 = async (
 ) => {
   const Contract = await hre.ethers.getContractFactory("FansCreateERC20");
   const contract = await Contract.deploy(admin, signer, recipient, uri, paymentToken, priceCoef, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployFansCreateBNBUpgradeable = async (
+  admin: AddressLike,
+  signer: AddressLike,
+  recipient: AddressLike,
+  uri: string,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("FansCreateBNBUpgradeable");
+  const contract = (await hre.upgrades.deployProxy(
+    Contract,
+    [admin, signer, recipient, uri],
+    txOverrides ? { txOverrides } : undefined
+  )) as unknown as FansCreateBNBUpgradeable;
   await contract.waitForDeployment();
   return contract;
 };
