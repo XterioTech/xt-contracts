@@ -6,6 +6,7 @@ export enum ContractOrAddrName {
   MarketplaceV2 = "MarketplaceV2",
   FansCreate = "FansCreate",
   SafeManager = "SafeManager",
+  OnchainIAP = "OnchainIAP",
 }
 
 export const tokenGatewayAddressMap: NetworkAddressMap = {
@@ -47,6 +48,13 @@ export const fansCreateAddressMap: NetworkAddressMap = {
   xterio: "0x70D75ae4b40Ac5A8E1f2AbE888978Ba28329C00F",
 };
 
+export const onchainIAPAddressMap: NetworkAddressMap = {
+  xterio: "",
+  // Testnets
+  sepolia: '0xEd2c2cbdA41a3Aa612229326ef7598D431f5efE1',
+  xterioTestnet: "0xFF4475541AD29385d19c258b474Fa93F99D0824F",
+};
+
 export const safeManagerAddressMap: NetworkAddressMap = {
   mainnet: "0x2100c6Ba5361f4Afa29c5d187aE5E0Cd5a0F9CF6",
   opbnb: "0x9b5D0Ccb7C95e448B742BA83D85282a38944b3E9", // Safe not available on opbnb, use XterAdmin1 address
@@ -69,6 +77,7 @@ const hyperMap = {
   [ContractOrAddrName.MarketplaceV2]: marketplaceV2AddressMap,
   [ContractOrAddrName.FansCreate]: fansCreateAddressMap,
   [ContractOrAddrName.SafeManager]: safeManagerAddressMap,
+  [ContractOrAddrName.OnchainIAP]: onchainIAPAddressMap,
 };
 
 // helper functions
