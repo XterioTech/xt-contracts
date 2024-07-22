@@ -112,7 +112,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _skuId,
         uint256 _price,
         uint256 _amount
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) productExists(_productId) {
         products[_productId].skus[_skuId] = SKU(false, _amount, _price);
 
         productSKUIds[_productId].add(_skuId);
@@ -151,7 +151,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _productId,
         address _paymentTokenAddress,
         bool _isValid
-    ) external onlyRole(MANAGER_ROLE) {
+    ) external onlyRole(MANAGER_ROLE) productExists(_productId) {
         products[_productId]
             .paymentMethods[_paymentTokenAddress]
             .valid = _isValid;
@@ -191,12 +191,13 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
                 msg.value >= totalPrice,
                 "OnchainIAP: Insufficient payment"
             );
-            bool success = payable(recipient).send(totalPrice);
+
+            (bool success, ) = recipient.call{value: totalPrice}("");
             require(success, "OnchainIAP: Transfer to recipient failed");
 
             uint256 excess = msg.value - totalPrice;
             if (excess > 0) {
-                bool refundSuccess = payable(msg.sender).send(excess);
+                (bool refundSuccess, ) = msg.sender.call{value: excess}("");
                 require(refundSuccess, "OnchainIAP: Refund to sender failed");
             }
         } else {
