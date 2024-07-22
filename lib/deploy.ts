@@ -119,8 +119,8 @@ export const deployFansCreateBNBUpgradeable = async (
 ) => {
   const Contract = await hre.ethers.getContractFactory("FansCreateBNBUpgradeable");
   const deployOptions: DeployProxyOptions = {
-    kind: 'uups' as const,
-    ...txOverrides
+    kind: "uups" as const,
+    txOverrides: txOverrides,
   };
   const contract = (await hre.upgrades.deployProxy(
     Contract,
@@ -143,8 +143,8 @@ export const deployFansCreateERC20Upgradeable = async (
   const Contract = await hre.ethers.getContractFactory("FansCreateERC20Upgradeable");
   const deployOptions: DeployProxyOptions = {
     initializer: "initialize(address,address,address,string,address,uint256)",
-    kind: 'uups' as const,
-    ...txOverrides
+    kind: "uups" as const,
+    ...txOverrides,
   };
   const contract = (await hre.upgrades.deployProxy(
     Contract,
@@ -296,12 +296,7 @@ export const deployWhitelistClaimETH = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const WhitelistClaimETH = await ethers.getContractFactory("WhitelistClaimETH");
-  const whitelistClaimETH = await WhitelistClaimETH.deploy(
-    merkleRoot,
-    startTime,
-    deadline,
-    txOverrides || {}
-  );
+  const whitelistClaimETH = await WhitelistClaimETH.deploy(merkleRoot, startTime, deadline, txOverrides || {});
   await whitelistClaimETH.waitForDeployment();
   return whitelistClaimETH;
 };
@@ -332,7 +327,7 @@ export const deployTokenDistribute = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("TokenDistribute");
-  const contract = await Contract.deploy(defaultOwner, txOverrides || {})
+  const contract = await Contract.deploy(defaultOwner, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
@@ -345,16 +340,12 @@ export const deployAggregator = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("Aggregator");
-  const contract = await Contract.deploy(defaultOwner, decimals, description, version, txOverrides || {})
+  const contract = await Contract.deploy(defaultOwner, decimals, description, version, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
 
-
-export const deployOnchainIAP = async (
-  admin: string,
-  txOverrides?: NonPayableOverrides & { from?: string }
-) => {
+export const deployOnchainIAP = async (admin: string, txOverrides?: NonPayableOverrides & { from?: string }) => {
   const Contract = await ethers.getContractFactory("OnchainIAP");
   const contract = await Contract.deploy(admin, txOverrides || {});
   await contract.waitForDeployment();

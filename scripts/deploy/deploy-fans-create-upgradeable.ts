@@ -8,10 +8,20 @@ const main = async () => {
   const [deployer] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let verifyAddress = process.env.verifyAddress;
-  const admin = process.env.admin || deployer.address;
-  const signer = process.env.signer || deployer.address;
-  const recipient = process.env.recipient || deployer.address;
-  const uri = process.env.uri || "https://example.com/metadata";
+  const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
+  const signer = process.env.signer;
+  const recipient = process.env.recipient;
+  const uri = process.env.uri;
+
+  if (!signer) {
+    throw new Error("signer not set");
+  }
+  if (!recipient) {
+    throw new Error("recipient not set");
+  }
+  if (!uri) {
+    throw new Error("uri not set");
+  }
 
   if (!verifyAddress) {
     console.info(colorize(Color.blue, `Deploy FansCreateBNBUpgradeable`));
