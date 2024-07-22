@@ -1,9 +1,10 @@
 import hre, { ethers } from "hardhat";
-import { MarketplaceV2, TokenGateway } from "../typechain-types";
+import { FansCreateBNBUpgradeable, FansCreateERC20Upgradeable, MarketplaceV2, TokenGateway } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
 import MerkleTree from "merkletreejs";
 import keccak256 from "keccak256";
+import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 export const deployMajorToken = async (
   admin: AddressLike,
@@ -105,6 +106,51 @@ export const deployFansCreateERC20 = async (
 ) => {
   const Contract = await hre.ethers.getContractFactory("FansCreateERC20");
   const contract = await Contract.deploy(admin, signer, recipient, uri, paymentToken, priceCoef, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployFansCreateBNBUpgradeable = async (
+  admin: AddressLike,
+  signer: AddressLike,
+  recipient: AddressLike,
+  uri: string,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("FansCreateBNBUpgradeable");
+  const deployOptions: DeployProxyOptions = {
+    kind: 'uups' as const,
+    ...txOverrides
+  };
+  const contract = (await hre.upgrades.deployProxy(
+    Contract,
+    [admin, signer, recipient, uri],
+    deployOptions
+  )) as unknown as FansCreateBNBUpgradeable;
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployFansCreateERC20Upgradeable = async (
+  admin: AddressLike,
+  signer: AddressLike,
+  recipient: AddressLike,
+  uri: string,
+  paymentToken: AddressLike,
+  priceCoef: BigNumberish,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("FansCreateERC20Upgradeable");
+  const deployOptions: DeployProxyOptions = {
+    initializer: "initialize(address,address,address,string,address,uint256)",
+    kind: 'uups' as const,
+    ...txOverrides
+  };
+  const contract = (await hre.upgrades.deployProxy(
+    Contract,
+    [admin, signer, recipient, uri, paymentToken, priceCoef],
+    deployOptions
+  )) as unknown as FansCreateERC20Upgradeable;
   await contract.waitForDeployment();
   return contract;
 };
