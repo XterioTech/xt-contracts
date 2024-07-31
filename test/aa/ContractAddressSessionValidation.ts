@@ -49,18 +49,21 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
         // 
         const contractAddressSVM = await (await ethers.getContractFactory("ContractAddressSessionValidationModule")).deploy();
 
-        const ERC721NFT = await (await ethers.getContractFactory("TestERC721PublicMint")).deploy();
+        const ERC1155NFT = await (await ethers.getContractFactory("ERC1155NFT")).deploy();
 
         const sessionKey = await sessionKeySigner.getAddress();
-        const targetAddresses = [ERC721NFT.target];
+        const targetAddresses = [ERC1155NFT.target];
         const sessionKeyData = ethers.AbiCoder.defaultAbiCoder().encode(
             ["address", "address[]"],
             [sessionKey, targetAddresses]
         );
+        const currentTime = Date.parse(new Date().toString()) / 1000;
+        const validUntil = currentTime + 1800; // sessoin key 过期时间，当前时间 + 30 分钟
+        const validAfter = currentTime + 600; // session key 开始时间，当前时间 + 10 分钟
 
         const leafData = ethers.solidityPacked(
             ["uint48", "uint48", "address", "bytes"],
-            [0, 0, contractAddressSVM.target, sessionKeyData]
+            [validUntil, validAfter, contractAddressSVM.target, sessionKeyData]
         );
 
         const merkleTree = await enableNewTreeForSmartAccountViaEcdsa([ethers.keccak256(leafData)], await sessionKeyManager.getAddress(), await userSA.getAddress(), smartAccountOwnerSigner, entryPoint, await ecdsaOwnershipRegistryModule.getAddress());
@@ -77,9 +80,60 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             leafData,
             merkleTree,
             contractAddressSVM,
-            ERC721NFT
+            ERC1155NFT,
+            validUntil,
+            validAfter,
         }
     }
+
+    it("the validAfter time was not reached", async () => {
+        const {
+            deployerSigner,
+            entryPoint,
+            userSA,
+            sessionKeyManager,
+            contractAddressSVM,
+            sessionKeyData,
+            leafData,
+            merkleTree,
+            ERC1155NFT,
+            sessionKeySigner,
+            validUntil,
+            validAfter,
+        } = await loadFixture(setUp);
+        const ERC1155NFTContract = await ethers.getContractFactory("ERC1155NFT");
+
+        const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
+            "execute",
+            [
+                await ERC1155NFT.getAddress(),
+                0,
+                ERC1155NFTContract.interface.encodeFunctionData("setApprovalForAll", [
+                    await deployerSigner.getAddress(),
+                    true,
+                ]),
+            ],
+            await userSA.getAddress(),
+            sessionKeySigner,
+            entryPoint,
+            await sessionKeyManager.getAddress(),
+            validUntil,
+            validAfter,
+            await contractAddressSVM.getAddress(),
+            sessionKeyData,
+            merkleTree.getHexProof(ethers.keccak256(leafData))
+        );
+
+        expect(
+            await ERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+        ).to.equal(false);
+        await expect(entryPoint.handleOps([approvalUserOp], await deployerSigner.getAddress())).to.be.rejectedWith(
+            "AA22 expired or not due"
+        );
+        expect(
+            await ERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+        ).to.equal(false);
+    });
 
     it("should be able to process Session with specified contract address", async () => {
         const {
@@ -91,17 +145,22 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             sessionKeyData,
             leafData,
             merkleTree,
-            ERC721NFT,
+            ERC1155NFT,
             sessionKeySigner,
+            validUntil,
+            validAfter,
         } = await loadFixture(setUp);
-        const ERC721NFTContract = await ethers.getContractFactory("TestERC721PublicMint");
+        // set the blockchain timestamp
+        await ethers.provider.send("evm_setNextBlockTimestamp", [validAfter + 1]);
+
+        const ERC1155NFTContract = await ethers.getContractFactory("ERC1155NFT");
 
         const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
             "execute",
             [
-                await ERC721NFT.getAddress(),
+                await ERC1155NFT.getAddress(),
                 0,
-                ERC721NFTContract.interface.encodeFunctionData("setApprovalForAll", [
+                ERC1155NFTContract.interface.encodeFunctionData("setApprovalForAll", [
                     await deployerSigner.getAddress(),
                     true,
                 ]),
@@ -110,20 +169,72 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             sessionKeySigner,
             entryPoint,
             await sessionKeyManager.getAddress(),
-            0,
-            0,
+            validUntil,
+            validAfter,
             await contractAddressSVM.getAddress(),
             sessionKeyData,
             merkleTree.getHexProof(ethers.keccak256(leafData))
         );
 
         expect(
-            await ERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+            await ERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
         ).to.equal(false);
         await entryPoint.handleOps([approvalUserOp], await deployerSigner.getAddress());
         expect(
-            await ERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+            await ERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
         ).to.equal(true);
+    });
+
+    it("exceeds the validUntil time", async () => {
+        const {
+            deployerSigner,
+            entryPoint,
+            userSA,
+            sessionKeyManager,
+            contractAddressSVM,
+            sessionKeyData,
+            leafData,
+            merkleTree,
+            ERC1155NFT,
+            sessionKeySigner,
+            validUntil,
+            validAfter,
+        } = await loadFixture(setUp);
+        // set the blockchain timestamp
+        await ethers.provider.send("evm_setNextBlockTimestamp", [validUntil + 1]);
+
+        const ERC1155NFTContract = await ethers.getContractFactory("ERC1155NFT");
+
+        const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
+            "execute",
+            [
+                await ERC1155NFT.getAddress(),
+                0,
+                ERC1155NFTContract.interface.encodeFunctionData("setApprovalForAll", [
+                    await deployerSigner.getAddress(),
+                    true,
+                ]),
+            ],
+            await userSA.getAddress(),
+            sessionKeySigner,
+            entryPoint,
+            await sessionKeyManager.getAddress(),
+            validUntil,
+            validAfter,
+            await contractAddressSVM.getAddress(),
+            sessionKeyData,
+            merkleTree.getHexProof(ethers.keccak256(leafData))
+        );
+
+        expect(
+            await ERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+        ).to.equal(false);
+        await expect(entryPoint.handleOps([approvalUserOp], await deployerSigner.getAddress())).to.be.rejectedWith(
+            "AA22 expired or not due"
+        );
+        expect(
+            await ERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+        ).to.equal(false);
     });
 
     it("should revert if trying to use wrong contract address", async () => {
@@ -136,20 +247,22 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             sessionKeyData,
             leafData,
             merkleTree,
-            ERC721NFT,
+            ERC1155NFT,
             sessionKeySigner,
+            validUntil,
+            validAfter,
         } = await loadFixture(setUp);
-        const ERC721NFTContract = await ethers.getContractFactory("TestERC721PublicMint");
-        const WrongERC721NFT = await (
-            await ethers.getContractFactory("TestERC721PublicMint")
+        const ERC1155NFTContract = await ethers.getContractFactory("ERC1155NFT");
+        const WrongERC1155NFT = await (
+            await ethers.getContractFactory("ERC1155NFT")
         ).deploy();
 
         const approvalUserOp = await makeEcdsaSessionKeySignedUserOp(
             "execute",
             [
-                await WrongERC721NFT.getAddress(),
+                await WrongERC1155NFT.getAddress(),
                 0,
-                ERC721NFTContract.interface.encodeFunctionData("setApprovalForAll", [
+                ERC1155NFTContract.interface.encodeFunctionData("setApprovalForAll", [
                     await deployerSigner.getAddress(),
                     true,
                 ]),
@@ -158,8 +271,8 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             sessionKeySigner,
             entryPoint,
             await sessionKeyManager.getAddress(),
-            0,
-            0,
+            validUntil,
+            validAfter,
             await contractAddressSVM.getAddress(),
             sessionKeyData,
             merkleTree.getHexProof(ethers.keccak256(leafData))
@@ -175,10 +288,10 @@ describe("SessionKey: Contract Address Session Validation Module", function () {
             );
 
         expect(
-            await ERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+            await ERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
         ).to.equal(false);
         expect(
-            await WrongERC721NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
+            await WrongERC1155NFT.isApprovedForAll(await userSA.getAddress(), await deployerSigner.getAddress())
         ).to.equal(false);
     });
 });

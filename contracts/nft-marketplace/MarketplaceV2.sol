@@ -16,6 +16,8 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 import "../basic-tokens/interfaces/IGateway.sol";
 
+import "@openzeppelin/contracts/interfaces/IERC1271.sol";
+
 contract MarketplaceV2 is
     Initializable,
     OwnableUpgradeable,
@@ -121,6 +123,11 @@ contract MarketplaceV2 is
     event RemovePaymentToken(address indexed paymentToken);
 
     event SetGateway(address indexed gateway);
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     function initialize(
         address _gateway,
@@ -342,6 +349,10 @@ contract MarketplaceV2 is
                 "MarketplaceV2: buy order not filled"
             );
         }
+
+        fills[seller][sellerMessageHash] += fill;
+        fills[buyer][buyerMessageHash] += fill;
+
         executeTransfers(
             transactionType,
             order,
@@ -351,8 +362,6 @@ contract MarketplaceV2 is
             sellerMetadata.recipient,
             buyerMetadata.recipient
         );
-        fills[seller][sellerMessageHash] += fill;
-        fills[buyer][buyerMessageHash] += fill;
 
         /*  LOGS  */
         emit MatchOrder(
@@ -423,6 +432,9 @@ contract MarketplaceV2 is
             "MarketplaceV2: invalid payment method"
         );
 
+        require(order.serviceFee < BASE, "MarketplaceV2: invalid serviceFee");
+        require(order.royaltyFee < BASE, "MarketplaceV2: invalid royaltyFee");
+
         require(
             sellerMetadata.sellOrBuy == true,
             "MarketplaceV2: seller should sell"
@@ -471,8 +483,13 @@ contract MarketplaceV2 is
         if (transactionType == TRANSACT_ERC721) {
             require(
                 sellerMetadata.maximumFill == 1 &&
-                    sellerMetadata.maximumFill == 1,
+                    buyerMetadata.maximumFill == 1,
                 "MarketplaceV2: invalid maximumFill"
+            );
+        } else {
+            require(
+                transactionType == TRANSACT_ERC1155,
+                "MarketplaceV2: invalid transactionType"
             );
         }
     }
@@ -491,9 +508,16 @@ contract MarketplaceV2 is
         bytes memory sig
     ) internal view returns (bool valid, bytes32 messageHash) {
         messageHash = getMessageHash(transactionType, order, metadata);
-        valid =
-            x == msg.sender ||
-            x == ECDSA.recover(getEthSignedMessageHash(messageHash), sig);
+        if (isContract(x)) {
+            valid =
+                x == msg.sender ||
+                IERC1271(x).isValidSignature(messageHash, sig) ==
+                bytes4(0x1626ba7e);
+        } else {
+            valid =
+                x == msg.sender ||
+                x == ECDSA.recover(getEthSignedMessageHash(messageHash), sig);
+        }
     }
 
     function getEthSignedMessageHash(
@@ -510,8 +534,16 @@ contract MarketplaceV2 is
         bytes32 transactionType,
         bytes memory order,
         bytes memory metadata
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(transactionType, order, metadata));
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    transactionType,
+                    order,
+                    metadata,
+                    block.chainid
+                )
+            );
     }
 
     /**
@@ -577,10 +609,16 @@ contract MarketplaceV2 is
             );
 
         if (success && result.length == 64) {
-            (order.royaltyFeeRecipient, royaltyFee) = abi.decode(
+            uint256 royaltyFeeOnChain;
+            (order.royaltyFeeRecipient, royaltyFeeOnChain) = abi.decode(
                 result,
                 (address, uint256)
             );
+            require(
+                royaltyFeeOnChain <= royaltyFee,
+                "MarketplaceV2: wrong on chain royalty fee"
+            );
+            royaltyFee = royaltyFeeOnChain;
             require(
                 totalCost > fee2service + royaltyFee,
                 "MarketplaceV2: wrong royalty fee"
@@ -884,5 +922,13 @@ contract MarketplaceV2 is
             buyerMetadata.maximumFill - fills[buyer][buyerMessageHash]
         );
         return (buyerMetadata.recipient, fill);
+    }
+
+    function isContract(address account) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
     }
 }

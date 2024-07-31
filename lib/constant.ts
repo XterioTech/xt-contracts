@@ -37,6 +37,7 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
   base: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
   // Testnets
   goerli: "0xDbE4F513dBc79dEF048Df54D870EfB3B2edE01cB",
+  sepolia: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   bscTestnet: "0x2973fAe1Db21e3f30dF115d43094E7B2d83251c5",
   opbnbTestnet: "0x1dDee87268F5AF34Ef2fBD128D0D8Dd21b67Bdb1",
   xterioTestnet: "0x9A228181d15E57Ab4324B6903EcD847cADBF727B",
