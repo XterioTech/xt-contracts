@@ -1,9 +1,12 @@
+import { NonPayableOverrides } from "../typechain-types/common";
+
 type NetworkAddressMap = { [network: string]: string };
 export enum ContractOrAddrName {
   TokenGateway = "TokenGateway",
   MarketplaceV2 = "MarketplaceV2",
   FansCreate = "FansCreate",
   SafeManager = "SafeManager",
+  OnchainIAP = "OnchainIAP",
 }
 
 export const tokenGatewayAddressMap: NetworkAddressMap = {
@@ -43,7 +46,14 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
 export const fansCreateAddressMap: NetworkAddressMap = {
   // Testnets
   xterioTestnet: "0xccc2508CE3C6cD3C10306aeb11D5201Dcb95e09B",
-  xterio: "0x70D75ae4b40Ac5A8E1f2AbE888978Ba28329C00F"
+  xterio: "0x70D75ae4b40Ac5A8E1f2AbE888978Ba28329C00F",
+};
+
+export const onchainIAPAddressMap: NetworkAddressMap = {
+  xterio: "",
+  // Testnets
+  sepolia: '0xEd2c2cbdA41a3Aa612229326ef7598D431f5efE1',
+  xterioTestnet: "0xFF4475541AD29385d19c258b474Fa93F99D0824F",
 };
 
 export const safeManagerAddressMap: NetworkAddressMap = {
@@ -68,6 +78,7 @@ const hyperMap = {
   [ContractOrAddrName.MarketplaceV2]: marketplaceV2AddressMap,
   [ContractOrAddrName.FansCreate]: fansCreateAddressMap,
   [ContractOrAddrName.SafeManager]: safeManagerAddressMap,
+  [ContractOrAddrName.OnchainIAP]: onchainIAPAddressMap,
 };
 
 // helper functions
@@ -79,7 +90,7 @@ export function getAddressForNetwork(contract: ContractOrAddrName, network: stri
   return address;
 }
 
-export function getTxOverridesForNetwork(network: string): { gasPrice?: number } {
+export function getTxOverridesForNetwork(network: string): NonPayableOverrides & { from?: string } {
   switch (network) {
     case "bscTestnet":
       return { gasPrice: 5000000000 };
@@ -89,11 +100,19 @@ export function getTxOverridesForNetwork(network: string): { gasPrice?: number }
       return { gasPrice: 300000000000 };
     case "opbnbTestnet":
       return { gasPrice: 2500000008 };
+    case "xterio":
+      return { maxPriorityFeePerGas: 100000000, maxFeePerGas: 1100000000 };
     default:
       return {};
   }
 }
 
 export function isTestnet(network: string): boolean {
-  return network == "goerli" || network == "sepolia" || network == "bscTestnet" || network == "opbnbTestnet" || network == "xterioTestnet";
+  return (
+    network == "goerli" ||
+    network == "sepolia" ||
+    network == "bscTestnet" ||
+    network == "opbnbTestnet" ||
+    network == "xterioTestnet"
+  );
 }

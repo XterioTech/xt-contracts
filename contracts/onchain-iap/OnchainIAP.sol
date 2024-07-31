@@ -25,7 +25,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
 
     struct SKU {
         bool disabled;
-        uint32 amount;
+        uint256 amount;
         uint256 price;
     }
 
@@ -55,7 +55,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 indexed skuId,
         address paymentTokenAddress,
         uint256 paymentAmount,
-        uint32 amount
+        uint256 amount
     );
 
     constructor(address admin) {
@@ -111,8 +111,8 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _productId,
         uint32 _skuId,
         uint256 _price,
-        uint32 _amount
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 _amount
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) productExists(_productId) {
         products[_productId].skus[_skuId] = SKU(false, _amount, _price);
 
         productSKUIds[_productId].add(_skuId);
@@ -151,7 +151,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
         uint32 _productId,
         address _paymentTokenAddress,
         bool _isValid
-    ) external onlyRole(MANAGER_ROLE) {
+    ) external onlyRole(MANAGER_ROLE) productExists(_productId) {
         products[_productId]
             .paymentMethods[_paymentTokenAddress]
             .valid = _isValid;
@@ -191,12 +191,13 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
                 msg.value >= totalPrice,
                 "OnchainIAP: Insufficient payment"
             );
-            bool success = payable(recipient).send(totalPrice);
+
+            (bool success, ) = recipient.call{value: totalPrice}("");
             require(success, "OnchainIAP: Transfer to recipient failed");
 
             uint256 excess = msg.value - totalPrice;
             if (excess > 0) {
-                bool refundSuccess = payable(msg.sender).send(excess);
+                (bool refundSuccess, ) = msg.sender.call{value: excess}("");
                 require(refundSuccess, "OnchainIAP: Refund to sender failed");
             }
         } else {
@@ -254,10 +255,10 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
             totalPrice = (priceRaw * 10 ** 18) / (10 ** product.priceDecimals);
             decimals = 18;
         } else {
+            decimals = IERC20Metadata(_paymentTokenAddress).decimals();
             totalPrice =
                 (priceRaw * 10 ** decimals) /
                 (10 ** product.priceDecimals);
-            decimals = IERC20Metadata(_paymentTokenAddress).decimals();
         }
         return (totalPrice, decimals);
     }
@@ -321,7 +322,7 @@ contract OnchainIAP is AccessControl, ReentrancyGuard {
     function getProductSKUInfo(
         uint32 _productId,
         uint32 _skuId
-    ) public view returns (uint32, bool, uint256) {
+    ) public view returns (uint256, bool, uint256) {
         SKU memory sku = products[_productId].skus[_skuId];
         return (sku.amount, sku.disabled, sku.price);
     }
