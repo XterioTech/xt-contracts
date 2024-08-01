@@ -11,6 +11,13 @@ async function main() {
     txOverrides: getTxOverridesForNetwork(hre.network.name),
   });
   await instance.waitForDeployment();
+  
+  // verify
+  await hre.run("verify:verify", {
+    address: proxyAddress,
+    contract: "contracts/nft-marketplace/MarketplaceV2.sol:MarketplaceV2",
+  });
+
   const implAddressNew = await hre.upgrades.erc1967.getImplementationAddress(proxyAddress);
 
   console.log(`MarketplaceV2 upgraded: ${proxyAddress}`);
