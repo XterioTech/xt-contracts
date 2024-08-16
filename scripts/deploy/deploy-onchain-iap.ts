@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { Color, colorize } from "../../lib/utils";
+import { Color, colorize, infoAboutDeployer } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployOnchainIAP } from "../../lib/deploy";
 import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
@@ -12,7 +12,7 @@ const main = async () => {
 
   if (!address) {
     console.info(colorize(Color.blue, `Deploy OnchainIAP`));
-    console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
+    await infoAboutDeployer(hre, deployer);
     console.info(colorize(Color.yellow, `Admin: ${admin}`));
 
     if (!inputConfirm("Confirm? ")) {
