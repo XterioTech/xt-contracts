@@ -50,7 +50,14 @@ export const fansCreateAddressMap: NetworkAddressMap = {
 };
 
 export const onchainIAPAddressMap: NetworkAddressMap = {
-  xterio: "",
+  mainnet: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  opbnb: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  arbitrumOne: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  polygon: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  bsc: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  xterio: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  xterioEth: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  base: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
   // Testnets
   sepolia: '0xEd2c2cbdA41a3Aa612229326ef7598D431f5efE1',
   xterioTestnet: "0xFF4475541AD29385d19c258b474Fa93F99D0824F",
