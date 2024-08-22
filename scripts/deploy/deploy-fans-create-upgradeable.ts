@@ -11,7 +11,7 @@ const main = async () => {
   const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
   const signer = process.env.signer;
   const recipient = process.env.recipient;
-  const uri = process.env.uri;
+  const uri = process.env.uri || 'https://api.playvrs.net/xgc/meta/works/{id}';
 
   if (!signer) {
     throw new Error("signer not set");
