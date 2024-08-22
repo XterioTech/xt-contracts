@@ -29,7 +29,7 @@ const main = async () => {
     }
 
     console.info(`============================================================`);
-    console.info(`===================== Deploy Marketplace =====================`);
+    console.info(`===================== Deploy Marketplace ===================`);
     console.info(`============================================================`);
     const marketplace = await deployMarketplaceV2(
       gatewayAddress,

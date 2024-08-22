@@ -23,7 +23,7 @@ export const tokenGatewayAddressMap: NetworkAddressMap = {
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
   bscTestnet: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   opbnbTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
-  xterioTestnet: "0xB6Fe7Bc1c8836983C0643D5869c42bD27aCAAedD",
+  xterioTestnet: "0x1266EFc5430a871b44d5BC29C67f89B3134902Bb",
 };
 
 export const marketplaceV2AddressMap: NetworkAddressMap = {
@@ -40,12 +40,12 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
   sepolia: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   bscTestnet: "0x2973fAe1Db21e3f30dF115d43094E7B2d83251c5",
   opbnbTestnet: "0x1dDee87268F5AF34Ef2fBD128D0D8Dd21b67Bdb1",
-  xterioTestnet: "0x9A228181d15E57Ab4324B6903EcD847cADBF727B",
+  xterioTestnet: "0xD5c5930f96e9743931ac5B2925792007a6665546",
 };
 
 export const fansCreateAddressMap: NetworkAddressMap = {
   // Testnets
-  xterioTestnet: "0xccc2508CE3C6cD3C10306aeb11D5201Dcb95e09B",
+  xterioTestnet: "",
   xterio: "0x70D75ae4b40Ac5A8E1f2AbE888978Ba28329C00F",
 };
 
@@ -60,7 +60,7 @@ export const onchainIAPAddressMap: NetworkAddressMap = {
   base: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
   // Testnets
   sepolia: '0xEd2c2cbdA41a3Aa612229326ef7598D431f5efE1',
-  xterioTestnet: "0xFF4475541AD29385d19c258b474Fa93F99D0824F",
+  xterioTestnet: "0x5949430506ff6Ce098a5DdD8a062D3Da7373b365",
 };
 
 export const safeManagerAddressMap: NetworkAddressMap = {
