@@ -59,8 +59,10 @@ export const onchainIAPAddressMap: NetworkAddressMap = {
   xterioEth: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
   base: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
   // Testnets
-  sepolia: '0xEd2c2cbdA41a3Aa612229326ef7598D431f5efE1',
-  xterioTestnet: "0xFF4475541AD29385d19c258b474Fa93F99D0824F",
+  sepolia: '0x6F58796D4563a5140Cb636Fd4C48EB20fe97ff1F',        //for stage eng
+  // sepolia: '0x1cDc98Abe4dB79b332206dD7a89742F0f59255F7',        //for test eng
+  xterioTestnet: "0xd3875f07496d65fc09Ad455ca53194A77eBCb504",  // for stage env
+  // xterioTestnet: "0x5949430506ff6Ce098a5DdD8a062D3Da7373b365",  // for test env
 };
 
 export const safeManagerAddressMap: NetworkAddressMap = {

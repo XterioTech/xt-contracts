@@ -7,7 +7,12 @@ const main = async () => {
 
   const productId = 1;
   const priceDecimals = 6;
-  const paymentRecipient = "0xD86864908d62d2fA38f24707f97A2570967999C3";
+  const paymentRecipient = process.env.paymentRecipient;
+
+  if (!paymentRecipient) {
+    throw new Error("paymentRecipient not set");
+    
+  }
 
   const tokenDecimals = 8;
   const skus = [
