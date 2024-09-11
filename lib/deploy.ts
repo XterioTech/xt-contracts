@@ -351,3 +351,11 @@ export const deployOnchainIAP = async (admin: string, txOverrides?: NonPayableOv
   await contract.waitForDeployment();
   return contract;
 };
+
+
+export const deployCheckIn = async (startTime: number, txOverrides?: NonPayableOverrides & { from?: string }) => {
+  const Contract = await ethers.getContractFactory("CheckInContract");
+  const contract = await Contract.deploy(startTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+}
