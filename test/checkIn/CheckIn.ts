@@ -69,6 +69,47 @@ describe("CheckIn", function () {
 
             timestamp1 = startTime - 60 * 60 * 1; // 使用过去 1 小时的时间戳查询，即前一天时间
             await expect(checkIn.query(await user2.getAddress(), tgChannel, timestamp1)).to.revertedWith("CheckInContract: invalid timestamp");
+
+            //
+            // 手动调节区块到第二天的时间
+            let timestamp2 = startTime + 60 * 60 * 24
+            await hre.ethers.provider.send("evm_setNextBlockTimestamp", [timestamp2])
+            await hre.ethers.provider.send("evm_mine", []);
+            const currentBlock2 = await hre.ethers.provider.getBlock("latest");
+            const currentTime2 = currentBlock2?.timestamp || 0;
+            console.log("second day block timestamp: ", timestamp2, currentTime2);
+
+            // 第二天签到
+            await checkIn.connect(user1).checkIn(gameChannel);
+            // 第一天的检查
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, currentTime)).to.equal(true);
+            timestamp1 = startTime + 60 * 60 * 5; // 使用过了 5 小时的时间戳查询
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.equal(true);
+            timestamp1 = startTime + 60 * 60 * 10; // 使用过了 10 小时的时间戳查询
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.equal(true);
+            timestamp1 = startTime + 60 * 60 * 23; // 使用过了 23 小时的时间戳查询
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.equal(true);
+
+            // use error channel
+            expect(await checkIn.query(await user1.getAddress(), tgChannel, timestamp1)).to.equal(false);
+
+            timestamp1 = startTime - 60 * 60 * 1; // 使用过去 1 小时的时间戳查询，即前一天时间
+            await expect(checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.revertedWith("CheckInContract: invalid timestamp");
+
+            // 第二天的检查
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, currentTime)).to.equal(true);
+            timestamp1 = timestamp2 + 60 * 60 * 5; // 使用过了 5 小时的时间戳查询
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.equal(true);
+            timestamp1 = timestamp2 + 60 * 60 * 10; // 使用过了 10 小时的时间戳查询
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.equal(true);
+            timestamp1 = timestamp2 + 60 * 60 * 23; // 使用过了 23 小时的时间戳查询
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.equal(true);
+
+            // use error channel
+            expect(await checkIn.query(await user1.getAddress(), tgChannel, timestamp1)).to.equal(false);
+
+            timestamp1 = timestamp2 + 60 * 60 * 24; // 使用过了 24 小时的时间戳查询
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.equal(false);
         });
     });
 });
