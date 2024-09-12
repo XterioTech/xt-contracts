@@ -27,7 +27,9 @@ contract CheckInContract {
         uint256 _channel,
         uint256 _timestamp
     ) external view returns (bool) {
-        require(_timestamp >= startTime, "CheckInContract: invalid timestamp");
+        if (_timestamp < startTime) {
+            return false;
+        }
         uint256 dayIndex = (_timestamp - startTime) / SECONDS_IN_DAY + 1;
         return records[_who][_channel][dayIndex];
     }

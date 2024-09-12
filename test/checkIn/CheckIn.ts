@@ -8,7 +8,7 @@ describe("CheckIn", function () {
     const tgChannel = 2;
     async function basicFixture() {
         const [deployer, user1, user2] = await hre.ethers.getSigners();
-        const startTime = 1726012800; // 2024-09-11 08:00:00 china
+        const startTime = 1726099200; // 2024-09-12 08:00:00 china
         const checkIn = await deployCheckIn(startTime);
 
         return { user1, user2, checkIn, startTime };
@@ -48,7 +48,7 @@ describe("CheckIn", function () {
             expect(await checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.equal(false);
 
             timestamp1 = startTime - 60 * 60 * 1; // 使用过去 1 小时的时间戳查询，即前一天时间
-            await expect(checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.revertedWith("CheckInContract: invalid timestamp");
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.equal(false);
             //
 
             await checkIn.connect(user2).checkIn(tgChannel);
@@ -68,7 +68,7 @@ describe("CheckIn", function () {
             expect(await checkIn.query(await user2.getAddress(), tgChannel, timestamp1)).to.equal(false);
 
             timestamp1 = startTime - 60 * 60 * 1; // 使用过去 1 小时的时间戳查询，即前一天时间
-            await expect(checkIn.query(await user2.getAddress(), tgChannel, timestamp1)).to.revertedWith("CheckInContract: invalid timestamp");
+            expect(await checkIn.query(await user2.getAddress(), tgChannel, timestamp1)).to.equal(false);
 
             //
             // 手动调节区块到第二天的时间
@@ -94,7 +94,7 @@ describe("CheckIn", function () {
             expect(await checkIn.query(await user1.getAddress(), tgChannel, timestamp1)).to.equal(false);
 
             timestamp1 = startTime - 60 * 60 * 1; // 使用过去 1 小时的时间戳查询，即前一天时间
-            await expect(checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.revertedWith("CheckInContract: invalid timestamp");
+            expect(await checkIn.query(await user1.getAddress(), gameChannel, timestamp1)).to.equal(false);
 
             // 第二天的检查
             expect(await checkIn.query(await user1.getAddress(), gameChannel, currentTime)).to.equal(true);
