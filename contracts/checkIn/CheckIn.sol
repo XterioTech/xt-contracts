@@ -34,7 +34,7 @@ contract CheckInContract {
         return records[_user][_channel][dayIndex];
     }
 
-    function querysForUser(
+    function queryMultiTimestamps(
         address _user,
         uint256 _channel,
         uint256[] calldata _timestamps
@@ -49,7 +49,7 @@ contract CheckInContract {
         return results;
     }
 
-    function querysForUsers(
+    function queryMultiUsers(
         address[] calldata _users,
         uint256 _channel,
         uint256 _timestamp

@@ -118,23 +118,23 @@ describe("CheckIn", function () {
             // 查询 user1 第一和第二天的签到情况
             let firstDay = currentTime + 60 * 60 * 1;
             let secondDay = currentTime2 + 60 * 60 * 1;
-            const results = await checkIn.querysForUser(await user1.getAddress(), gameChannel, [firstDay, secondDay]);
+            const results = await checkIn.queryMultiTimestamps(await user1.getAddress(), gameChannel, [firstDay, secondDay]);
             for (let result of results) {
                 expect(result).to.equal(true);
             }
 
             //  查询 user1, user2 第一天
-            const results2 = await checkIn.querysForUsers([await user1.getAddress(), await user2.getAddress()], gameChannel, firstDay)
+            const results2 = await checkIn.queryMultiUsers([await user1.getAddress(), await user2.getAddress()], gameChannel, firstDay)
             // user2 是 tg 签到，所以 game 这里的 false
             expect(results2[0]).to.equal(true);
             expect(results2[1]).to.equal(false);
 
-            const results3 = await checkIn.querysForUsers([await user1.getAddress(), await user2.getAddress()], tgChannel, firstDay)
+            const results3 = await checkIn.queryMultiUsers([await user1.getAddress(), await user2.getAddress()], tgChannel, firstDay)
             expect(results3[0]).to.equal(false);
             expect(results3[1]).to.equal(true);
 
             //  查询 user1, user2 第二天
-            const results4 = await checkIn.querysForUsers([await user1.getAddress(), await user2.getAddress()], gameChannel, secondDay)
+            const results4 = await checkIn.queryMultiUsers([await user1.getAddress(), await user2.getAddress()], gameChannel, secondDay)
             // user2 第二天没有签到
             expect(results4[0]).to.equal(true);
             expect(results4[1]).to.equal(false);
