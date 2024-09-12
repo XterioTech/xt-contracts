@@ -8,7 +8,7 @@ describe("CheckIn", function () {
     const tgChannel = 2;
     async function basicFixture() {
         const [deployer, user1, user2] = await hre.ethers.getSigners();
-        const startTime = 1726099200; // 2024-09-12 08:00:00 china
+        const startTime = 1726099200; // 这里应该使用具体某一天的 utc 零点的时间作为基准
         const checkIn = await deployCheckIn(startTime);
 
         return { user1, user2, checkIn, startTime };
