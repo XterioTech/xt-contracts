@@ -7,11 +7,12 @@ async function main() {
   const [deployer] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
-  let startTime = process.env.checkInStartTime;
+  let startTime = Number.parseInt(process.env.checkInStartTime || "0");
 
   if (!address) {
     console.info(colorize(Color.blue, `Deploy CheckIn`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
+    console.info(colorize(Color.yellow, `Checkin Start Time: ${new Date(startTime * 1000)}`));
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
