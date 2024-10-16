@@ -16,3 +16,5 @@ abi
 # sensitive files
 wallet.json
 wallet.*.json
+
+*.csv
