@@ -1,0 +1,50 @@
+Transaction Info [2024-10-16T15:52:04.890Z]:
+{
+address: 0x2d1Be0cf8fD687b447825857A7476c02fb45C5b8
+eventName: distributeERC20 to #[0, 100)
+txHash: 0x3fdf6c2ede1762f17ef7cad25cc99726c8e7392f6155e79c5a1aee132defbf18
+timestamp: 2024-10-16T15:52:04.890Z
+}
+Transaction Error [2024-10-16T15:54:04.895Z]:
+{
+address: 0x2d1Be0cf8fD687b447825857A7476c02fb45C5b8
+eventName: distributeERC20 to #[0, 100)
+txHash: 0x3fdf6c2ede1762f17ef7cad25cc99726c8e7392f6155e79c5a1aee132defbf18
+errMessage: Error: Transaction timed out
+timestamp: 2024-10-16T15:54:04.895Z
+}
+Transaction Info [2024-10-16T15:54:08.443Z]:
+{
+address: 0x2d1Be0cf8fD687b447825857A7476c02fb45C5b8
+eventName: distributeERC20 to #[100, 200)
+txHash: 0x4e2c7da01043be182177459a74e4f197be234a5605dc76ee60fb745f51c48a7a
+timestamp: 2024-10-16T15:54:08.443Z
+}
+Transaction Info [2024-10-16T15:55:07.854Z]:
+{
+address: 0x2d1Be0cf8fD687b447825857A7476c02fb45C5b8
+eventName: distributeERC20 to #[200, 234)
+txHash: 0xd031f338f4c398e79982563607ad026655b1695a067adc460215e128835e41e5
+timestamp: 2024-10-16T15:55:07.854Z
+}
+Transaction Info [2024-10-16T15:59:05.605Z]:
+{
+address: 0x2d1Be0cf8fD687b447825857A7476c02fb45C5b8
+eventName: distributeERC20 to #[0, 100)
+txHash: 0xb894741e5120c51ce3fdae7cc6dc885bc132859e020650b0e16ebe94aefee7d8
+timestamp: 2024-10-16T15:59:05.605Z
+}
+Transaction Info [2024-10-16T15:59:19.863Z]:
+{
+address: 0x2d1Be0cf8fD687b447825857A7476c02fb45C5b8
+eventName: distributeERC20 to #[100, 200)
+txHash: 0xe8b841503dab06dc2711913df0b1250f10644c61010c1dd8b2ad7723e6b51bd5
+timestamp: 2024-10-16T15:59:19.863Z
+}
+Transaction Info [2024-10-16T15:59:28.939Z]:
+{
+address: 0x2d1Be0cf8fD687b447825857A7476c02fb45C5b8
+eventName: distributeERC20 to #[200, 234)
+txHash: 0xa8bdbeffd197440a76136636e828ad0937e3fd41f505835019818d68776b0236
+timestamp: 2024-10-16T15:59:28.939Z
+}
