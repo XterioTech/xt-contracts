@@ -40,12 +40,12 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
   sepolia: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   bscTestnet: "0x2973fAe1Db21e3f30dF115d43094E7B2d83251c5",
   opbnbTestnet: "0x1dDee87268F5AF34Ef2fBD128D0D8Dd21b67Bdb1",
-  xterioTestnet: "0x9A228181d15E57Ab4324B6903EcD847cADBF727B",
+  xterioTestnet: "0xD5c5930f96e9743931ac5B2925792007a6665546",
 };
 
 export const fansCreateAddressMap: NetworkAddressMap = {
   // Testnets
-  xterioTestnet: "0xccc2508CE3C6cD3C10306aeb11D5201Dcb95e09B",
+  xterioTestnet: "0x4CaF4cb43C455Ed66E643cB7d59c45b38E66d0D0",
   xterio: "0x70D75ae4b40Ac5A8E1f2AbE888978Ba28329C00F",
 };
 
