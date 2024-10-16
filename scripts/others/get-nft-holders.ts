@@ -13,14 +13,15 @@ const main = async () => {
 
     const min_token_id = Number(process.env.MIN_TOKEN_ID) || 0;
     const max_token_id = Number(process.env.MAX_TOKEN_ID) || 10000;
-
+    const block_number = Number(process.env.BLOCK_NUMBER) || "latest";
     for (let i = min_token_id; i <= max_token_id; i++) {
         try {
-            let NFTIDOwnerAddress = await BasicERC721C.ownerOf(i);
+            let NFTIDOwnerAddress = await BasicERC721C.ownerOf(i, { blockTag: block_number });
             console.log(i, ",", NFTIDOwnerAddress);
         } catch (e) {
             // console.log(i, e);
         }
+
     }
 };
 
