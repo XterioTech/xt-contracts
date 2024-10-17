@@ -10,6 +10,8 @@ import (
 )
 
 func main() {
+	log.Println("Start calculate...")
+	defer log.Println("End calculate!")
 	//
 	rarityToAmountMap := readFromFile("rarity-to-amount.txt")
 	//
@@ -31,6 +33,9 @@ func main() {
 }
 
 func readFromFile(fileName string) map[string]string {
+	log.Println("Open and read", fileName, "file...")
+	defer log.Println("Read", fileName, "finished!")
+
 	results := make(map[string]string)
 	rarityToAmountFile, err := os.Open(fileName)
 	if err != nil {
@@ -44,5 +49,6 @@ func readFromFile(fileName string) map[string]string {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+	log.Println(fileName, "has", len(results), "lines.")
 	return results
 }

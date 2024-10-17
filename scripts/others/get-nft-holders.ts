@@ -8,6 +8,7 @@ import hre from "hardhat";
 // BLOCK_HEIGHT=100000
 //
 // npx hardhat run scripts/others/get-nft-holders.ts --network mainnet > ./scripts/utils-go/calculateAirdropAmount/nftId-to-owner-onChain.txt
+// tail -f ./scripts/utils-go/calculateAirdropAmount/nftId-to-owner-onChain.txt
 
 const main = async () => {
     const BasicERC721C = await hre.helpers.loadBasicERC721C(process.env.NFT_ADDRESS || "");
