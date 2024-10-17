@@ -18,4 +18,3 @@ wallet.json
 wallet.*.json
 
 *.csv
-*.txt
