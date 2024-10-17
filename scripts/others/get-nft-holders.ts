@@ -17,7 +17,7 @@ const main = async () => {
     for (let i = min_token_id; i <= max_token_id; i++) {
         try {
             let NFTIDOwnerAddress = await BasicERC721C.ownerOf(i, { blockTag: block_number });
-            console.log(i, ",", NFTIDOwnerAddress);
+            console.log(`${i},${NFTIDOwnerAddress}`);
         } catch (e) {
             // console.log(i, e);
         }
