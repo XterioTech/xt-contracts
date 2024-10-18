@@ -21,9 +21,12 @@ func main() {
 	//
 	ownerToAirdropAmount := make(map[string]int)
 	for nftId, owner := range nftIdToOwnerMap {
+		// 通过 nft id 查询稀有度
 		rarity := nftIdToRarityMap[nftId]
+		// 通过稀有度查询空投数量
 		amountStr := rarityToAmountMap[rarity]
 		amount, _ := strconv.Atoi(amountStr)
+		// 累计当前 owner 的空投数量
 		ownerToAirdropAmount[owner] += amount
 	}
 
