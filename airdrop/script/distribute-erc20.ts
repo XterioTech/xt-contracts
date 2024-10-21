@@ -25,7 +25,7 @@ async function distributeERC20(
   ]);
 
   tx = await distributer.distributeTokens(tokenAddress, recipients, amounts, decimals ?? 0, sender ?? ethers.ZeroAddress, {
-    gasPrice: BigInt(feeData.gasPrice ?? 0) * BigInt(20) / BigInt(10),
+    gasPrice: BigInt(feeData.gasPrice ?? 0) * BigInt(12) / BigInt(10),
     gasLimit: BigInt(gas) * BigInt(12) / BigInt(10)
   });
 
