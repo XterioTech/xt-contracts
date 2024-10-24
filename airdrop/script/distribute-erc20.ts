@@ -34,10 +34,12 @@ async function distributeERC20(
 
 async function main() {
   const taskName = 'distribute-erc20'
-  const network = NETWORK.SEPOLIA;
+  // const network = NETWORK.SEPOLIA;
+  const network = NETWORK.XTERIO;
   const provider = providerByNetwork(network)
   const params = {
-    tokenAddress: '0x12065F0d03cd1Bd280565069164F9E803c2DA988', // test coin
+    tokenAddress: '0x94F8D460A89949044acaa0a3dc6991AAbEBDC688', // DB
+    // tokenAddress: '0x12065F0d03cd1Bd280565069164F9E803c2DA988', // test coin
     from: process.env.DISTRIBUTER_PARIVATE_KEY ?? '',
     distributer_filepath: './airdrop/csv/distribute-erc20.csv'
   };
