@@ -359,3 +359,10 @@ export const deployCheckIn = async (startTime: number, txOverrides?: NonPayableO
   await contract.waitForDeployment();
   return contract;
 }
+
+export const deploySingleCheckIn = async (txOverrides?: NonPayableOverrides & { from?: string }) => {
+  const Contract = await ethers.getContractFactory("SingleCheckIn");
+  const contract = await Contract.deploy(txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+}
