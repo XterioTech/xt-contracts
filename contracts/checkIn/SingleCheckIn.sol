@@ -3,18 +3,20 @@ pragma solidity ^0.8.20;
 
 contract SingleCheckIn {
     mapping(address user => mapping(uint256 channel => bool checked)) records;
+    mapping(address => uint256) lastCheckInTime;
 
-    event CheckIn(address indexed user, uint256 indexed channel);
+    event CheckIn(
+        address indexed user,
+        uint256 indexed channel,
+        uint256 timestamp
+    );
 
     constructor() {}
 
     function checkIn(uint256 _channel) external {
-        require(
-            !records[msg.sender][_channel],
-            "Already checked in for this channel."
-        );
         records[msg.sender][_channel] = true;
-        emit CheckIn(msg.sender, _channel);
+        lastCheckInTime[msg.sender] = block.timestamp;
+        emit CheckIn(msg.sender, _channel, block.timestamp);
     }
 
     function query(
@@ -22,6 +24,10 @@ contract SingleCheckIn {
         uint256 _channel
     ) external view returns (bool) {
         return records[_user][_channel];
+    }
+
+    function getLastCheckInTime(address _user) external view returns (uint256) {
+        return lastCheckInTime[_user];
     }
 
     function queryMultiChannels(

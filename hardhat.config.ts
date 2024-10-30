@@ -66,7 +66,8 @@ const config: HardhatUserConfig = {
       accounts: privateKey != "" ? [privateKey] : [],
     },
     polygon: {
-      url: "https://polygon-rpc.com",
+      url: "https://polygon.blockpi.network/v1/rpc/public",
+      // url: "https://polygon-rpc.com",
       accounts: privateKey != "" ? [privateKey] : [],
     },
     base: {

@@ -24,12 +24,8 @@ describe("SingleCheckInContract", function () {
       await singleCheckIn.connect(user1).checkIn(gameChannel);
       expect(await singleCheckIn.query(await user1.getAddress(), gameChannel)).to.equal(true);
 
-      await expect(singleCheckIn.connect(user1).checkIn(gameChannel)).to.be.revertedWith("Already checked in for this channel.");
-
-
       await singleCheckIn.connect(user2).checkIn(tgChannel);
       expect(await singleCheckIn.query(await user2.getAddress(), tgChannel)).to.equal(true);
-      await expect(singleCheckIn.connect(user2).checkIn(tgChannel)).to.be.revertedWith("Already checked in for this channel.");
 
       expect(await singleCheckIn.query(await user1.getAddress(), tgChannel)).to.equal(false);
       expect(await singleCheckIn.query(await user2.getAddress(), gameChannel)).to.equal(false);
@@ -41,6 +37,10 @@ describe("SingleCheckInContract", function () {
       const results2 = await singleCheckIn.queryMultiUsers([await user1.getAddress(), await user2.getAddress()], tgChannel);
       expect(results2[0]).to.equal(false);
       expect(results2[1]).to.equal(true);
+
+      const newChannel = 3;
+      await singleCheckIn.connect(user1).checkIn(newChannel);
+      expect(await singleCheckIn.query(await user1.getAddress(), newChannel)).to.equal(true);
     });
   });
 });
