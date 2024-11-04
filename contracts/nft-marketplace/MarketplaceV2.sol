@@ -604,7 +604,7 @@ contract MarketplaceV2 is
                 abi.encodeWithSelector(
                     IERC2981.royaltyInfo.selector,
                     order.targetTokenId,
-                    order.price
+                    totalCost
                 )
             );
 
