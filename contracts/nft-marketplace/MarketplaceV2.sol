@@ -402,6 +402,9 @@ contract MarketplaceV2 is
      */
     function ignoreMessageHashs(bytes32[] calldata messageHashs) external {
         for (uint256 i = 0; i < messageHashs.length; i++) {
+            if (cancelled[msg.sender][messageHashs[i]]) {
+                continue;
+            }
             ignoreMessageHash(messageHashs[i]);
         }
     }
