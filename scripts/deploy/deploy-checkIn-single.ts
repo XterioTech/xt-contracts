@@ -28,7 +28,7 @@ async function main() {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/checkIn/SingleCheckIn.sol:SingleCheckIn",
+        contract: "contracts/check-in/SingleCheckIn.sol:SingleCheckIn",
         constructorArguments: [],
       });
     } catch (e) {
