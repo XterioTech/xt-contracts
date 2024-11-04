@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+// Daily checkin
 contract CheckInContract {
     uint256 public constant SECONDS_IN_DAY = 86400;
     uint256 public immutable startTime;
