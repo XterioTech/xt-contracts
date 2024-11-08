@@ -402,6 +402,9 @@ contract MarketplaceV2 is
      */
     function ignoreMessageHashs(bytes32[] calldata messageHashs) external {
         for (uint256 i = 0; i < messageHashs.length; i++) {
+            if (cancelled[msg.sender][messageHashs[i]]) {
+                continue;
+            }
             ignoreMessageHash(messageHashs[i]);
         }
     }
@@ -604,7 +607,7 @@ contract MarketplaceV2 is
                 abi.encodeWithSelector(
                     IERC2981.royaltyInfo.selector,
                     order.targetTokenId,
-                    order.price
+                    totalCost
                 )
             );
 
