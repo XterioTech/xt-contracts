@@ -2,9 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract AiCampaign is Ownable, ReentrancyGuard {
+contract AiCampaign is Ownable {
     uint256 public constant DAY_PERIOD = 24 * 60 * 60;
     uint256 public eventStartTime;
     uint256 public eventEndTime;
@@ -43,13 +42,11 @@ contract AiCampaign is Ownable, ReentrancyGuard {
 
     /************************************ User Functions *************************************/
 
-    function claimChatScore() external nonReentrant onlyDuringEvent {
+    function claimChatScore() external onlyDuringEvent {
         emit ChatScoreClaimed(msg.sender, block.timestamp);
     }
 
-    function switchScene(
-        uint256 sceneId
-    ) external nonReentrant onlyDuringEvent {
+    function switchScene(uint256 sceneId) external onlyDuringEvent {
         require(sceneId >= 1 && sceneId <= 28, "AiCampaign: invalid scene ID");
 
         uint256 todayIndex = dayIndex();
@@ -73,7 +70,7 @@ contract AiCampaign is Ownable, ReentrancyGuard {
         return 3 - userSceneSwitches[msg.sender][todayIndex];
     }
 
-    function claimScore() external nonReentrant onlyDuringEvent {
+    function claimScore() external onlyDuringEvent {
         emit ScoreClaimed(msg.sender, block.timestamp);
     }
 
