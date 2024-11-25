@@ -366,3 +366,13 @@ export const deploySingleCheckIn = async (txOverrides?: NonPayableOverrides & { 
   await contract.waitForDeployment();
   return contract;
 }
+
+export const deployAiCampaign = async (
+  eventStartTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("AiCampaign");
+  const contract = await Contract.deploy(eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
