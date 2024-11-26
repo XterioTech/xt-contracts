@@ -1,4 +1,3 @@
-// test/project-specific/ai-campaign/AiCampaign.test.ts
 import { expect } from "chai";
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { ethers } from "hardhat";
@@ -17,61 +16,53 @@ describe('AiCampaign', () => {
   describe('claimChatScore', () => {
     it('should allow a user to claim chat score', async () => {
       const { aiCampaign, user1 } = await loadFixture(baseFixture);
-      const tx = await aiCampaign.connect(user1).claimChatScore();
+      const walletType = 1;
+      const tx = await aiCampaign.connect(user1).claimChatScore(walletType);
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => (log as EventLog).fragment.name === 'ChatScoreClaimed');
       expect(event).to.exist;
-      const [userAddress, timestamp] = (event as EventLog).args;
+      const [userAddress, returnedWalletType, timestamp] = (event as EventLog).args;
       expect(userAddress).to.equal(user1.address);
-      expect(timestamp).to.be.closeTo(await time.latest(), 5); // 允许5秒的误差
+      expect(returnedWalletType).to.equal(walletType);
+      expect(timestamp).to.be.closeTo(await time.latest(), 5);
     });
   });
 
   describe('switchScene', () => {
     it('should allow a user to switch scene', async () => {
       const { aiCampaign, user1 } = await loadFixture(baseFixture);
-      const tx = await aiCampaign.connect(user1).switchScene(1);
+      const walletType = 1;
+      const tx = await aiCampaign.connect(user1).switchScene(1, walletType);
       const receipt = await tx.wait();
       const event = receipt?.logs.find(log => (log as EventLog).fragment.name === 'SceneSwitched');
       expect(event).to.exist;
-      const [userAddress, sceneId, timestamp] = (event as EventLog).args;
+      const [userAddress, sceneId, returnedWalletType, timestamp] = (event as EventLog).args;
       expect(userAddress).to.equal(user1.address);
       expect(sceneId).to.equal(1);
+      expect(returnedWalletType).to.equal(walletType);
       expect(timestamp).to.be.closeTo(await time.latest(), 5);
     });
 
     it('should revert if scene ID is invalid', async () => {
       const { aiCampaign, user1 } = await loadFixture(baseFixture);
-      await expect(aiCampaign.connect(user1).switchScene(29)).to.be.revertedWith("AiCampaign: invalid scene ID");
-    });
-
-    it('should revert if maximum switches reached for today', async () => {
-      const { aiCampaign, user1 } = await loadFixture(baseFixture);
-      await aiCampaign.connect(user1).switchScene(1);
-      await aiCampaign.connect(user1).switchScene(2);
-      await aiCampaign.connect(user1).switchScene(3);
-      await expect(aiCampaign.connect(user1).switchScene(4)).to.be.revertedWith("AiCampaign: maximum switches reached for today");
+      const walletType = 1;
+      await expect(aiCampaign.connect(user1).switchScene(29, walletType)).to.be.revertedWith("AiCampaign: invalid scene ID");
     });
   });
 
-  describe('remainingSwitches', () => {
-    it('should return remaining switches', async () => {
+  describe('claimTaskScore', () => {
+    it('should allow a user to claim task score', async () => {
       const { aiCampaign, user1 } = await loadFixture(baseFixture);
-      await aiCampaign.connect(user1).switchScene(1);
-      const remaining = await aiCampaign.connect(user1).remainingSwitches();
-      expect(remaining).to.equal(2);
-    });
-  });
-
-  describe('claimScore', () => {
-    it('should allow a user to claim score', async () => {
-      const { aiCampaign, user1 } = await loadFixture(baseFixture);
-      const tx = await aiCampaign.connect(user1).claimScore();
+      const walletType = 1;
+      const taskId = 123;
+      const tx = await aiCampaign.connect(user1).claimTaskScore(taskId, walletType);
       const receipt = await tx.wait();
-      const event = receipt?.logs.find(log => (log as EventLog).fragment.name === 'ScoreClaimed');
+      const event = receipt?.logs.find(log => (log as EventLog).fragment.name === 'TaskScoreClaimed');
       expect(event).to.exist;
-      const [userAddress, timestamp] = (event as EventLog).args;
+      const [userAddress, returnedTaskId, returnedWalletType, timestamp] = (event as EventLog).args;
       expect(userAddress).to.equal(user1.address);
+      expect(returnedTaskId).to.equal(taskId);
+      expect(returnedWalletType).to.equal(walletType);
       expect(timestamp).to.be.closeTo(await time.latest(), 5);
     });
   });

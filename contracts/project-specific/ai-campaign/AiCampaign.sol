@@ -8,16 +8,24 @@ contract AiCampaign is Ownable {
     uint256 public eventStartTime;
     uint256 public eventEndTime;
 
-    mapping(address => mapping(uint256 => uint256)) private userSceneSwitches;
-
     // Events
-    event ChatScoreClaimed(address indexed user, uint256 timestamp);
+    event ChatScoreClaimed(
+        address indexed user,
+        uint256 walletType,
+        uint256 timestamp
+    );
     event SceneSwitched(
         address indexed user,
         uint256 sceneId,
+        uint256 walletType,
         uint256 timestamp
     );
-    event ScoreClaimed(address indexed user, uint256 timestamp);
+    event TaskScoreClaimed(
+        address indexed user,
+        uint256 taskId,
+        uint256 walletType,
+        uint256 timestamp
+    );
 
     constructor(uint256 _eventStartTime) {
         eventStartTime = _eventStartTime;
@@ -42,36 +50,23 @@ contract AiCampaign is Ownable {
 
     /************************************ User Functions *************************************/
 
-    function claimChatScore() external onlyDuringEvent {
-        emit ChatScoreClaimed(msg.sender, block.timestamp);
+    function claimChatScore(uint256 walletType) external onlyDuringEvent {
+        emit ChatScoreClaimed(msg.sender, walletType, block.timestamp);
     }
 
-    function switchScene(uint256 sceneId) external onlyDuringEvent {
+    function switchScene(
+        uint256 sceneId,
+        uint256 walletType
+    ) external onlyDuringEvent {
         require(sceneId >= 1 && sceneId <= 28, "AiCampaign: invalid scene ID");
-
-        uint256 todayIndex = dayIndex();
-        require(
-            userSceneSwitches[msg.sender][todayIndex] < 3,
-            "AiCampaign: maximum switches reached for today"
-        );
-
-        userSceneSwitches[msg.sender][todayIndex]++;
-
-        emit SceneSwitched(msg.sender, sceneId, block.timestamp);
+        emit SceneSwitched(msg.sender, sceneId, walletType, block.timestamp);
     }
 
-    function remainingSwitches()
-        external
-        view
-        onlyDuringEvent
-        returns (uint256)
-    {
-        uint256 todayIndex = dayIndex();
-        return 3 - userSceneSwitches[msg.sender][todayIndex];
-    }
-
-    function claimScore() external onlyDuringEvent {
-        emit ScoreClaimed(msg.sender, block.timestamp);
+    function claimTaskScore(
+        uint256 taskId,
+        uint256 walletType
+    ) external onlyDuringEvent {
+        emit TaskScoreClaimed(msg.sender, taskId, walletType, block.timestamp);
     }
 
     /************************************ Management Functions *************************************/
