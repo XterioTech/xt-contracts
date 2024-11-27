@@ -19,7 +19,7 @@ describe('AiCampaign', () => {
       const walletType = 1;
       const tx = await aiCampaign.connect(user1).claimChatScore(walletType);
       const receipt = await tx.wait();
-      const event = receipt?.logs.find(log => (log as EventLog).fragment.name === 'ChatScoreClaimed');
+      const event = receipt?.logs.find(log => (log as EventLog).fragment.name === 'ClaimChatScore');
       expect(event).to.exist;
       const [userAddress, returnedWalletType, timestamp] = (event as EventLog).args;
       expect(userAddress).to.equal(user1.address);
@@ -31,22 +31,13 @@ describe('AiCampaign', () => {
   describe('switchScene', () => {
     it('should allow a user to switch scene', async () => {
       const { aiCampaign, user1 } = await loadFixture(baseFixture);
-      const walletType = 1;
-      const tx = await aiCampaign.connect(user1).switchScene(1, walletType);
+      const tx = await aiCampaign.connect(user1).switchScene();
       const receipt = await tx.wait();
-      const event = receipt?.logs.find(log => (log as EventLog).fragment.name === 'SceneSwitched');
+      const event = receipt?.logs.find(log => (log as EventLog).fragment.name === 'SwitchScene');
       expect(event).to.exist;
-      const [userAddress, sceneId, returnedWalletType, timestamp] = (event as EventLog).args;
+      const [userAddress, timestamp] = (event as EventLog).args;
       expect(userAddress).to.equal(user1.address);
-      expect(sceneId).to.equal(1);
-      expect(returnedWalletType).to.equal(walletType);
       expect(timestamp).to.be.closeTo(await time.latest(), 5);
-    });
-
-    it('should revert if scene ID is invalid', async () => {
-      const { aiCampaign, user1 } = await loadFixture(baseFixture);
-      const walletType = 1;
-      await expect(aiCampaign.connect(user1).switchScene(29, walletType)).to.be.revertedWith("AiCampaign: invalid scene ID");
     });
   });
 
@@ -57,7 +48,7 @@ describe('AiCampaign', () => {
       const taskId = 123;
       const tx = await aiCampaign.connect(user1).claimTaskScore(taskId, walletType);
       const receipt = await tx.wait();
-      const event = receipt?.logs.find(log => (log as EventLog).fragment.name === 'TaskScoreClaimed');
+      const event = receipt?.logs.find(log => (log as EventLog).fragment.name === 'ClaimTaskScore');
       expect(event).to.exist;
       const [userAddress, returnedTaskId, returnedWalletType, timestamp] = (event as EventLog).args;
       expect(userAddress).to.equal(user1.address);

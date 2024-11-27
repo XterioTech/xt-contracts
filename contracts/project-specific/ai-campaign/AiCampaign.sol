@@ -9,18 +9,13 @@ contract AiCampaign is Ownable {
     uint256 public eventEndTime;
 
     // Events
-    event ChatScoreClaimed(
+    event ClaimChatScore(
         address indexed user,
         uint256 walletType,
         uint256 timestamp
     );
-    event SceneSwitched(
-        address indexed user,
-        uint256 sceneId,
-        uint256 walletType,
-        uint256 timestamp
-    );
-    event TaskScoreClaimed(
+    event SwitchScene(address indexed user, uint256 timestamp);
+    event ClaimTaskScore(
         address indexed user,
         uint256 taskId,
         uint256 walletType,
@@ -51,22 +46,18 @@ contract AiCampaign is Ownable {
     /************************************ User Functions *************************************/
 
     function claimChatScore(uint256 walletType) external onlyDuringEvent {
-        emit ChatScoreClaimed(msg.sender, walletType, block.timestamp);
+        emit ClaimChatScore(msg.sender, walletType, block.timestamp);
     }
 
-    function switchScene(
-        uint256 sceneId,
-        uint256 walletType
-    ) external onlyDuringEvent {
-        require(sceneId >= 1 && sceneId <= 28, "AiCampaign: invalid scene ID");
-        emit SceneSwitched(msg.sender, sceneId, walletType, block.timestamp);
+    function switchScene() external onlyDuringEvent {
+        emit SwitchScene(msg.sender, block.timestamp);
     }
 
     function claimTaskScore(
         uint256 taskId,
         uint256 walletType
     ) external onlyDuringEvent {
-        emit TaskScoreClaimed(msg.sender, taskId, walletType, block.timestamp);
+        emit ClaimTaskScore(msg.sender, taskId, walletType, block.timestamp);
     }
 
     /************************************ Management Functions *************************************/
