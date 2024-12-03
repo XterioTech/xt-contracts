@@ -53,6 +53,7 @@ describe("Test LootboxUnwrapper Contract", function () {
         "uint256", // contentTokenId
         "uint256", // deadline
         "uint256", // chainid
+        "address", // contract address
       ],
       [
         u1.address,
@@ -62,6 +63,7 @@ describe("Test LootboxUnwrapper Contract", function () {
         contentTokenId,
         deadline,
         hre.network.config.chainId,
+        lootboxUnwrapper.target
       ]
     );
     const sig = await nftManager.signMessage(hre.ethers.getBytes(msgHash));
