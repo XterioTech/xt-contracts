@@ -6,7 +6,7 @@ import "./interfaces/IGateway.sol";
 import "./interfaces/IERC1155BurnSingle.sol";
 
 contract LootboxUnwrapper {
-    address gateway;
+    address immutable gateway;
 
     constructor(address _gateway) {
         gateway = _gateway;
@@ -79,7 +79,8 @@ contract LootboxUnwrapper {
                     contentTokenAddress,
                     contentTokenId,
                     deadline,
-                    block.chainid
+                    block.chainid,
+                    address(this)
                 )
             );
     }

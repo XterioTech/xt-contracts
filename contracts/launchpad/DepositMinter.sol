@@ -108,11 +108,12 @@ contract DepositMinter is AccessControl, ReentrancyGuard {
     }
 
     function setAuctionEndTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
-        require(_t > block.timestamp, "DepositMinter: invalid timestamp");
+        require(_t > block.timestamp && auctionStartTime < _t, "DepositMinter: invalid timestamp");
         auctionEndTime = _t;
     }
 
     function setAuctionStartTime(uint256 _t) external onlyRole(MANAGER_ROLE) {
+        require(_t < auctionEndTime, "DepositMinter: invalid timestamp");
         auctionStartTime = _t;
     }
 

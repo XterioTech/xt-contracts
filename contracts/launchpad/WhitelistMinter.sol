@@ -95,6 +95,9 @@ contract WhitelistMinter {
         address signer = IGateway(gateway).nftManager(_tokenAddress);
         _checkSigValidity(inputHash, _sig, signer);
 
+        mintedBuyerId[msg.sender][_limits[0]] += _amount;
+        mintedTokenId[_tokenAddress][_tokenId][_limits[2]] += _amount;
+
         // Transfer payment tokens
         if (_paymentTokenAddress == address(0)) {
             require(
@@ -123,9 +126,6 @@ contract WhitelistMinter {
                 "0x"
             );
         }
-
-        mintedBuyerId[msg.sender][_limits[0]] += _amount;
-        mintedTokenId[_tokenAddress][_tokenId][_limits[2]] += _amount;
 
         // Emit the Mint event
         emit Mint(
@@ -163,7 +163,8 @@ contract WhitelistMinter {
                     _paymentTokenAmount,
                     _payeeAddress,
                     _deadline,
-                    block.chainid
+                    block.chainid,
+                    address(this)
                 )
             );
     }
