@@ -18,7 +18,7 @@ const main = async () => {
     }
 
     console.info(`============================================================`);
-    console.info(`===================== Deploy CreatorTokenTransferValidator =====================`);
+    console.info(`=========== Deploy CreatorTokenTransferValidator ===========`);
     console.info(`============================================================`);
     const validator = await deployCreatorTokenTransferValidator(admin.address);
     address = await validator.getAddress();

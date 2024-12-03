@@ -20,7 +20,7 @@ const main = async () => {
     }
 
     console.info(`============================================================`);
-    console.info(`===================== Deploy WhitelistMinter =====================`);
+    console.info(`==================== Deploy WhitelistMinter ================`);
     console.info(`============================================================`);
     const whitelistMinter = await deployWhitelistMinter(gatewayAddress, getTxOverridesForNetwork(hre.network.name));
     address = await whitelistMinter.getAddress();

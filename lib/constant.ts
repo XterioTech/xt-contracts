@@ -23,7 +23,7 @@ export const tokenGatewayAddressMap: NetworkAddressMap = {
   goerli: "0xC8d6b1D3Cca37952465086D9D96DB0E1C96f4E1e",
   bscTestnet: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   opbnbTestnet: "0x5d3757bC0f724aA4332DCa2184edA1b8a94eA0b6",
-  xterioTestnet: "0xB6Fe7Bc1c8836983C0643D5869c42bD27aCAAedD",
+  xterioTestnet: "0x1266EFc5430a871b44d5BC29C67f89B3134902Bb",
 };
 
 export const marketplaceV2AddressMap: NetworkAddressMap = {
@@ -37,22 +37,32 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
   base: "0xFC1759E75180aeE982DC08D0d6D365ebFA0296a7",
   // Testnets
   goerli: "0xDbE4F513dBc79dEF048Df54D870EfB3B2edE01cB",
+  sepolia: "0xBAdCF947d6F23e7252d6b4bB9334Ce0cff0E0C0C",
   bscTestnet: "0x2973fAe1Db21e3f30dF115d43094E7B2d83251c5",
   opbnbTestnet: "0x1dDee87268F5AF34Ef2fBD128D0D8Dd21b67Bdb1",
-  xterioTestnet: "0x9A228181d15E57Ab4324B6903EcD847cADBF727B",
+  xterioTestnet: "0xD5c5930f96e9743931ac5B2925792007a6665546",
 };
 
 export const fansCreateAddressMap: NetworkAddressMap = {
   // Testnets
-  xterioTestnet: "0xccc2508CE3C6cD3C10306aeb11D5201Dcb95e09B",
-  xterio: "0x70D75ae4b40Ac5A8E1f2AbE888978Ba28329C00F",
+  xterioTestnet: "0x4CaF4cb43C455Ed66E643cB7d59c45b38E66d0D0",
+  xterio: "0x7e913A13740ab75df2B34249059879948F5157D0",
 };
 
 export const onchainIAPAddressMap: NetworkAddressMap = {
-  xterio: "",
+  mainnet: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  opbnb: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  arbitrumOne: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  polygon: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  bsc: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  xterio: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  xterioEth: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
+  base: "0xD9A1b8D84FB0Db3C95cfaAb819Ae18EBE4634891",
   // Testnets
-  sepolia: '0xEd2c2cbdA41a3Aa612229326ef7598D431f5efE1',
-  xterioTestnet: "0xFF4475541AD29385d19c258b474Fa93F99D0824F",
+  sepolia: '0x6F58796D4563a5140Cb636Fd4C48EB20fe97ff1F',        //for stage eng
+  // sepolia: '0x1cDc98Abe4dB79b332206dD7a89742F0f59255F7',        //for test eng
+  xterioTestnet: "0xd3875f07496d65fc09Ad455ca53194A77eBCb504",  // for stage env
+  // xterioTestnet: "0x5949430506ff6Ce098a5DdD8a062D3Da7373b365",  // for test env
 };
 
 export const safeManagerAddressMap: NetworkAddressMap = {

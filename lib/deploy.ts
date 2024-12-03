@@ -1,9 +1,10 @@
 import hre, { ethers } from "hardhat";
-import { MarketplaceV2, TokenGateway } from "../typechain-types";
+import { FansCreateBNBUpgradeable, FansCreateERC20Upgradeable, MarketplaceV2, TokenGateway } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
 import MerkleTree from "merkletreejs";
 import keccak256 from "keccak256";
+import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 export const deployMajorToken = async (
   admin: AddressLike,
@@ -105,6 +106,51 @@ export const deployFansCreateERC20 = async (
 ) => {
   const Contract = await hre.ethers.getContractFactory("FansCreateERC20");
   const contract = await Contract.deploy(admin, signer, recipient, uri, paymentToken, priceCoef, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployFansCreateBNBUpgradeable = async (
+  admin: AddressLike,
+  signer: AddressLike,
+  recipient: AddressLike,
+  uri: string,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("FansCreateBNBUpgradeable");
+  const deployOptions: DeployProxyOptions = {
+    kind: "uups" as const,
+    txOverrides: txOverrides,
+  };
+  const contract = (await hre.upgrades.deployProxy(
+    Contract,
+    [admin, signer, recipient, uri],
+    deployOptions
+  )) as unknown as FansCreateBNBUpgradeable;
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployFansCreateERC20Upgradeable = async (
+  admin: AddressLike,
+  signer: AddressLike,
+  recipient: AddressLike,
+  uri: string,
+  paymentToken: AddressLike,
+  priceCoef: BigNumberish,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("FansCreateERC20Upgradeable");
+  const deployOptions: DeployProxyOptions = {
+    initializer: "initialize(address,address,address,string,address,uint256)",
+    kind: "uups" as const,
+    ...txOverrides,
+  };
+  const contract = (await hre.upgrades.deployProxy(
+    Contract,
+    [admin, signer, recipient, uri, paymentToken, priceCoef],
+    deployOptions
+  )) as unknown as FansCreateERC20Upgradeable;
   await contract.waitForDeployment();
   return contract;
 };
@@ -250,12 +296,7 @@ export const deployWhitelistClaimETH = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const WhitelistClaimETH = await ethers.getContractFactory("WhitelistClaimETH");
-  const whitelistClaimETH = await WhitelistClaimETH.deploy(
-    merkleRoot,
-    startTime,
-    deadline,
-    txOverrides || {}
-  );
+  const whitelistClaimETH = await WhitelistClaimETH.deploy(merkleRoot, startTime, deadline, txOverrides || {});
   await whitelistClaimETH.waitForDeployment();
   return whitelistClaimETH;
 };
@@ -286,7 +327,7 @@ export const deployTokenDistribute = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("TokenDistribute");
-  const contract = await Contract.deploy(defaultOwner, txOverrides || {})
+  const contract = await Contract.deploy(defaultOwner, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
@@ -299,18 +340,29 @@ export const deployAggregator = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("Aggregator");
-  const contract = await Contract.deploy(defaultOwner, decimals, description, version, txOverrides || {})
+  const contract = await Contract.deploy(defaultOwner, decimals, description, version, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
 
-
-export const deployOnchainIAP = async (
-  admin: string,
-  txOverrides?: NonPayableOverrides & { from?: string }
-) => {
+export const deployOnchainIAP = async (admin: string, txOverrides?: NonPayableOverrides & { from?: string }) => {
   const Contract = await ethers.getContractFactory("OnchainIAP");
   const contract = await Contract.deploy(admin, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
+
+
+export const deployCheckIn = async (startTime: number, txOverrides?: NonPayableOverrides & { from?: string }) => {
+  const Contract = await ethers.getContractFactory("CheckInContract");
+  const contract = await Contract.deploy(startTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+}
+
+export const deploySingleCheckIn = async (txOverrides?: NonPayableOverrides & { from?: string }) => {
+  const Contract = await ethers.getContractFactory("SingleCheckIn");
+  const contract = await Contract.deploy(txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+}

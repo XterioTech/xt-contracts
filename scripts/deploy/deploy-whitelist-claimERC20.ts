@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployWhitelistClaimERC20 } from "../../lib/deploy";
-import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
+import { getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [deployer] = await hre.ethers.getSigners();
@@ -33,6 +33,8 @@ const main = async () => {
     console.info(colorize(Color.blue, `Deploy WhitelistClaimERC20`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
     // console.info(colorize(Color.yellow, `Admin: ${admin}`));
+    console.info(colorize(Color.yellow, `Claim Merkle Root: ${claimMerkleRoot}`));
+    console.info(colorize(Color.yellow, `Token Address: ${paymentToken}`));
     console.info(colorize(Color.yellow, `Claim Start Time: ${new Date(claimStartTime * 1000)}`));
     console.info(colorize(Color.yellow, `Claim End Time: ${new Date(claimEndTime * 1000)}`));
     if (!inputConfirm("Confirm? ")) {

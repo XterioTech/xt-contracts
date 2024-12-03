@@ -20,7 +20,7 @@ const main = async () => {
     }
 
     console.info(`============================================================`);
-    console.info(`===================== Deploy TokenGateway =====================`);
+    console.info(`===================== Deploy TokenGateway ==================`);
     console.info(`============================================================`);
     const gateway = await deployGateway(gatewayAdmin, getTxOverridesForNetwork(hre.network.name));
     const proxyAddress = await gateway.getAddress();

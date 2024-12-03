@@ -66,7 +66,8 @@ const config: HardhatUserConfig = {
       accounts: privateKey != "" ? [privateKey] : [],
     },
     polygon: {
-      url: "https://polygon-rpc.com",
+      url: "https://polygon.blockpi.network/v1/rpc/public",
+      // url: "https://polygon-rpc.com",
       accounts: privateKey != "" ? [privateKey] : [],
     },
     base: {
@@ -88,6 +89,15 @@ const config: HardhatUserConfig = {
   },
   solidity: {
     compilers: [
+      {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
       {
         version: "0.8.19",
         settings: {

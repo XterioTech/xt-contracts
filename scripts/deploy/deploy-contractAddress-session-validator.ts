@@ -27,7 +27,7 @@ const main = async () => {
     }
 
     console.info(`=================================================================================`);
-    console.info(`=================== Deploy ContractAddressSessionValidationModule =================`);
+    console.info(`================= Deploy ContractAddressSessionValidationModule =================`);
     console.info(`=================================================================================`);
     const ContractAddressSessionValidationModule = await deployContractAddressSessionValidationModule(getTxOverridesForNetwork(hre.network.name));
 
