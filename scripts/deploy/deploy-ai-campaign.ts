@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { Color, colorize } from "../../lib/utils";
+import { Color, colorize, infoAboutDeployer } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployAiCampaign } from "../../lib/deploy";
 
@@ -9,9 +9,13 @@ async function main() {
   let address = process.env.verifyAddress;
   const eventStartTime = Number.parseInt(process.env.eventStartTime || "0")
 
+  if (eventStartTime <= 0) {
+    throw new Error("eventStartTime not specified");
+  }
+
   if (!address) {
-    console.info(colorize(Color.blue, `Deploy CheckIn`));
-    console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
+    console.info(colorize(Color.blue, `Deploy AiCampaign`));
+    await infoAboutDeployer(hre, deployer);
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
@@ -29,7 +33,7 @@ async function main() {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/project-specific/ai-campaign/AiCampaign.sol:AiCampaign",
+        contract: "contracts/ai-campaign/AiCampaign.sol:AiCampaign",
         constructorArguments: [eventStartTime],
       });
     } catch (e) {
