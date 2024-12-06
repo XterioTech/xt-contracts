@@ -11,7 +11,7 @@ contract XterToken is ERC20, ERC20Pausable, ERC20Permit, ERC20Burnable, AccessCo
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     
-    constructor(address admin, address wallet) ERC20("Xter", "XTER") ERC20Permit("Xter") {
+    constructor(address admin, address wallet) ERC20("Xterio", "XTER") ERC20Permit("Xterio") {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _mint(wallet, 1_000_000_000 * 10 ** 18);
     }
