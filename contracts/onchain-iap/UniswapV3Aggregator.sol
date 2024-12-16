@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "./libraries/TickMath.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract UniswapV3Aggregator is Ownable {
     IUniswapV3Pool public uniswapV3Pool;
@@ -64,6 +65,17 @@ contract UniswapV3Aggregator is Ownable {
         uint256 numerator = uint256(sqrtPriceX96) * uint256(sqrtPriceX96);
         uint256 denominator = 1 << 192;
         uint256 price = (numerator * 10 ** decimals) / denominator;
+
+        uint8 token0Decimals = IERC20Metadata(uniswapV3Pool.token0())
+            .decimals();
+        uint8 token1Decimals = IERC20Metadata(uniswapV3Pool.token1())
+            .decimals();
+
+        if (token0Decimals < token1Decimals) {
+            price = price / (10 ** (token1Decimals - token0Decimals));
+        } else {
+            price = price * (10 ** (token0Decimals - token1Decimals));
+        }
 
         if (tokenAddress != uniswapV3Pool.token0()) {
             price = 10 ** (2 * decimals) / price;
