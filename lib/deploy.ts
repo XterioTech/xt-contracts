@@ -359,3 +359,15 @@ export const deployCheckIn = async (startTime: number, txOverrides?: NonPayableO
   await contract.waitForDeployment();
   return contract;
 }
+
+export const deployUniswapV3Aggregator = async (
+  defaultOwner: AddressLike,
+  uniswapV3Pool: AddressLike,
+  tokenAddress: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("UniswapV3Aggregator");
+  const contract = await Contract.deploy(defaultOwner, uniswapV3Pool, tokenAddress, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
