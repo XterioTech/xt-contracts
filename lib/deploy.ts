@@ -360,6 +360,23 @@ export const deployCheckIn = async (startTime: number, txOverrides?: NonPayableO
   return contract;
 }
 
+export const deploySingleCheckIn = async (txOverrides?: NonPayableOverrides & { from?: string }) => {
+  const Contract = await ethers.getContractFactory("SingleCheckIn");
+  const contract = await Contract.deploy(txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+}
+
+export const deployAiCampaign = async (
+  eventStartTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("AiCampaign");
+  const contract = await Contract.deploy(eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
 export const deployUniswapV3Aggregator = async (
   defaultOwner: AddressLike,
   uniswapV3Pool: AddressLike,

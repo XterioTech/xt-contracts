@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
-import { Color, colorize } from "../../lib/utils";
+import { Color, colorize, infoAboutDeployer } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployMajorToken } from "../../lib/deploy";
 
@@ -13,7 +13,9 @@ async function main() {
 
   if (!address) {
     console.info(colorize(Color.blue, `Deploy XterToken`));
-    console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
+    await infoAboutDeployer(hre, deployer);
+    console.info(colorize(Color.yellow, `admin: ${admin}`));
+    console.info(colorize(Color.yellow, `wallet: ${wallet}`));
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;

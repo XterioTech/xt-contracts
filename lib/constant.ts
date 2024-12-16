@@ -46,7 +46,7 @@ export const marketplaceV2AddressMap: NetworkAddressMap = {
 export const fansCreateAddressMap: NetworkAddressMap = {
   // Testnets
   xterioTestnet: "0x4CaF4cb43C455Ed66E643cB7d59c45b38E66d0D0",
-  xterio: "0x70D75ae4b40Ac5A8E1f2AbE888978Ba28329C00F",
+  xterio: "0x7e913A13740ab75df2B34249059879948F5157D0",
 };
 
 export const onchainIAPAddressMap: NetworkAddressMap = {
