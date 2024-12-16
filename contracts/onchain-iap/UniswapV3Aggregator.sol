@@ -72,14 +72,6 @@ contract UniswapV3Aggregator is Ownable {
         return (0, int256(price), 0, 0, 0);
     }
 
-    function updateUniswapV3Pool(address _uniswapV3Pool) external onlyOwner {
-        uniswapV3Pool = IUniswapV3Pool(_uniswapV3Pool);
-    }
-
-    function updateTokenAddress(address _tokenAddress) external onlyOwner {
-        tokenAddress = _tokenAddress;
-    }
-
     function updateDecimals(uint8 _decimals) external onlyOwner {
         decimals = _decimals;
     }
