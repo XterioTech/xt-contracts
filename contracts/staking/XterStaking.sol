@@ -30,7 +30,6 @@ contract XterStaking is
         address staker; // Address of the staker
         uint256 amount; // Amount staked
         uint256 startTime; // Staking start time
-        uint256 endTime; // Time when unstaking is allowed
         uint256 duration; // Duration in seconds
         bool claimed; // default is false
     }
@@ -45,7 +44,6 @@ contract XterStaking is
         uint256 indexed id,
         uint256 amount,
         uint256 startTime,
-        uint256 endTime,
         uint256 duration,
         bool claimed
     );
@@ -55,7 +53,6 @@ contract XterStaking is
         uint256 indexed id,
         uint256 amount,
         uint256 startTime,
-        uint256 endTime,
         uint256 duration,
         bool claimed
     );
@@ -65,7 +62,6 @@ contract XterStaking is
         uint256 indexed id,
         uint256 amount,
         uint256 startTime,
-        uint256 endTime,
         uint256 duration,
         bool claimed
     );
@@ -112,8 +108,6 @@ contract XterStaking is
 
         XTER.safeTransferFrom(msg.sender, address(this), amount);
 
-        uint256 endTime = block.timestamp + duration; // Calculate end time
-
         address staker = _beneficiary != address(0) ? _beneficiary : msg.sender; // Determine staker
 
         stakes.push(
@@ -122,7 +116,6 @@ contract XterStaking is
                 staker: staker,
                 amount: amount,
                 startTime: block.timestamp,
-                endTime: endTime,
                 duration: duration,
                 claimed: false
             })
@@ -135,24 +128,31 @@ contract XterStaking is
             stakes.length - 1,
             amount,
             block.timestamp,
-            endTime,
             duration,
             false
         );
+    }
+
+    modifier canUnstake(uint256 _id) {
+        Stk storage stakeData = stakes[_id];
+        require(stakeData.staker == msg.sender, "Not authorized");
+        require(
+            block.timestamp >= stakeData.startTime + stakeData.duration,
+            "Stake period not ended"
+        );
+        require(!stakeData.claimed, "Stake not valid or already claimed");
+        stakeData.claimed = true; // Set as claimed
+        _;
     }
 
     /**
      * @notice User to unstake
      * @param _id Stake record ID
      */
-    function unstake(uint256 _id) public whenNotPaused nonReentrant {
+    function unstake(
+        uint256 _id
+    ) external whenNotPaused nonReentrant canUnstake(_id) {
         Stk storage stakeData = stakes[_id];
-
-        require(stakeData.staker == msg.sender, "Not authorized");
-        require(!stakeData.claimed, "Stake not valid or already claimed");
-        require(block.timestamp >= stakeData.endTime, "Stake period not ended");
-
-        stakeData.claimed = true; // Set as claimed
 
         XTER.safeTransfer(msg.sender, stakeData.amount);
 
@@ -161,7 +161,6 @@ contract XterStaking is
             _id,
             stakeData.amount,
             stakeData.startTime,
-            stakeData.endTime,
             stakeData.duration,
             stakeData.claimed
         );
@@ -175,13 +174,9 @@ contract XterStaking is
     function restake(
         uint256 _id,
         uint256 duration // Duration in seconds
-    ) external whenNotPaused nonReentrant {
+    ) external whenNotPaused nonReentrant canUnstake(_id) {
         Stk storage stakeData = stakes[_id];
 
-        require(stakeData.staker == msg.sender, "Not authorized");
-        require(!stakeData.claimed, "Stake not ended or already claimed");
-
-        stakeData.claimed = true; // Set as claimed
         // restake previous amount
         stake(stakeData.amount, duration, address(0));
 
@@ -189,10 +184,9 @@ contract XterStaking is
             msg.sender,
             _id,
             stakeData.amount,
-            stakeData.startTime,
-            stakeData.endTime,
-            duration,
-            stakeData.claimed
+            block.timestamp,
+            duration, // new duration
+            false
         );
     }
 
