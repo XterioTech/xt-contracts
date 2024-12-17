@@ -11,13 +11,11 @@ interface IWhitelistClaimERC20 {
 
 interface IXterStaking {
     function XTER() external view returns (IERC20);
-    enum Tier {
-        Tier24M,
-        Tier12M,
-        Tier6M,
-        Tier3M
-    }
-    function stake(uint256 amount, Tier tier, address _beneficiary) external;
+    function stake(
+        uint256 amount,
+        uint256 duration,
+        address _beneficiary
+    ) external;
 }
 
 contract XterStakeDelegator is ReentrancyGuard {
@@ -39,7 +37,7 @@ contract XterStakeDelegator is ReentrancyGuard {
     function claimAndStake(
         uint256 amount,
         uint256 stakeAmount,
-        IXterStaking.Tier tier
+        uint256 duration
     ) external nonReentrant {
         require(
             stakeAmount <= amount,
@@ -49,7 +47,7 @@ contract XterStakeDelegator is ReentrancyGuard {
         whitelistClaim.claim(amount, new bytes32[](0)); //Todo...  Merkle proof by sig
 
         IERC20 xterToken = IERC20(address(xterStaking.XTER()));
-        xterStaking.stake(stakeAmount, tier, msg.sender);
+        xterStaking.stake(stakeAmount, duration, msg.sender);
 
         uint256 remainingAmount = amount - stakeAmount;
         xterToken.safeTransfer(msg.sender, remainingAmount);

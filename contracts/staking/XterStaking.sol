@@ -24,28 +24,15 @@ contract XterStaking is
     // Token interface
     IERC20Upgradeable public XTER;
 
-    // Available tiers with their multipliers
-    enum Tier {
-        Tier24M, // 24 months, multiplier 4.5
-        Tier12M, // 12 months, multiplier 2.0
-        Tier6M, // 6 months, multiplier 0.75
-        Tier3M // 3 months, multiplier 0.25
-    }
-
-    enum Status {
-        UnClaimed, // 0 - 未领取
-        Claimed // 1 - 已领取
-    }
-
-    // Staking structure
+    // Staking status
     struct Stk {
         uint256 id; // Unique identifier for each stake
         address staker; // Address of the staker
         uint256 amount; // Amount staked
-        Tier tier; // Staking tier
         uint256 startTime; // Staking start time
         uint256 endTime; // Time when unstaking is allowed
-        Status status; // UnClaimed or Claimed
+        uint256 duration; // Duration in seconds
+        bool claimed; // default is false
     }
 
     // Store user stakes
@@ -59,7 +46,8 @@ contract XterStaking is
         uint256 amount,
         uint256 startTime,
         uint256 endTime,
-        Status status
+        uint256 duration,
+        bool claimed
     );
 
     event UnStake(
@@ -68,7 +56,8 @@ contract XterStaking is
         uint256 amount,
         uint256 startTime,
         uint256 endTime,
-        Status status
+        uint256 duration,
+        bool claimed
     );
 
     event ReStake(
@@ -78,7 +67,8 @@ contract XterStaking is
         uint256 restakeAmount,
         uint256 startTime,
         uint256 endTime,
-        Status status
+        uint256 duration,
+        bool claimed
     );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -106,37 +96,40 @@ contract XterStaking is
         address newImplementation
     ) internal override onlyRole(UPGRADER_ROLE) {}
 
+    /// @dev ────────────────────────────────────────────────
+    /// @dev                     Core Functions
+    /// @dev ────────────────────────────────────────────────
     /**
      * @notice User to stake
      * @param amount Amount to stake
-     * @param tier Staking tier
+     * @param duration Duration in seconds
      */
     function stake(
         uint256 amount,
-        Tier tier,
+        uint256 duration, // Duration in seconds
         address _beneficiary
     ) public whenNotPaused nonReentrant {
         require(amount > 0, "Stake amount must be greater than zero");
 
         XTER.safeTransferFrom(msg.sender, address(this), amount);
 
-        uint256 endTime = block.timestamp + getTierDuration(tier);
+        uint256 endTime = block.timestamp + duration; // Calculate end time
 
-        address staker = _beneficiary != address(0) ? _beneficiary : msg.sender; // 提取 staker
+        address staker = _beneficiary != address(0) ? _beneficiary : msg.sender; // Determine staker
 
         stakes.push(
             Stk({
                 id: stakes.length,
                 staker: staker,
                 amount: amount,
-                tier: Tier(tier),
                 startTime: block.timestamp,
                 endTime: endTime,
-                status: Status.UnClaimed
+                duration: duration,
+                claimed: false
             })
         );
 
-        userStakes[staker].push(stakes.length - 1); // 保存 staker 的 stake 记录 ID
+        userStakes[staker].push(stakes.length - 1); // Save staker's stake record ID
 
         emit Stake(
             staker,
@@ -144,7 +137,8 @@ contract XterStaking is
             amount,
             block.timestamp,
             endTime,
-            Status.UnClaimed
+            duration,
+            false
         );
     }
 
@@ -157,12 +151,12 @@ contract XterStaking is
 
         require(stakeData.staker == msg.sender, "Not authorized");
         require(
-            stakeData.status == Status.UnClaimed,
+            !stakeData.claimed, // Check if unclaimed
             "Stake not valid or already claimed"
         );
         require(block.timestamp >= stakeData.endTime, "Stake period not ended");
 
-        stakeData.status = Status.Claimed; // Set to ended and claimed status
+        stakeData.claimed = true; // Set as claimed
 
         XTER.safeTransfer(msg.sender, stakeData.amount);
 
@@ -172,25 +166,27 @@ contract XterStaking is
             stakeData.amount,
             stakeData.startTime,
             stakeData.endTime,
-            stakeData.status
+            stakeData.duration,
+            stakeData.claimed
         );
     }
 
     /**
      * @notice User can claim part of their stake and restake
      * @param _id Stake record ID
-     * @param tier New staking tier
+     * @param restakeAmount Amount to restake
+     * @param duration Duration in seconds
      */
     function claimAndReStake(
         uint256 _id,
         uint256 restakeAmount,
-        Tier tier
+        uint256 duration // Duration in seconds
     ) external whenNotPaused nonReentrant {
         Stk storage stakeData = stakes[_id];
 
         require(stakeData.staker == msg.sender, "Not authorized");
         require(
-            stakeData.status == Status.UnClaimed,
+            !stakeData.claimed, // Check if unclaimed
             "Stake not ended or already claimed"
         );
         require(
@@ -200,11 +196,11 @@ contract XterStaking is
 
         uint256 claimAmount = stakeData.amount - restakeAmount;
 
-        stakeData.status = Status.Claimed;
+        stakeData.claimed = true; // Set as claimed
 
         XTER.safeTransfer(msg.sender, claimAmount);
 
-        stake(restakeAmount, tier, address(0));
+        stake(restakeAmount, duration, address(0)); // Directly pass duration (seconds)
 
         emit ReStake(
             msg.sender,
@@ -213,23 +209,14 @@ contract XterStaking is
             restakeAmount,
             stakeData.startTime,
             stakeData.endTime,
-            stakeData.status
+            duration,
+            stakeData.claimed
         );
     }
 
-    /**
-     * @notice Get duration for a specific tier (in seconds)
-     * @param tier The tier to query
-     */
-    function getTierDuration(Tier tier) internal pure returns (uint256) {
-        if (tier == Tier.Tier24M) return 24 * 30 days;
-        if (tier == Tier.Tier12M) return 12 * 30 days;
-        if (tier == Tier.Tier6M) return 6 * 30 days;
-        if (tier == Tier.Tier3M) return 3 * 30 days;
-
-        revert("Invalid tier");
-    }
-
+    /// @dev ────────────────────────────────────────────────
+    /// @dev                     View Functions
+    /// @dev ────────────────────────────────────────────────
     /**
      * @notice Get total staked amount
      */
@@ -264,6 +251,10 @@ contract XterStaking is
 
         return userStakeRecords;
     }
+
+    /// @dev ────────────────────────────────────────────────
+    /// @dev                     Management Functions
+    /// @dev ────────────────────────────────────────────────
 
     /**
      * @notice Manager can pause the contract
