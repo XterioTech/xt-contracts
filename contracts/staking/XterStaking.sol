@@ -184,50 +184,12 @@ contract XterStaking is
             msg.sender,
             _id,
             stakeData.amount,
-            block.timestamp,
-            duration, // new duration
-            false
+            stakeData.startTime,,
+            stakeData.duration, // old duration
+            stakeData.claimed
         );
     }
-
-    /// @dev ────────────────────────────────────────────────
-    /// @dev                     View Functions
-    /// @dev ────────────────────────────────────────────────
-    /**
-     * @notice Get total staked amount
-     */
-    function totalStaked() external view returns (uint256 total) {
-        for (uint i = 0; i < stakes.length; i++) {
-            total += stakes[i].amount;
-        }
-    }
-
-    /**
-     * @notice Get total staked amount for a specific user
-     * @param user User address
-     */
-    function getUserTotalStaked(
-        address user
-    ) external view returns (uint256 total) {
-        for (uint i = 0; i < userStakes[user].length; i++) {
-            total += stakes[userStakes[user][i]].amount;
-        }
-    }
-
-    /**
-     * @notice Get all staking records for a specific user
-     * @param user User address
-     */
-    function getUserStakes(address user) external view returns (Stk[] memory) {
-        Stk[] memory userStakeRecords = new Stk[](userStakes[user].length);
-
-        for (uint i = 0; i < userStakes[user].length; i++) {
-            userStakeRecords[i] = stakes[userStakes[user][i]];
-        }
-
-        return userStakeRecords;
-    }
-
+    
     /// @dev ────────────────────────────────────────────────
     /// @dev                     Management Functions
     /// @dev ────────────────────────────────────────────────
