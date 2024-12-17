@@ -1,21 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract XterStaking is AccessControl, Pausable, ReentrancyGuard {
-    using SafeERC20 for IERC20;
+contract XterStaking is
+    Initializable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable
+{
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    // Define roles
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
     // Token interface
-    IERC20 public immutable XTER;
-
-    uint256 public immutable startTime;
+    IERC20Upgradeable public XTER;
 
     // Available tiers with their multipliers
     enum Tier {
@@ -74,14 +81,30 @@ contract XterStaking is AccessControl, Pausable, ReentrancyGuard {
         Status status
     );
 
-    constructor(address xterToken, uint256 startTime_) {
-        require(xterToken != address(0), "Invalid token address");
-        XTER = IERC20(xterToken);
-        startTime = startTime_;
-
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MANAGER_ROLE, msg.sender);
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
+
+    function initialize(
+        address admin,
+        address xterToken
+    ) public virtual initializer {
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+        __UUPSUpgradeable_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(MANAGER_ROLE, admin);
+        _grantRole(UPGRADER_ROLE, admin);
+
+        require(xterToken != address(0), "Invalid token address");
+        XTER = IERC20Upgradeable(xterToken);
+    }
+
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     /**
      * @notice User to stake
