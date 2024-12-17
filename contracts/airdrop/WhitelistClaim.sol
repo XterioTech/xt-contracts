@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     bytes32 public merkleRoot;
@@ -69,8 +70,29 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     function delegateClaim(
         address beneficiary,
         uint256 amount,
-        bytes32[] memory proof
+        bytes32[] memory proof,
+        uint256 deadline,
+        bytes calldata sig
     ) external nonReentrant validateClaim(beneficiary, amount, proof) {
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                beneficiary,
+                amount,
+                proof,
+                deadline,
+                block.chainid,
+                msg.sender, // delegator
+                address(this)
+            )
+        );
+
+        // beneficiary must be the signer
+        require(
+            beneficiary ==
+                ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), sig),
+            "WhitelistClaim: invalid signature"
+        );
+
         _payOut(amount, msg.sender); // _payout to delegator for part staking
         emit XDelegateClaim(msg.sender, beneficiary, amount);
     }

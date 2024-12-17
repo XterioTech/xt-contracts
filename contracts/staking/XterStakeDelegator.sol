@@ -11,7 +11,9 @@ interface IWhitelistClaimERC20 {
     function delegateClaim(
         address beneficiary,
         uint256 amount,
-        bytes32[] memory proof
+        bytes32[] memory proof,
+        uint256 deadline,
+        bytes calldata sig
     ) external;
 }
 
@@ -30,7 +32,7 @@ contract XterStakeDelegator is ReentrancyGuard, Pausable, Ownable {
     IWhitelistClaimERC20 public whitelistClaim;
     IXterStaking public xterStaking;
 
-    event ClaimedAndStaked(
+    event ClaimAndStake(
         address indexed user,
         uint256 totalAmount,
         uint256 stakeAmount,
@@ -51,7 +53,9 @@ contract XterStakeDelegator is ReentrancyGuard, Pausable, Ownable {
         uint256 totalAmount,
         bytes32[] memory proof,
         uint256 stakeAmount,
-        uint256 duration
+        uint256 duration,
+        uint256 deadline,
+        bytes calldata sig
     ) external nonReentrant whenNotPaused {
         require(
             stakeAmount <= totalAmount,
@@ -62,22 +66,17 @@ contract XterStakeDelegator is ReentrancyGuard, Pausable, Ownable {
         require(proof.length > 0, "Proof must be provided");
 
         // claim
-        whitelistClaim.delegateClaim(msg.sender, totalAmount, proof);
+        whitelistClaim.delegateClaim(
+            msg.sender, // beneficiary
+            totalAmount,
+            proof,
+            deadline,
+            sig
+        );
 
         // stake
         IERC20 xterToken = IERC20(address(xterStaking.XTER()));
-
         xterToken.safeIncreaseAllowance(address(xterStaking), stakeAmount);
-
-        // Check current allowance before increasing
-        uint256 currentAllowance = xterToken.allowance(
-            address(this),
-            address(xterStaking)
-        );
-        require(
-            currentAllowance >= stakeAmount,
-            "Insufficient allowance for staking"
-        );
 
         xterStaking.stake(stakeAmount, duration, msg.sender);
 
@@ -87,7 +86,7 @@ contract XterStakeDelegator is ReentrancyGuard, Pausable, Ownable {
             xterToken.safeTransfer(msg.sender, withdrawAmount);
         }
         // Emit event for tracking
-        emit ClaimedAndStaked(
+        emit ClaimAndStake(
             msg.sender,
             totalAmount,
             stakeAmount,
