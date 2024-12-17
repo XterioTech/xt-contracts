@@ -63,8 +63,7 @@ contract XterStaking is
     event ReStake(
         address indexed user,
         uint256 indexed id,
-        uint256 claimAmount,
-        uint256 restakeAmount,
+        uint256 amount,
         uint256 startTime,
         uint256 endTime,
         uint256 duration,
@@ -150,10 +149,7 @@ contract XterStaking is
         Stk storage stakeData = stakes[_id];
 
         require(stakeData.staker == msg.sender, "Not authorized");
-        require(
-            !stakeData.claimed, // Check if unclaimed
-            "Stake not valid or already claimed"
-        );
+        require(!stakeData.claimed, "Stake not valid or already claimed");
         require(block.timestamp >= stakeData.endTime, "Stake period not ended");
 
         stakeData.claimed = true; // Set as claimed
@@ -174,39 +170,25 @@ contract XterStaking is
     /**
      * @notice User can claim part of their stake and restake
      * @param _id Stake record ID
-     * @param restakeAmount Amount to restake
      * @param duration Duration in seconds
      */
-    function claimAndReStake(
+    function restake(
         uint256 _id,
-        uint256 restakeAmount,
         uint256 duration // Duration in seconds
     ) external whenNotPaused nonReentrant {
         Stk storage stakeData = stakes[_id];
 
         require(stakeData.staker == msg.sender, "Not authorized");
-        require(
-            !stakeData.claimed, // Check if unclaimed
-            "Stake not ended or already claimed"
-        );
-        require(
-            restakeAmount <= stakeData.amount,
-            "Restake amount exceeds total stake"
-        );
-
-        uint256 claimAmount = stakeData.amount - restakeAmount;
+        require(!stakeData.claimed, "Stake not ended or already claimed");
 
         stakeData.claimed = true; // Set as claimed
-
-        XTER.safeTransfer(msg.sender, claimAmount);
-
-        stake(restakeAmount, duration, address(0)); // Directly pass duration (seconds)
+        // restake previous amount
+        stake(stakeData.amount, duration, address(0));
 
         emit ReStake(
             msg.sender,
             _id,
-            claimAmount,
-            restakeAmount,
+            stakeData.amount,
             stakeData.startTime,
             stakeData.endTime,
             duration,
