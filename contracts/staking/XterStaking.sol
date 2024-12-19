@@ -44,8 +44,7 @@ contract XterStaking is
         uint256 indexed id,
         uint256 amount,
         uint256 startTime,
-        uint256 duration,
-        bool claimed
+        uint256 duration
     );
 
     event UnStake(
@@ -53,17 +52,7 @@ contract XterStaking is
         uint256 indexed id,
         uint256 amount,
         uint256 startTime,
-        uint256 duration,
-        bool claimed
-    );
-
-    event ReStake(
-        address indexed user,
-        uint256 indexed id,
-        uint256 amount,
-        uint256 startTime,
-        uint256 duration,
-        bool claimed
+        uint256 duration
     );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -128,8 +117,7 @@ contract XterStaking is
             stakes.length - 1,
             amount,
             block.timestamp,
-            duration,
-            false
+            duration
         );
     }
 
@@ -161,8 +149,7 @@ contract XterStaking is
             _id,
             stakeData.amount,
             stakeData.startTime,
-            stakeData.duration,
-            stakeData.claimed
+            stakeData.duration
         );
     }
 
@@ -177,19 +164,36 @@ contract XterStaking is
     ) external whenNotPaused nonReentrant canUnstake(_id) {
         Stk storage stakeData = stakes[_id];
 
-        // restake previous amount
-        stake(stakeData.amount, duration, address(0));
-
-        emit ReStake(
+        emit UnStake(
             msg.sender,
             _id,
             stakeData.amount,
-            stakeData.startTime,,
-            stakeData.duration, // old duration
-            stakeData.claimed
+            stakeData.startTime,
+            stakeData.duration
+        );
+
+        stakes.push(
+            Stk({
+                id: stakes.length,
+                staker: msg.sender,
+                amount: stakeData.amount,
+                startTime: block.timestamp,
+                duration: duration,
+                claimed: false
+            })
+        );
+
+        userStakes[msg.sender].push(stakes.length - 1); // Save staker's stake record ID
+
+        emit Stake(
+            msg.sender,
+            stakes.length - 1,
+            stakeData.amount,
+            block.timestamp,
+            duration
         );
     }
-    
+
     /// @dev ────────────────────────────────────────────────
     /// @dev                     Management Functions
     /// @dev ────────────────────────────────────────────────
