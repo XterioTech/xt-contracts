@@ -395,3 +395,14 @@ export const deployXterStaking = async (
   await contract.waitForDeployment();
   return contract;
 };
+
+export const deployXterStakeDelegator = async (
+  whitelistClaim: AddressLike,
+  xterStaking: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("XterStakeDelegator");
+  const contract = await Contract.deploy(whitelistClaim, xterStaking, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};

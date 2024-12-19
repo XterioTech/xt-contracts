@@ -164,4 +164,5 @@ describe("Test XterStaking Contract", function () {
       console.log(`User ${i + 1} unstaked ${updatedStake.amount.toString()}`); // Print unstaking log
     }
   });
+  
 }); 
