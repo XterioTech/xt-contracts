@@ -62,9 +62,6 @@ contract XterStakeDelegator is ReentrancyGuard, Pausable, Ownable {
             "Stake amount must be less than or equal to claim amount"
         );
 
-        // Validate proof (this is a placeholder, implement actual proof validation)
-        require(proof.length > 0, "Proof must be provided");
-
         // claim
         whitelistClaim.delegateClaim(
             msg.sender, // beneficiary
