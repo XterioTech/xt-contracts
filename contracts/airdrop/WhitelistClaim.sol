@@ -74,6 +74,9 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
         uint256 deadline,
         bytes calldata sig
     ) external nonReentrant validateClaim(beneficiary, amount, proof) {
+        
+        require(deadline > block.timestamp, "WhitelistClaim: signature expired");
+
         bytes32 hash = keccak256(
             abi.encodePacked(
                 beneficiary,
