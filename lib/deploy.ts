@@ -1,5 +1,5 @@
 import hre, { ethers } from "hardhat";
-import { FansCreateBNBUpgradeable, FansCreateERC20Upgradeable, MarketplaceV2, TokenGateway } from "../typechain-types";
+import { FansCreateBNBUpgradeable, FansCreateERC20Upgradeable, MarketplaceV2, TokenGateway, XterStaking } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
 import MerkleTree from "merkletreejs";
@@ -366,3 +366,43 @@ export const deploySingleCheckIn = async (txOverrides?: NonPayableOverrides & { 
   await contract.waitForDeployment();
   return contract;
 }
+
+export const deployAiCampaign = async (
+  eventStartTime: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("AiCampaign");
+  const contract = await Contract.deploy(eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployXterStaking = async (
+  admin: AddressLike,
+  stakingToken: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("XterStaking");
+  const deployOptions: DeployProxyOptions = {
+    kind: "uups" as const,
+    txOverrides: txOverrides || {},
+  };
+  const contract = (await hre.upgrades.deployProxy(
+    Contract,
+    [admin, stakingToken],
+    deployOptions
+  )) as unknown as XterStaking;
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployXterStakeDelegator = async (
+  whitelistClaim: AddressLike,
+  xterStaking: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("XterStakeDelegator");
+  const contract = await Contract.deploy(whitelistClaim, xterStaking, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
