@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/interfaces/IERC1271.sol";
 
 abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     bytes32 public merkleRoot;
@@ -89,11 +90,19 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
         );
 
         // beneficiary must be the signer
-        require(
-            beneficiary ==
-                ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), sig),
-            "WhitelistClaim: invalid signature"
-        );
+        if (isContract(beneficiary)) {
+            require(
+                IERC1271(beneficiary).isValidSignature(hash, sig) ==
+                    bytes4(0x1626ba7e),
+                "WhitelistClaim: invalid signature"
+            );
+        } else {
+            require(
+                beneficiary ==
+                    ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), sig),
+                "WhitelistClaim: invalid signature"
+            );
+        }
 
         _payOut(amount, msg.sender); // _payout to delegator for part staking
         emit XDelegateClaim(msg.sender, beneficiary, amount);
@@ -125,5 +134,13 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     /****************** View Functions ******************/
     function isTimeValid() external view returns (bool) {
         return block.timestamp >= startTime && block.timestamp <= deadline;
+    }
+
+    function isContract(address account) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
     }
 }
