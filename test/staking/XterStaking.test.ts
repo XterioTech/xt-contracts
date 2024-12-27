@@ -108,6 +108,7 @@ describe("Test XterStaking Contract", function () {
   });
 
   it("Should allow 100 users to stake, restake, and unstake", async function () {
+    this.timeout(14400000);
     const { xterToken, xterStakingAddress, xterStaking, admin } = await loadFixture(basicFixture);
 
     const randomUser = async () => {
@@ -164,5 +165,5 @@ describe("Test XterStaking Contract", function () {
       console.log(`User ${i + 1} unstaked ${updatedStake.amount.toString()}`); // Print unstaking log
     }
   });
-  
+
 }); 

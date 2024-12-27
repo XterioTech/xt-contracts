@@ -5,12 +5,17 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-help
 import { deployWhitelistClaimERC20, deployMajorToken, deployXterStakeDelegator, deployXterStaking } from "../../lib/deploy";
 import MerkleTree from "merkletreejs";
 import keccak256 from "keccak256";
+import { callSmartAccountExecuteMethod, getSmartAccountByOwner, getSmartAccountComponents } from "../aa/utils/smartAccount";
 
 describe("XterStakeDelegator", function () {
   async function basicFixture() {
-    const [admin, u1, u2, u3] = await hre.ethers.getSigners();
-    const whitelist = [u1.address, u2.address, u3.address];
-    const amounts = [ethers.parseEther("1"), ethers.parseEther("2"), ethers.parseEther("3")];
+    const [admin, u1, u2, u3, smartAccountEoaOwner] = await hre.ethers.getSigners();
+
+    const { entryPoint, ecdsaOwnershipRegistryModule } = await getSmartAccountComponents();
+    const smartAccount = await getSmartAccountByOwner(entryPoint, ecdsaOwnershipRegistryModule, smartAccountEoaOwner);
+
+    const whitelist = [u1.address, u2.address, u3.address, await smartAccount.getAddress()];
+    const amounts = [ethers.parseEther("1"), ethers.parseEther("2"), ethers.parseEther("3"), ethers.parseEther("4")];
     const startTime = (await time.latest()) - 3600;
     const deadline = (await time.latest()) + 3600;
 
@@ -37,6 +42,10 @@ describe("XterStakeDelegator", function () {
       u1,
       u2,
       u3,
+      smartAccountEoaOwner,
+      smartAccount,
+      entryPoint,
+      ecdsaOwnershipRegistryModule,
       merkleRoot,
       deadline,
       merkleTree,
@@ -262,5 +271,93 @@ describe("XterStakeDelegator", function () {
     await expect(
       xterStakeDelegator.connect(u1).claimAndStake(amounts[0], proof, ethers.parseEther("0.5"), 1000, deadline, signature)
     ).to.be.revertedWith("WhitelistClaim: already claimed");
+  });
+
+  it("Should allow user smartAccount to delegate claim and stake", async function () {
+    const { wc, smartAccount, smartAccountEoaOwner, entryPoint, ecdsaOwnershipRegistryModule, amounts, merkleTree, xtertToken, xterStaking, xterStakeDelegator } = await loadFixture(basicFixture);
+    const leaf = ethers.solidityPackedKeccak256(
+      ["address", "uint256"],
+      [await smartAccount.getAddress(), amounts[3]]
+    );
+    const proof = merkleTree.getHexProof(leaf);
+
+    const deadline = (await time.latest()) + 3600
+    const msgHash = ethers.solidityPackedKeccak256(
+      ["address", "uint256", "bytes32[]", "uint256", "uint256", "address", "address"],
+      [await smartAccount.getAddress(), amounts[3], proof, deadline, hre.network.config.chainId, await xterStakeDelegator.getAddress(), await wc.getAddress()]
+    );
+
+    // 需要 smartAccount 的拥有者签名, 来实现 对 delegate 合约的代理
+    let signature = await smartAccountEoaOwner.signMessage(hre.ethers.getBytes(msgHash));
+
+    const initialBalance = await xtertToken.balanceOf(await wc.getAddress());
+
+    const stakeAmount = ethers.parseEther("0.5")
+    const stakeDuration = 1000
+
+    signature = hre.ethers.AbiCoder.defaultAbiCoder().encode(["bytes", "address"], [signature, await ecdsaOwnershipRegistryModule.getAddress()]);
+    let dest = await xterStakeDelegator.getAddress();
+    let value = 0;
+    let func = xterStakeDelegator.interface.encodeFunctionData("claimAndStake", [amounts[3], proof, stakeAmount, stakeDuration, deadline, signature]);
+    await callSmartAccountExecuteMethod(entryPoint, ecdsaOwnershipRegistryModule, smartAccount, smartAccountEoaOwner, dest, value, func);
+    // await xterStakeDelegator.connect(u1).claimAndStake(amounts[0], proof, stakeAmount, stakeDuration, deadline, signature);
+
+    const finalBalance = await xtertToken.balanceOf(await wc.getAddress());
+
+    expect(finalBalance).to.equal(initialBalance - amounts[3]);
+    expect(await xtertToken.balanceOf(await smartAccount.getAddress())).to.equal(amounts[3] - stakeAmount);
+
+    const stakeData = await xterStaking.stakes(0)
+    expect(stakeData.claimed).to.equal(false);
+    expect(stakeData.amount).to.equal(stakeAmount); // Verify the stake amount
+    expect(stakeData.duration).to.equal(stakeDuration); // Verify the stake duration
+
+
+    await time.increase(stakeDuration + 1);
+
+    dest = await xterStaking.getAddress();
+    value = 0;
+    func = xterStaking.interface.encodeFunctionData("unstake", [0]);
+    await callSmartAccountExecuteMethod(entryPoint, ecdsaOwnershipRegistryModule, smartAccount, smartAccountEoaOwner, dest, value, func);
+    // await xterStaking.connect(u1).unstake(0);
+
+    const stakeDataAfterUnstake = await xterStaking.stakes(0)
+
+    expect(stakeDataAfterUnstake.claimed).to.equal(true);
+    expect(await xtertToken.balanceOf(await smartAccount.getAddress())).to.equal(amounts[3]);
+  });
+
+  it("Should revert if the signer of the smartAccountis is error", async function () {
+    const { wc, u1, smartAccount, smartAccountEoaOwner, entryPoint, ecdsaOwnershipRegistryModule, amounts, merkleTree, xtertToken, xterStaking, xterStakeDelegator } = await loadFixture(basicFixture);
+    const leaf = ethers.solidityPackedKeccak256(
+      ["address", "uint256"],
+      [await smartAccount.getAddress(), amounts[3]]
+    );
+    const proof = merkleTree.getHexProof(leaf);
+    const deadline = (await time.latest()) + 3600
+    const msgHash = ethers.solidityPackedKeccak256(
+      ["address", "uint256", "bytes32[]", "uint256", "uint256", "address", "address"],
+      [await smartAccount.getAddress(), amounts[3], proof, deadline, hre.network.config.chainId, await xterStakeDelegator.getAddress(), await wc.getAddress()]
+    );
+
+    // 错误签名
+    let signature = await u1.signMessage(hre.ethers.getBytes(msgHash));
+
+    const initialBalance = await xtertToken.balanceOf(await wc.getAddress());
+
+    const stakeAmount = ethers.parseEther("0.5")
+    const stakeDuration = 1000
+
+    signature = hre.ethers.AbiCoder.defaultAbiCoder().encode(["bytes", "address"], [signature, await ecdsaOwnershipRegistryModule.getAddress()]);
+    const dest = await xterStakeDelegator.getAddress();
+    const value = 0;
+    const func = xterStakeDelegator.interface.encodeFunctionData("claimAndStake", [amounts[3], proof, stakeAmount, stakeDuration, deadline, signature]);
+    await callSmartAccountExecuteMethod(entryPoint, ecdsaOwnershipRegistryModule, smartAccount, smartAccountEoaOwner, dest, value, func);
+    // await xterStakeDelegator.connect(u1).claimAndStake(amounts[0], proof, stakeAmount, stakeDuration, deadline, signature);
+
+    const finalBalance = await xtertToken.balanceOf(await wc.getAddress());
+
+    expect(finalBalance).to.equal(initialBalance);
+    expect(await xtertToken.balanceOf(await smartAccount.getAddress())).to.equal(0);
   });
 });

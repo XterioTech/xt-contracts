@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract WhitelistClaimERC20 is WhitelistClaim {
     using SafeERC20 for IERC20;
-    IERC20 public token;
+    IERC20 public immutable token;
     address public vault = address(this);
 
     constructor(
