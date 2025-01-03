@@ -9,7 +9,7 @@ const main = async () => {
     const l2Address = "0x" + result.toString(16).slice(-40);
     console.log("l1Address =", l1Address);
     console.log("applyL1ToL2Alias");
-    console.log("l2Address =", l2Address);
+    console.log("l2Address =", hre.ethers.getAddress(l2Address));
 
 };
 
