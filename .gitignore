@@ -9,6 +9,7 @@ typechain-types
 cache
 artifacts
 abi
+!airdrop/abi/
 
 # Mac OS
 .DS_Store
@@ -18,3 +19,4 @@ wallet.json
 wallet.*.json
 
 *.csv
+*.log
