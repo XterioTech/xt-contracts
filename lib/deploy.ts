@@ -1,5 +1,5 @@
 import hre, { ethers } from "hardhat";
-import { FansCreateBNBUpgradeable, FansCreateERC20Upgradeable, MarketplaceV2, TokenGateway, XterStaking } from "../typechain-types";
+import { FansCreateBNBUpgradeable, FansCreateERC20Upgradeable, MarketplaceV2, TokenGateway, XterNFTStaking, XterStaking } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
 import MerkleTree from "merkletreejs";
@@ -403,6 +403,26 @@ export const deployXterStakeDelegator = async (
 ) => {
   const Contract = await hre.ethers.getContractFactory("XterStakeDelegator");
   const contract = await Contract.deploy(whitelistClaim, xterStaking, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployXterNFTStaking = async (
+  admin: string,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const ContractFactory = await ethers.getContractFactory("XterNFTStaking");
+  const deployOptions: DeployProxyOptions = {
+    kind: "uups" as const,
+    txOverrides: txOverrides || {},
+  };
+
+  const contract = (await hre.upgrades.deployProxy(
+    ContractFactory,
+    [admin],
+    deployOptions
+  )) as unknown as XterNFTStaking;
+
   await contract.waitForDeployment();
   return contract;
 };

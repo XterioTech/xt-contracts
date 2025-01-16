@@ -38,7 +38,8 @@ async function main() {
   const network = NETWORK.XTERIO;
   const provider = providerByNetwork(network)
   const params = {
-    tokenAddress: '0x94F8D460A89949044acaa0a3dc6991AAbEBDC688', // DB
+    tokenAddress: '0xefd4bC9afD210517803f293ABABd701CaeeCdfd0', // XTER
+    // tokenAddress: '0x94F8D460A89949044acaa0a3dc6991AAbEBDC688', // DB
     // tokenAddress: '0x12065F0d03cd1Bd280565069164F9E803c2DA988', // test coin
     from: process.env.DISTRIBUTER_PARIVATE_KEY ?? '',
     distributer_filepath: './airdrop/csv/distribute-erc20.csv'
