@@ -10,7 +10,7 @@ const formatLogMessage = (info: any) => {
 };
 
 export const logAndWaitTx = async (tx: ethers.TransactionResponse, taskName: string, eventName: string) => {
-  const logFilePath = `./airdrop/logs/${new Date().toJSON().slice(0, 10)}_${taskName}.log`;
+  const logFilePath = `./${new Date().toJSON().slice(0, 10)}_${taskName}.log`;
 
   const simpleLogger = {
     txInfo: (info: { address: string; eventName: string; txHash: string; timestamp: string }) => {
