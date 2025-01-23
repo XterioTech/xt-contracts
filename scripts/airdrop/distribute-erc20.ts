@@ -30,6 +30,7 @@ async function distributeERC20(tokenAddress: string, recipients: string[], amoun
 
 async function main() {
   const taskName = "distribute-erc20";
+  const network = hre.network.name;
 
   const [signer] = await hre.ethers.getSigners();
   const provider = hre.ethers.provider;
@@ -62,7 +63,7 @@ async function main() {
   const name = await erc20.name();
   const symbol = await erc20.symbol();
   const decimals = await erc20.decimals();
-  const balance = await erc20.balanceOf(DISTRIBUTER[hre.network.name]);
+  const balance = await erc20.balanceOf(DISTRIBUTER[network]);
 
   const ethBalance = await provider.getBalance(signer.address);
 
@@ -70,7 +71,7 @@ async function main() {
   console.info(
     colorize(
       Color.yellow,
-      `Network: ${hre.network.name}, Signer: ${signer.address}, Gas Balance: ${ethers.formatEther(ethBalance)}`
+      `Network: ${network}, Signer: ${signer.address}, Gas Balance: ${ethers.formatEther(ethBalance)}`
     )
   );
   console.info(colorize(Color.yellow, `Token: ${name} ${symbol}, Decimals: ${decimals}`));
@@ -106,11 +107,15 @@ async function main() {
       console.log("distributeERC20 Fail with txHash: " + tx.hash);
       console.log(`[${i}, ${endIdx}) failed !!!!!!`);
     }
-    await logAndWaitTx(tx, taskName, `distributeERC20 to #[${i}, ${endIdx})`);
+    await logAndWaitTx(tx, taskName, network, `distributeERC20 to #[${i}, ${endIdx})`);
   }
 
-  const balanceRemaining = await erc20.balanceOf(DISTRIBUTER[hre.network.name]);
-  console.info(colorize(Color.yellow, `Remaining Balance on Contract:  ${ethers.formatUnits(balanceRemaining, decimals)}`));
+  const balanceRemaining = await erc20.balanceOf(DISTRIBUTER[network]);
+  console.info(
+    colorize(Color.yellow, `Remaining Balance on Contract:  ${ethers.formatUnits(balanceRemaining, decimals)}`)
+  );
 }
 
-main().catch(console.error);
+main()
+  .then(() => process.exit(0))
+  .catch(console.error);
