@@ -3,29 +3,31 @@ import fs from 'fs';
 
 const getTimestamp = () => new Date().toISOString();
 
-const formatLogMessage = (info: any) => {
-  return Object.entries(info)
-    .map(([key, value]) => `${key}: ${value}`)
-    .join('\n');
-};
+interface LogObj {
+  network: string;
+  address: string; 
+  eventName: string; 
+  txHash: string; 
+  timestamp: string;
+  errMessage?: any;
+}
 
-export const logAndWaitTx = async (tx: ethers.TransactionResponse, taskName: string, eventName: string) => {
+export const logAndWaitTx = async (tx: ethers.TransactionResponse, taskName: string, network: string, eventName: string) => {
   const logFilePath = `./${new Date().toJSON().slice(0, 10)}_${taskName}.log`;
 
   const simpleLogger = {
-    txInfo: (info: { address: string; eventName: string; txHash: string; timestamp: string }) => {
-      const logMessage = `Transaction Info [${info.timestamp}]:\n{\n${formatLogMessage(info)}\n}\n`;
+    txInfo: (info: LogObj) => {
+      const logMessage = JSON.stringify({level: "info", ...info}) + "\n"
       fs.appendFileSync(logFilePath, logMessage);
-      // console.log(logMessage);
     },
-    txError: (error: { address: string; eventName: string; txHash: string; errMessage: any; timestamp: string }) => {
-      const logMessage = `Transaction Error [${error.timestamp}]:\n{\n${formatLogMessage(error)}\n}\n`;
+    txError: (error: LogObj) => {
+      const logMessage = JSON.stringify({level: "error", ...error}) + "\n"
       fs.appendFileSync(logFilePath, logMessage);
-      // console.error(logMessage);
     }
   };
 
   simpleLogger.txInfo({
+    network,
     address: `${tx.from}`,
     eventName: eventName,
     txHash: tx.hash,
@@ -42,6 +44,7 @@ export const logAndWaitTx = async (tx: ethers.TransactionResponse, taskName: str
     ]);
   } catch (e) {
     simpleLogger.txError({
+      network,
       address: `${tx.from}`,
       eventName: eventName,
       txHash: tx.hash,
