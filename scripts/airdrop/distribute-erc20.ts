@@ -48,7 +48,16 @@ async function main() {
 
   // readFromCSV
   const { csvData } = await readFromCSV(csvFile);
-  const qualifiedRecords = csvData.filter((row) => ethers.isAddress(row[0]) && Number(row[1]) > 0); // amount > 0
+  const cleanData = csvData.map((r) => r.map((i) => i.trim()));
+  const qualifiedRecords = cleanData.filter((row) => {
+    const q = row.length > 1 && ethers.isAddress(row[0].trim()) && Number(row[1]) > 0;  // amount > 0
+    if (!q) {
+      console.info(colorize(Color.yellow, `Unqualified row: ${row}`));
+    }
+    return q;
+  });
+  console.info("--------------------------------");
+
   let totalAmt = 0;
   for (const r of qualifiedRecords) {
     const v = Number(r[1]) * 10 ** decimalPlaces;
@@ -60,13 +69,17 @@ async function main() {
   totalAmt = totalAmt / 10 ** decimalPlaces;
 
   const erc20 = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-  const name = await erc20.name();
-  const symbol = await erc20.symbol();
-  const decimals = await erc20.decimals();
-  const balance = await erc20.balanceOf(DISTRIBUTER[network]);
+  
+  console.info("reading token info...");
+  const [name, symbol, decimals] = await Promise.all([erc20.name(), erc20.symbol(), erc20.decimals()]);
 
-  const ethBalance = await provider.getBalance(signer.address);
+  console.info("reading balance info...");
+  const [balance, ethBalance] = await Promise.all([
+    erc20.balanceOf(DISTRIBUTER[network]),
+    provider.getBalance(signer.address),
+  ]);
 
+  console.info("--------------------------------");
   console.info(colorize(Color.blue, `Distribute ERC20`));
   console.info(
     colorize(
