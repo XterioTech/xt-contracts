@@ -301,6 +301,18 @@ export const deployWhitelistClaimETH = async (
   return whitelistClaimETH;
 };
 
+export const deployWhitelistClaimETHWithUnlockTime = async (
+  merkleRoot: string,
+  startTime: number,
+  deadline: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const WhitelistClaimETH = await ethers.getContractFactory("WhitelistClaimETHWithUnlockTime");
+  const whitelistClaimETH = await WhitelistClaimETH.deploy(merkleRoot, startTime, deadline, txOverrides || {});
+  await whitelistClaimETH.waitForDeployment();
+  return whitelistClaimETH;
+};
+
 export const deployWhitelistClaimERC20 = async (
   merkleRoot: string,
   startTime: number,
@@ -310,6 +322,27 @@ export const deployWhitelistClaimERC20 = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const WhitelistClaimERC20 = await ethers.getContractFactory("WhitelistClaimERC20");
+  const whitelistClaimERC20 = await WhitelistClaimERC20.deploy(
+    merkleRoot,
+    startTime,
+    deadline,
+    paymentToken,
+    vault,
+    txOverrides || {}
+  );
+  await whitelistClaimERC20.waitForDeployment();
+  return whitelistClaimERC20;
+};
+
+export const deployWhitelistClaimERC20WithUnlockTime = async (
+  merkleRoot: string,
+  startTime: number,
+  deadline: number,
+  paymentToken: AddressLike,
+  vault: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const WhitelistClaimERC20 = await ethers.getContractFactory("WhitelistClaimERC20WithUnlockTime");
   const whitelistClaimERC20 = await WhitelistClaimERC20.deploy(
     merkleRoot,
     startTime,
