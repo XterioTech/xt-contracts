@@ -13,12 +13,11 @@ abstract contract WhitelistClaimWithUnlockTime is Ownable, ReentrancyGuard {
     uint256 public startTime;
     uint256 public deadline;
 
-    event XClaim(address indexed account, uint256 amount, uint256 unlockTime);
+    event XClaim(address indexed account, uint256 amount);
     event XDelegateClaim(
         address indexed delegator,
         address indexed account,
-        uint256 amount,
-        uint256 unlockTime
+        uint256 amount
     );
     event UpdateMerkleRoot(bytes32 newMerkleRoot);
 
@@ -80,7 +79,7 @@ abstract contract WhitelistClaimWithUnlockTime is Ownable, ReentrancyGuard {
         validateClaim(msg.sender, amount, unlockTime, proof)
     {
         _payOut(amount, msg.sender);
-        emit XClaim(msg.sender, amount, unlockTime);
+        emit XClaim(msg.sender, amount);
     }
 
     function delegateClaim(
@@ -126,7 +125,7 @@ abstract contract WhitelistClaimWithUnlockTime is Ownable, ReentrancyGuard {
         }
 
         _payOut(amount, msg.sender); // _payout to delegator for part staking
-        emit XDelegateClaim(msg.sender, beneficiary, amount, unlockTime);
+        emit XDelegateClaim(msg.sender, beneficiary, amount);
     }
 
     /// @dev This virtual function should transfer the specified `amount` of the payment token to the `to` address
