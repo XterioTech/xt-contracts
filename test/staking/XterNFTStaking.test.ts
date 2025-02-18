@@ -80,82 +80,70 @@ describe("Test XterNFTStaking Contract", function () {
     await xterNFTStaking.connect(admin).setPaused(true);
 
     // Attempt to stake while paused, should revert
-    await expect(xterNFTStaking.connect(admin).stake(erc721OneAddress, 1)).to.be.revertedWith("Pausable: paused");
+    await expect(xterNFTStaking.connect(admin).stake(erc721OneAddress, [1])).to.be.revertedWith("Pausable: paused");
 
     // Unpause the contract
     await xterNFTStaking.connect(admin).setPaused(false);
 
     // Attempt to stake with user1, should revert as collection is not allowed
-    await expect(xterNFTStaking.connect(user1).stake(ethers.ZeroAddress, 1)).to.be.revertedWith("This NFT collection is not allowed");
+    await expect(xterNFTStaking.connect(user1).stake(ethers.ZeroAddress, [1])).to.be.revertedWith("This NFT collection is not allowed");
 
     // Allow the collection for staking
     await xterNFTStaking.connect(admin).setAllowedCollection(erc721OneAddress, true);
 
     // Attempt to stake with user1, should revert as user1 is not the owner or approved
-    await expect(xterNFTStaking.connect(user2).stake(erc721OneAddress, 1)).to.be.revertedWith("ERC721: caller is not token owner or approved");
+    await expect(xterNFTStaking.connect(user2).stake(erc721OneAddress, [1])).to.be.revertedWith("ERC721: caller is not token owner or approved");
 
     // Approve xterNFTStaking to manage user1's NFT
     await erc721One.connect(user1).setApprovalForAll(xterNFTStakingAddress, true);
 
+    // Atempt to stake duplicated nft ids
+    await expect(xterNFTStaking.connect(user1).stake(erc721OneAddress, [1, 1, 1])).to.be.reverted;
+
     // Now user1 should be able to stake without reverting
-    await expect(xterNFTStaking.connect(user1).stake(erc721OneAddress, 1)).to.not.be.reverted;
+    await expect(xterNFTStaking.connect(user1).stake(erc721OneAddress, [1, 2, 3])).to.not.be.reverted;
   });
 
   it("Should allow user to un-stake NFT when staked", async function () {
-    await xterNFTStaking.connect(user1).stake(erc721OneAddress, 1);
+    await xterNFTStaking.connect(user1).stake(erc721OneAddress, [1, 2]);
 
-    const stakedTokensBefore = await xterNFTStaking.getUserCollectionTokenIds(user1.getAddress(), erc721OneAddress);
-    expect(stakedTokensBefore).to.include(BigInt(1));
+    const stakingBalanceBefore = await xterNFTStaking.stakingBalance(user1.getAddress(), erc721OneAddress);
+    expect(stakingBalanceBefore).to.equal(2);
 
-    await xterNFTStaking.connect(user1).unstake(erc721OneAddress, 1);
+    await xterNFTStaking.connect(user1).unstake(erc721OneAddress, [1]);
 
-    const stakedTokensAfter = await xterNFTStaking.getUserCollectionTokenIds(user1.getAddress(), erc721OneAddress);
-    expect(stakedTokensAfter).to.not.include(BigInt(1));
+    const stakingBalanceAfter = await xterNFTStaking.stakingBalance(user1.getAddress(), erc721OneAddress);
+    expect(stakingBalanceAfter).to.equal(1);
   });
 
   it("Should not allow user to un-stake NFT that is not staked", async function () {
-    await xterNFTStaking.connect(user1).stake(erc721OneAddress, 1);
+    await xterNFTStaking.connect(user1).stake(erc721OneAddress, [1]);
 
-    const stakedTokens = await xterNFTStaking.getUserCollectionTokenIds(user1.getAddress(), erc721OneAddress);
-    expect(stakedTokens).to.include(BigInt(1));
-
-    await expect(xterNFTStaking.connect(user1).unstake(erc721OneAddress, 2)).to.be.revertedWith("Token ID not found in staked tokens");
-    await expect(xterNFTStaking.connect(user1).unstake(erc721TwoAddress, 1)).to.be.revertedWith("No tokens staked in this collection");
+    await expect(xterNFTStaking.connect(user1).unstake(erc721OneAddress, [2])).to.be.revertedWith("Not the corresponding NFT staker");
+    await expect(xterNFTStaking.connect(user1).unstake(erc721TwoAddress, [1])).to.be.revertedWith("Not the corresponding NFT staker");
   });
 
   it("Should allow multiple users to stake NFTs from both collections and verify holdings", async function () {
-    // User1 stakes multiple NFTs from erc721One
-    await xterNFTStaking.connect(user1).stake(erc721OneAddress, 1);
-    await xterNFTStaking.connect(user1).stake(erc721OneAddress, 2);
-    await xterNFTStaking.connect(user1).stake(erc721OneAddress, 3);
+    // User1 stakes 3 NFTs from erc721One
+    await xterNFTStaking.connect(user1).stake(erc721OneAddress, [1, 2, 3]);
+    // User1 stakes an NFT from erc721Two
+    await xterNFTStaking.connect(user1).stake(erc721TwoAddress, [1]);
 
     // User2 stakes an NFT from erc721One
-    await xterNFTStaking.connect(user2).stake(erc721OneAddress, 11);
-
-    // User1 stakes an NFT from erc721Two
-    await xterNFTStaking.connect(user1).stake(erc721TwoAddress, 1);
-
+    await xterNFTStaking.connect(user2).stake(erc721OneAddress, [11]);
     // User2 stakes an NFT from erc721Two
-    await xterNFTStaking.connect(user2).stake(erc721TwoAddress, 11);
+    await xterNFTStaking.connect(user2).stake(erc721TwoAddress, [11]);
 
     // Verify that the contract holds the NFTs from both collections
-    const user1StakedTokensOne = await xterNFTStaking.getUserCollectionTokenIds(user1.getAddress(), erc721OneAddress);
-    const user1StakedTokensTwo = await xterNFTStaking.getUserCollectionTokenIds(user1.getAddress(), erc721TwoAddress);
-    const user2StakedTokensOne = await xterNFTStaking.getUserCollectionTokenIds(user2.getAddress(), erc721OneAddress);
-    const user2StakedTokensTwo = await xterNFTStaking.getUserCollectionTokenIds(user2.getAddress(), erc721TwoAddress);
+    const user1StakedTokensOne = await xterNFTStaking.stakingBalance(user1.getAddress(), erc721OneAddress);
+    const user1StakedTokensTwo = await xterNFTStaking.stakingBalance(user1.getAddress(), erc721TwoAddress);
+    const user2StakedTokensOne = await xterNFTStaking.stakingBalance(user2.getAddress(), erc721OneAddress);
+    const user2StakedTokensTwo = await xterNFTStaking.stakingBalance(user2.getAddress(), erc721TwoAddress);
 
-    expect(user1StakedTokensOne).to.include(BigInt(1));
-    expect(user1StakedTokensOne).to.include(BigInt(2));
-    expect(user1StakedTokensOne).to.include(BigInt(3));
-    expect(user2StakedTokensOne).to.include(BigInt(11));
-    expect(user1StakedTokensTwo).to.include(BigInt(1));
-    expect(user2StakedTokensTwo).to.include(BigInt(11));
-
-    const user1TotalStakedCountOne = await xterNFTStaking.getUserTotalStakedCount(user1.getAddress());
-    const user1TotalStakedCountTwo = await xterNFTStaking.getUserTotalStakedCount(user2.getAddress());
-
-    expect(user1TotalStakedCountOne).to.equal(4); // 3 from erc721One + 1 from erc721Two
-    expect(user1TotalStakedCountTwo).to.equal(2); // 1 from erc721One + 1 from erc721Two
+    expect(user1StakedTokensOne).to.equal(3);
+    expect(user1StakedTokensTwo).to.equal(1);
+    expect(user2StakedTokensOne).to.equal(1);
+    expect(user2StakedTokensTwo).to.equal(1);
 
     const tokenId1Owner = await erc721One.ownerOf(1);
     expect(tokenId1Owner).to.equal(xterNFTStakingAddress);
@@ -172,18 +160,17 @@ describe("Test XterNFTStaking Contract", function () {
 
 
     // then unstake all NFTs from erc721One erc721Two
-    await xterNFTStaking.connect(user1).unstake(erc721OneAddress, 1);
-    await xterNFTStaking.connect(user1).unstake(erc721OneAddress, 2);
-    await xterNFTStaking.connect(user1).unstake(erc721OneAddress, 3);
-    await xterNFTStaking.connect(user2).unstake(erc721OneAddress, 11);
-    await xterNFTStaking.connect(user1).unstake(erc721TwoAddress, 1);
-    await xterNFTStaking.connect(user2).unstake(erc721TwoAddress, 11);
+    await xterNFTStaking.connect(user1).unstake(erc721OneAddress, [1,2,3]);
+    await xterNFTStaking.connect(user1).unstake(erc721TwoAddress, [1]);
+    
+    await xterNFTStaking.connect(user2).unstake(erc721OneAddress, [11]);
+    await xterNFTStaking.connect(user2).unstake(erc721TwoAddress, [11]);
 
     // verify that user1 and user2 have no NFTs staked
-    expect(await xterNFTStaking.getUserCollectionTokenIds(user1.getAddress(), erc721OneAddress)).to.be.empty;
-    expect(await xterNFTStaking.getUserCollectionTokenIds(user1.getAddress(), erc721TwoAddress)).to.be.empty;
-    expect(await xterNFTStaking.getUserCollectionTokenIds(user2.getAddress(), erc721OneAddress)).to.be.empty;
-    expect(await xterNFTStaking.getUserCollectionTokenIds(user2.getAddress(), erc721TwoAddress)).to.be.empty;
+    expect(await xterNFTStaking.stakingBalance(user1.getAddress(), erc721OneAddress)).to.equal(0);
+    expect(await xterNFTStaking.stakingBalance(user1.getAddress(), erc721TwoAddress)).to.equal(0);
+    expect(await xterNFTStaking.stakingBalance(user2.getAddress(), erc721OneAddress)).to.equal(0);
+    expect(await xterNFTStaking.stakingBalance(user2.getAddress(), erc721TwoAddress)).to.equal(0);
 
     // verify that user1 and user2 hold their origin nfts
     expect(await erc721One.ownerOf(1)).to.equal(await user1.getAddress());

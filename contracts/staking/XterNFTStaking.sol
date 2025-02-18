@@ -23,25 +23,26 @@ contract XterNFTStaking is
     // Allowed NFT collections
     mapping(address => bool) public allowedCollections;
 
-    // Mapping to track the token IDs staked by each user in each collection
-    mapping(address => mapping(address => uint256[]))
-        public userCollectionTokenIds;
+    // Mapping to track the staker for NFTs
+    // mapping (collection => (token index => staker))
+    mapping(address => mapping(uint256 => address)) public staker;
 
-    // Mapping to track the total number of NFTs staked by each user across all collections
-    mapping(address => uint256) public userTotalStakedCount;
+    // Mapping to track the staked NFT count by each user in each collection
+    // mapping (staker => (collection => balance))
+    mapping(address => mapping(address => uint256)) public stakingBalance;
 
-    event Staked(
+    event StakeNFT(
         address indexed user,
         address indexed collection,
-        uint256 indexed tokenId,
-        uint256 timestamp
+        uint256[] tokenIds,
+        uint256 stakingBalance
     );
 
-    event Unstaked(
+    event UnstakeNFT(
         address indexed user,
         address indexed collection,
-        uint256 indexed tokenId,
-        uint256 timestamp
+        uint256[] tokenIds,
+        uint256 remainingBalance
     );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -92,75 +93,44 @@ contract XterNFTStaking is
     // Function to stake an NFT
     function stake(
         address collection,
-        uint256 tokenId
+        uint256[] calldata tokenIds
     ) external whenNotPaused nonReentrant onlyAllowedCollection(collection) {
-        IERC721Upgradeable(collection).transferFrom(
-            msg.sender,
-            address(this),
-            tokenId
-        );
-
-        userCollectionTokenIds[msg.sender][collection].push(tokenId);
-
-        // Update the user's total staked count
-        userTotalStakedCount[msg.sender]++;
-
-        emit Staked(msg.sender, collection, tokenId, block.timestamp);
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            // transfer nft
+            IERC721Upgradeable(collection).transferFrom(
+                msg.sender,
+                address(this),
+                tokenIds[i]
+            );
+            // update staker
+            staker[collection][tokenIds[i]] = msg.sender;
+        }
+        // update balance
+        stakingBalance[msg.sender][collection] += tokenIds.length;
+        //  emit log
+        emit StakeNFT(msg.sender, collection, tokenIds, stakingBalance[msg.sender][collection]);
     }
 
     // Function to unstake an NFT
     function unstake(
         address collection,
-        uint256 tokenId
+        uint256[] calldata tokenIds
     ) external whenNotPaused nonReentrant {
-        require(
-            userCollectionTokenIds[msg.sender][collection].length > 0,
-            "No tokens staked in this collection"
-        );
-
-        // Find and remove the token ID from the user's staked tokens for the specific collection
-        uint256[] storage tokenIds = userCollectionTokenIds[msg.sender][
-            collection
-        ];
-
-        bool found = false;
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            if (tokenIds[i] == tokenId) {
-                // Remove the token ID from the array by swapping with the last element and popping it off
-                tokenIds[i] = tokenIds[tokenIds.length - 1];
-                tokenIds.pop();
-                found = true;
-                break;
-            }
+            require(staker[collection][tokenIds[i]] == msg.sender, "Not the corresponding NFT staker");
+            // update staker
+            staker[collection][tokenIds[i]] = address(0);
+            // transfer nft
+            IERC721Upgradeable(collection).transferFrom(
+                address(this),
+                msg.sender,
+                tokenIds[i]
+            );
         }
-
-        require(found, "Token ID not found in staked tokens");
-
-        IERC721Upgradeable(collection).transferFrom(
-            address(this),
-            msg.sender,
-            tokenId
-        );
-
-        // Update the user's total staked count
-        userTotalStakedCount[msg.sender]--;
-
-        emit Unstaked(msg.sender, collection, tokenId, block.timestamp);
-    }
-
-    // Function to get the total staked NFTs for a specific user in a specific collection
-    function getUserCollectionTokenIds(
-        address user,
-        address collection
-    ) external view returns (uint256[] memory) {
-        return userCollectionTokenIds[user][collection];
-    }
-
-    // Function to get the total number of NFTs staked by a specific user across all collections
-    function getUserTotalStakedCount(
-        address user
-    ) external view returns (uint256) {
-        return userTotalStakedCount[user];
+        // update balance
+        stakingBalance[msg.sender][collection] -= tokenIds.length;
+        //  emit log
+        emit UnstakeNFT(msg.sender, collection, tokenIds, stakingBalance[msg.sender][collection]);
     }
 
     // ERC721 Receiver function to handle incoming NFTs
