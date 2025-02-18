@@ -9,7 +9,7 @@ import { ethers } from "ethers";
 
 describe("Test XterNFTStaking Contract", function () {
   async function basicFixture() {
-    const [admin, user1, user2] = await hre.ethers.getSigners();
+    const [admin, user1, user2, user3] = await hre.ethers.getSigners();
 
     // Deploy ERC721 tokens for testing
     const { gateway, erc721: erc721One, nftManager } = await nftTradingTestFixture();
@@ -20,6 +20,8 @@ describe("Test XterNFTStaking Contract", function () {
 
     await gateway.connect(nftManager).ERC721_mintBatch(erc721One, user1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     await gateway.connect(nftManager).ERC721_mintBatch(erc721One, user2, [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+    // mint 50 nfts
+    await gateway.connect(nftManager).ERC721_mintBatch(erc721One, user3, [...Array(50).keys()].map(i=>i+50));
 
     await gatewayTwo.connect(nftManagerTwo).ERC721_mintBatch(erc721Two, user1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     await gatewayTwo.connect(nftManagerTwo).ERC721_mintBatch(erc721Two, user2, [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
@@ -38,6 +40,7 @@ describe("Test XterNFTStaking Contract", function () {
       admin,
       user1,
       user2,
+      user3
     };
   }
 
@@ -46,6 +49,7 @@ describe("Test XterNFTStaking Contract", function () {
     admin: HardhatEthersSigner,
     user1: HardhatEthersSigner,
     user2: HardhatEthersSigner,
+    user3: HardhatEthersSigner,
     erc721One: ERC721,
     erc721OneAddress: string,
     erc721Two: ERC721,
@@ -59,6 +63,7 @@ describe("Test XterNFTStaking Contract", function () {
     admin = fixture.admin;
     user1 = fixture.user1;
     user2 = fixture.user2;
+    user3 = fixture.user3;
     erc721One = fixture.erc721One;
     erc721OneAddress = fixture.erc721OneAddress;
     erc721Two = fixture.erc721Two;
@@ -67,6 +72,7 @@ describe("Test XterNFTStaking Contract", function () {
     await xterNFTStaking.connect(admin).setAllowedCollection(erc721OneAddress, true);
     await erc721One.connect(user1).setApprovalForAll(xterNFTStakingAddress, true);
     await erc721One.connect(user2).setApprovalForAll(xterNFTStakingAddress, true);
+    await erc721One.connect(user3).setApprovalForAll(xterNFTStakingAddress, true);
 
     await xterNFTStaking.connect(admin).setAllowedCollection(erc721TwoAddress, true);
     await erc721Two.connect(user1).setApprovalForAll(xterNFTStakingAddress, true);
@@ -180,6 +186,15 @@ describe("Test XterNFTStaking Contract", function () {
     expect(await erc721Two.ownerOf(1)).to.equal(await user1.getAddress());
     expect(await erc721Two.ownerOf(11)).to.equal(await user2.getAddress());
   });
+
+  it("Should allow user to stake / unstake 50 NFTs in one transactions", async function () {
+    const tokenIds = [...Array(50).keys()].map(i=>i+50)
+    await xterNFTStaking.connect(user3).stake(erc721OneAddress, tokenIds);
+    const stakingBalance = await xterNFTStaking.stakingBalance(user3.getAddress(), erc721OneAddress);
+    expect(stakingBalance).to.equal(50);
+    await xterNFTStaking.connect(user3).unstake(erc721OneAddress, tokenIds);
+  });
+
 });
 
 
