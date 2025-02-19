@@ -2,14 +2,14 @@ import hre from "hardhat";
 import { Color, colorize, infoAboutDeployer } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployXterStakeDelegator } from "../../lib/deploy";
-import { ContractOrAddrName } from "../../lib/constant";
-import { getAddressForNetwork } from "../../lib/constant";
+// import { ContractOrAddrName } from "../../lib/constant";
+// import { getAddressForNetwork } from "../../lib/constant";
 
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
-  const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
+  // const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
   const whitelistClaimERC20 = process.env.whitelistClaimERC20
   const xterStaking = process.env.xterStaking
 
@@ -23,6 +23,8 @@ async function main() {
   if (!address) {
     console.info(colorize(Color.blue, `Deploy XterStakeDelegator`));
     await infoAboutDeployer(hre, deployer);
+    console.info(colorize(Color.yellow, `WhitelistClaim Contract: ${whitelistClaimERC20}`));
+    console.info(colorize(Color.yellow, `XterStaking Contract: ${xterStaking}`));
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
       return;
