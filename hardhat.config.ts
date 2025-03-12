@@ -79,7 +79,7 @@ const config: HardhatUserConfig = {
       accounts: privateKey != "" ? [privateKey] : [],
     },
     xterio: {
-      url: "https://xterio-fullnode.alt.technology/",
+      url: "https://xterio-bnb.alt.technology/",
       accounts: privateKey != "" ? [privateKey] : [],
     },
     xterioEth: {

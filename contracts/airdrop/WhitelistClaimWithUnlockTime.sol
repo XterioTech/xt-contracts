@@ -7,9 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/interfaces/IERC1271.sol";
 
-abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
+abstract contract WhitelistClaimWithUnlockTime is Ownable, ReentrancyGuard {
     bytes32 public merkleRoot;
-    mapping(address => bool) public claimed;
+    mapping(address => mapping(uint256 => bool)) public claimed;
     uint256 public startTime;
     uint256 public deadline;
 
@@ -32,15 +32,17 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     function isWhitelisted(
         address account,
         uint256 amount,
+        uint256 unlockTime,
         bytes32[] memory proof
     ) public view returns (bool) {
-        bytes32 leaf = keccak256(abi.encodePacked(account, amount));
+        bytes32 leaf = keccak256(abi.encodePacked(account, amount, unlockTime));
         return MerkleProof.verify(proof, merkleRoot, leaf);
     }
 
     modifier validateClaim(
         address account,
         uint256 amount,
+        uint256 unlockTime,
         bytes32[] memory proof
     ) {
         require(
@@ -52,18 +54,30 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
             "WhitelistClaim: deadline exceeded"
         );
         require(
-            isWhitelisted(account, amount, proof),
+            block.timestamp >= unlockTime,
+            "WhitelistClaim: unlockTime has not arrived yet"
+        );
+        require(
+            isWhitelisted(account, amount, unlockTime, proof),
             "WhitelistClaim: not whitelisted"
         );
-        require(!claimed[account], "WhitelistClaim: already claimed");
-        claimed[account] = true;
+        require(
+            !claimed[account][unlockTime],
+            "WhitelistClaim: already claimed"
+        );
+        claimed[account][unlockTime] = true;
         _;
     }
 
     function claim(
         uint256 amount,
+        uint256 unlockTime,
         bytes32[] memory proof
-    ) external nonReentrant validateClaim(msg.sender, amount, proof) {
+    )
+        external
+        nonReentrant
+        validateClaim(msg.sender, amount, unlockTime, proof)
+    {
         _payOut(amount, msg.sender);
         emit XClaim(msg.sender, amount);
     }
@@ -71,16 +85,22 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     function delegateClaim(
         address beneficiary,
         uint256 amount,
+        uint256 unlockTime,
         bytes32[] memory proof,
         uint256 _deadline,
         bytes calldata sig
-    ) external nonReentrant validateClaim(beneficiary, amount, proof) {
+    )
+        external
+        nonReentrant
+        validateClaim(beneficiary, amount, unlockTime, proof)
+    {
         require(block.timestamp <= _deadline, "WhitelistClaim: too late");
 
         bytes32 hash = keccak256(
             abi.encodePacked(
                 beneficiary,
                 amount,
+                unlockTime,
                 proof,
                 _deadline,
                 block.chainid,

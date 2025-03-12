@@ -2,10 +2,14 @@ import hre from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 
+const idxToSkuId = (id: number) => {
+  return id + 1001
+}
+
 const main = async () => {
   const onchainIAP = await hre.helpers.loadOnchainIAP();
 
-  const productId = 1;
+  const productId = 2;
   const priceDecimals = 6;
   const paymentRecipient = process.env.paymentRecipient;
 
@@ -14,31 +18,31 @@ const main = async () => {
     
   }
 
-  const tokenDecimals = 8;
+  const tokenDecimals = 0;
   const skus = [
     {
-      price: "5",
-      amount: "3000",
+      price: "1.99",
+      amount: "257",
     },
     {
-      price: "10",
-      amount: "6500",
+      price: "4.99",
+      amount: "660",
     },
     {
-      price: "20",
-      amount: "14000",
+      price: "12.99",
+      amount: "1800",
     },
     {
-      price: "50",
-      amount: "36000",
+      price: "29.99",
+      amount: "4320",
     },
     {
-      price: "100",
-      amount: "75000",
+      price: "39.99",
+      amount: "6300",
     },
     {
-      price: "500",
-      amount: "400000",
+      price: "99.99",
+      amount: "18000",
     },
   ];
 
@@ -52,7 +56,7 @@ const main = async () => {
   console.info(colorize(Color.yellow, "\nSKUs:\tID\tPrice\tAmount"));
   for (let i = 0; i < skus.length; i++) {
     const { price, amount } = skus[i];
-    console.info(colorize(Color.yellow, ` \t${i + 1}\t${price}\t${amount}`));
+    console.info(colorize(Color.yellow, ` \t${idxToSkuId(i)}\t${price}\t${amount}`));
   }
 
   if (!inputConfirm("Confirm? ")) {
@@ -69,13 +73,14 @@ const main = async () => {
 
   for (let i = 0; i < skus.length; i++) {
     const { price, amount } = skus[i];
+    const skuId = idxToSkuId(i);
     const tx = await onchainIAP.registerSKU(
       productId,
-      i + 1,
+      skuId,
       hre.ethers.parseUnits(price, priceDecimals),
       hre.ethers.parseUnits(amount, tokenDecimals)
     );
-    console.info(`Register SKU #${i+1} TX: ${tx.hash}`);
+    console.info(`Register SKU #${skuId} TX: ${tx.hash}`);
     await tx.wait();
   }
 

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./WhitelistClaim.sol";
+import "./WhitelistClaimWithUnlockTime.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract WhitelistClaimERC20 is WhitelistClaim {
+contract WhitelistClaimERC20WithUnlockTime is WhitelistClaimWithUnlockTime {
     using SafeERC20 for IERC20;
     IERC20 public immutable token;
     address public vault = address(this);
@@ -16,7 +16,7 @@ contract WhitelistClaimERC20 is WhitelistClaim {
         uint256 _deadline,
         address _token,
         address _vault
-    ) WhitelistClaim(_merkleRoot, _startTime, _deadline) {
+    ) WhitelistClaimWithUnlockTime(_merkleRoot, _startTime, _deadline) {
         token = IERC20(_token);
         if (_vault != address(0)) {
             vault = _vault;
