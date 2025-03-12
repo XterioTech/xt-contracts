@@ -2,8 +2,6 @@ import hre, { ethers } from "hardhat";
 import { FansCreateBNBUpgradeable, FansCreateERC20Upgradeable, MarketplaceV2, TokenGateway, XterNFTStaking, XterStaking } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
-import MerkleTree from "merkletreejs";
-import keccak256 from "keccak256";
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 export const deployMajorToken = async (
@@ -406,6 +404,18 @@ export const deployAiCampaign = async (
 ) => {
   const Contract = await hre.ethers.getContractFactory("AiCampaign");
   const contract = await Contract.deploy(eventStartTime, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployUniswapV3Aggregator = async (
+  defaultOwner: AddressLike,
+  uniswapV3Pool: AddressLike,
+  tokenAddress: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("UniswapV3Aggregator");
+  const contract = await Contract.deploy(defaultOwner, uniswapV3Pool, tokenAddress, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
