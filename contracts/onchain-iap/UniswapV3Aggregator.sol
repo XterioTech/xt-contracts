@@ -5,15 +5,46 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "./libraries/TickMath.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-contract UniswapV3Aggregator is Ownable {
+contract UniswapV3Aggregator is Ownable, AggregatorV3Interface {
     IUniswapV3Pool public uniswapV3Pool;
-    uint8 public decimals = 18;
     uint32 public twapInterval = 3600; // 1 hour
 
-    constructor(address _owner, address _uniswapV3Pool) Ownable() {
-        uniswapV3Pool = IUniswapV3Pool(_uniswapV3Pool);
+    uint8 private _decimals;
+    string private _description;
+    uint256 private _version;
+
+    constructor(
+        address _uniswapV3Pool,
+        address _owner,
+        uint8 decimals_,
+        string memory description_,
+        uint256 version_
+    ) Ownable() {
+        _decimals = decimals_;
+        _description = description_;
+        _version = version_;
         transferOwnership(_owner);
+        uniswapV3Pool = IUniswapV3Pool(_uniswapV3Pool);
+    }
+
+    function decimals() external view returns (uint8) {
+        return _decimals;
+    }
+
+    function description() external view returns (string memory) {
+        return _description;
+    }
+
+    function version() external view returns (uint256) {
+        return _version;
+    }
+
+    function getRoundData(
+        uint80
+    ) external pure returns (uint80, int256, uint256, uint256, uint80) {
+        return (0, 0, 0, 0, 0);
     }
 
     function latestRoundData()
@@ -58,7 +89,7 @@ contract UniswapV3Aggregator is Ownable {
 
         uint256 numerator = uint256(sqrtPriceX96) * uint256(sqrtPriceX96);
         uint256 denominator = 1 << 192;
-        uint256 price = (numerator * 10 ** decimals) / denominator;
+        uint256 price = (numerator * 10 ** _decimals) / denominator;
 
         uint8 token0Decimals = IERC20Metadata(uniswapV3Pool.token0())
             .decimals();
@@ -74,8 +105,14 @@ contract UniswapV3Aggregator is Ownable {
         return (0, int256(price), 0, 0, 0);
     }
 
-    function updateDecimals(uint8 _decimals) external onlyOwner {
-        decimals = _decimals;
+    function updateAggregatorData(
+        uint8 decimals_,
+        string memory description_,
+        uint256 version_
+    ) external onlyOwner {
+        _decimals = decimals_;
+        _description = description_;
+        _version = version_;
     }
 
     function updateTwapInterval(uint32 _twapInterval) external onlyOwner {
