@@ -96,16 +96,16 @@ contract UniswapV3Aggregator is Ownable, AggregatorV3Interface {
             .decimals();
 
         uint256 price;
-        if (token0Decimals < token1Decimals) {
+        if (token0Decimals > token1Decimals) {
             price =
                 ((numerator * 10 ** _decimals) *
-                    (10 ** (token1Decimals - token0Decimals))) /
+                    (10 ** (token0Decimals - token1Decimals))) /
                 denominator;
         } else {
             price =
                 (numerator * 10 ** _decimals) /
                 denominator /
-                (10 ** (token0Decimals - token1Decimals));
+                (10 ** (token1Decimals - token0Decimals));
         }
 
         return (0, int256(price), 0, 0, 0);
