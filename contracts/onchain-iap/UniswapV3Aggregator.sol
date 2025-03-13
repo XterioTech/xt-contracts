@@ -89,13 +89,13 @@ contract UniswapV3Aggregator is Ownable, AggregatorV3Interface {
 
         uint256 numerator = uint256(sqrtPriceX96) * uint256(sqrtPriceX96);
         uint256 denominator = 1 << 192; // 2**96
-        // uint256 price = (numerator * 10 ** _decimals) / denominator;
 
         uint8 token0Decimals = IERC20Metadata(uniswapV3Pool.token0())
             .decimals();
         uint8 token1Decimals = IERC20Metadata(uniswapV3Pool.token1())
             .decimals();
 
+        uint256 price;
         if (token0Decimals < token1Decimals) {
             price =
                 ((numerator * 10 ** _decimals) *
