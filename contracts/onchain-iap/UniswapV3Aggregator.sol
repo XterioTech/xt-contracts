@@ -8,17 +8,11 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 contract UniswapV3Aggregator is Ownable {
     IUniswapV3Pool public uniswapV3Pool;
-    address public tokenAddress;
     uint8 public decimals = 18;
     uint32 public twapInterval = 3600; // 1 hour
 
-    constructor(
-        address _owner,
-        address _uniswapV3Pool,
-        address _tokenAddress
-    ) Ownable() {
+    constructor(address _owner, address _uniswapV3Pool) Ownable() {
         uniswapV3Pool = IUniswapV3Pool(_uniswapV3Pool);
-        tokenAddress = _tokenAddress;
         transferOwnership(_owner);
     }
 
@@ -75,10 +69,6 @@ contract UniswapV3Aggregator is Ownable {
             price = price / (10 ** (token1Decimals - token0Decimals));
         } else {
             price = price * (10 ** (token0Decimals - token1Decimals));
-        }
-
-        if (tokenAddress != uniswapV3Pool.token0()) {
-            price = 10 ** (2 * decimals) / price;
         }
 
         return (0, int256(price), 0, 0, 0);
