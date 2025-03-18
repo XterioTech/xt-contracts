@@ -211,4 +211,18 @@ contract XterStaking is
     function unpause() external onlyRole(MANAGER_ROLE) {
         _unpause();
     }
+
+    /**
+     * @notice stks are all the information, both claimed and unclaimed.
+     */
+    function migrate(Stk[] calldata stks) external onlyRole(MANAGER_ROLE) {
+        for (uint256 i; i < stks.length; ) {
+            stakes.push(stks[i]);
+            userStakes[stks[i].staker].push(stks[i].id);
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
 }
