@@ -38,7 +38,7 @@ const config: HardhatUserConfig = {
     },
     bscTestnet: {
       chainId: 97,
-      url: "https://data-seed-prebsc-2-s1.binance.org:8545",
+      url: "https://bsc-testnet-rpc.publicnode.com",
       accounts: privateKey != "" ? [privateKey] : [],
     },
     bsc: {
