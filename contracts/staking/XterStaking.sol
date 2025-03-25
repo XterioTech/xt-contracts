@@ -223,6 +223,24 @@ contract XterStaking is
             stakes.push(stks[i]);
             userStakes[stks[i].staker].push(stks[i].id);
 
+            if (stks[i].claimed) {
+                emit UnStake(
+                    stks[i].staker,
+                    stks[i].id,
+                    stks[i].amount,
+                    stks[i].startTime,
+                    stks[i].duration
+                );
+            } else {
+                emit Stake(
+                    stks[i].staker,
+                    stks[i].id,
+                    stks[i].amount,
+                    stks[i].startTime,
+                    stks[i].duration
+                );
+            }
+
             unchecked {
                 ++i;
                 ++id;
