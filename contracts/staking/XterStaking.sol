@@ -219,27 +219,10 @@ contract XterStaking is
         uint256 id = stakes.length;
         for (uint256 i; i < stks.length; ) {
             require(stks[i].id == id, "Invalid stk id");
+            require(stks[i].staker != address(0), "Invalid stk staker");
 
             stakes.push(stks[i]);
             userStakes[stks[i].staker].push(stks[i].id);
-
-            if (stks[i].claimed) {
-                emit UnStake(
-                    stks[i].staker,
-                    stks[i].id,
-                    stks[i].amount,
-                    stks[i].startTime,
-                    stks[i].duration
-                );
-            } else {
-                emit Stake(
-                    stks[i].staker,
-                    stks[i].id,
-                    stks[i].amount,
-                    stks[i].startTime,
-                    stks[i].duration
-                );
-            }
 
             unchecked {
                 ++i;
