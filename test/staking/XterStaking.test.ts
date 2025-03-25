@@ -166,4 +166,112 @@ describe("Test XterStaking Contract", function () {
     }
   });
 
+
+  it("Migrate: If the id is wrong, the call will fail", async function () {
+    const { xterStaking, admin } = await loadFixture(basicFixture);
+
+    const randomUser = async () => {
+      const wallet = hre.ethers.Wallet.createRandom().connect(hre.ethers.provider);
+      await setBalance(wallet.address, hre.ethers.parseEther("100"));
+      return wallet;
+    };
+
+    // type Stk = {
+    //   id: number;
+    //   staker: string;
+    //   amount: bigint;
+    //   startTime: number;
+    //   duration: number;
+    //   claimed: boolean;
+    // }
+
+    let stakes = [];
+    for (let i = 0; i < 100; i++) {
+      let stk = {
+        id: i,
+        staker: (await randomUser()).address,
+        amount: hre.ethers.parseEther((Math.random() * 10 + 1).toFixed(2)),
+        startTime: 1742890986,
+        duration: Math.floor(Math.random() * 3600) + 3600,
+        claimed: false,
+      }
+      stakes.push(stk);
+    }
+
+    // wrong id
+    stakes[50].id = 49
+
+    await expect(xterStaking.connect(admin).migrate(stakes)).to.be.revertedWith("Invalid stk id");
+
+  });
+
+  it("Migrate: If the staker is wrong, the call will fail", async function () {
+    const { xterStaking, admin } = await loadFixture(basicFixture);
+
+    const randomUser = async () => {
+      const wallet = hre.ethers.Wallet.createRandom().connect(hre.ethers.provider);
+      await setBalance(wallet.address, hre.ethers.parseEther("100"));
+      return wallet;
+    };
+
+    // type Stk = {
+    //   id: number;
+    //   staker: string;
+    //   amount: bigint;
+    //   startTime: number;
+    //   duration: number;
+    //   claimed: boolean;
+    // }
+
+    let stakes = [];
+    for (let i = 0; i < 100; i++) {
+      let stk = {
+        id: i,
+        staker: (await randomUser()).address,
+        amount: hre.ethers.parseEther((Math.random() * 10 + 1).toFixed(2)),
+        startTime: 1742890986,
+        duration: Math.floor(Math.random() * 3600) + 3600,
+        claimed: false,
+      }
+      stakes.push(stk);
+    }
+
+    // wrong staker
+    stakes[50].staker = hre.ethers.ZeroAddress
+
+    await expect(xterStaking.connect(admin).migrate(stakes)).to.be.revertedWith("Invalid stk staker");
+  });
+
+  it("Migrate: stakes length is 185", async function () {
+    const { xterStaking, admin } = await loadFixture(basicFixture);
+
+    const randomUser = async () => {
+      const wallet = hre.ethers.Wallet.createRandom().connect(hre.ethers.provider);
+      await setBalance(wallet.address, hre.ethers.parseEther("100"));
+      return wallet;
+    };
+
+    // type Stk = {
+    //   id: number;
+    //   staker: string;
+    //   amount: bigint;
+    //   startTime: number;
+    //   duration: number;
+    //   claimed: boolean;
+    // }
+
+    let stakes = [];
+    for (let i = 0; i < 185; i++) {
+      let stk = {
+        id: i,
+        staker: (await randomUser()).address,
+        amount: hre.ethers.parseEther((Math.random() * 10 + 1).toFixed(2)),
+        startTime: 1742890986,
+        duration: Math.floor(Math.random() * 3600) + 3600,
+        claimed: false,
+      }
+      stakes.push(stk);
+    }
+    await xterStaking.connect(admin).migrate(stakes);
+  });
 }); 

@@ -215,14 +215,19 @@ contract XterStaking is
     /**
      * @notice stks are all the information, both claimed and unclaimed.
      */
-    function migrate(Stk[] calldata stks) external onlyRole(MANAGER_ROLE) {
+    function migrate(
+        Stk[] calldata stks
+    ) external payable onlyRole(MANAGER_ROLE) {
         uint256 id = stakes.length;
-        for (uint256 i; i < stks.length; ) {
-            require(stks[i].id == id, "Invalid stk id");
-            require(stks[i].staker != address(0), "Invalid stk staker");
+        uint256 stksLen = stks.length;
 
-            stakes.push(stks[i]);
-            userStakes[stks[i].staker].push(stks[i].id);
+        for (uint256 i; i < stksLen; ) {
+            Stk calldata stk = stks[i];
+            require(stk.id == id, "Invalid stk id");
+            require(stk.staker != address(0), "Invalid stk staker");
+
+            stakes.push(stk);
+            userStakes[stk.staker].push(stk.id);
 
             unchecked {
                 ++i;
