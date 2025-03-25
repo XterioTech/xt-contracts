@@ -17,8 +17,8 @@ const main = async () => {
   if (!address) {
     console.info(colorize(Color.blue, `Deploy UniswapV3Aggregator`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
-    console.info(colorize(Color.yellow, `Owner: ${owner}`));
     console.info(colorize(Color.yellow, `uniswapV3Pool: ${uniswapV3Pool}`));
+    console.info(colorize(Color.yellow, `Owner: ${owner}`));
     console.info(colorize(Color.yellow, `Decimals: ${decimals}`));
     console.info(colorize(Color.yellow, `Description: ${description}`));
 
