@@ -216,7 +216,7 @@ contract XterStaking is
      * @notice stks are all the information, both claimed and unclaimed.
      */
     function migrate(Stk[] calldata stks) external onlyRole(MANAGER_ROLE) {
-        uint256 id = 0;
+        uint256 id = stakes.length;
         for (uint256 i; i < stks.length; ) {
             require(stks[i].id == id, "Invalid stk id");
 
