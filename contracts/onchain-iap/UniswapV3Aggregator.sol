@@ -8,7 +8,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 contract UniswapV3Aggregator is Ownable, AggregatorV3Interface {
-    IUniswapV3Pool public uniswapV3Pool;
+    IUniswapV3Pool public immutable uniswapV3Pool;
     uint32 public twapInterval = 3600; // 1 hour
 
     uint8 private _decimals;
