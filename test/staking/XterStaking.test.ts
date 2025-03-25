@@ -273,5 +273,19 @@ describe("Test XterStaking Contract", function () {
       stakes.push(stk);
     }
     await xterStaking.connect(admin).migrate(stakes);
+
+    stakes = [];
+    for (let i = 185; i < 370; i++) {
+      let stk = {
+        id: i,
+        staker: (await randomUser()).address,
+        amount: hre.ethers.parseEther((Math.random() * 10 + 1).toFixed(2)),
+        startTime: 1742890986,
+        duration: Math.floor(Math.random() * 3600) + 3600,
+        claimed: false,
+      }
+      stakes.push(stk);
+    }
+    await xterStaking.connect(admin).migrate(stakes);
   });
 }); 
