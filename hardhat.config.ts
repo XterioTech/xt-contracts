@@ -42,7 +42,7 @@ const config: HardhatUserConfig = {
       accounts: privateKey != "" ? [privateKey] : [],
     },
     bsc: {
-      url: "https://nd-500-897-492.p2pify.com/a3e45094653b57e0699623939df446a9",
+      url: "https://bsc-mainnet.core.chainstack.com/901a94bfc97d0e8a7280337e6e97e1a9",
       accounts: privateKey != "" ? [privateKey] : [],
     },
     // opbnbTestnet: {
