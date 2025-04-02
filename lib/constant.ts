@@ -63,6 +63,7 @@ export const onchainIAPAddressMap: NetworkAddressMap = {
   // sepolia: '0x1cDc98Abe4dB79b332206dD7a89742F0f59255F7',        //for test eng
   xterioTestnet: "0xd3875f07496d65fc09Ad455ca53194A77eBCb504",  // for stage env
   // xterioTestnet: "0x5949430506ff6Ce098a5DdD8a062D3Da7373b365",  // for test env
+  bscTestnet: "0x80e3D84C66ddEC4f0E25400a51297353a26243d1",   // for stage env
 };
 
 export const safeManagerAddressMap: NetworkAddressMap = {
