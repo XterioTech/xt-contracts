@@ -27,10 +27,10 @@ contract Launchpool is ReentrancyGuard, Ownable {
     uint256 public totalSupply;
     mapping(address => uint256) public balanceOf;
 
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
-    event RewardPaid(address indexed user, uint256 reward);
-    event GetRewartTimeUpdate(uint256 newGetRewardTime);
+    event XPoolStake(address indexed user, uint256 amount);
+    event XPoolWithdraw(address indexed user, uint256 amount);
+    event XPoolGetReward(address indexed user, uint256 reward);
+    event XPoolUpdateGetRewartTime(uint256 getRewardTime);
 
     constructor(
         address _owner,
@@ -121,7 +121,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
         totalSupply += _amount;
         balanceOf[msg.sender] += _amount;
         stakingToken.transferFrom(msg.sender, address(this), _amount);
-        emit Staked(msg.sender, _amount);
+        emit XPoolStake(msg.sender, _amount);
     }
 
     function withdraw(
@@ -136,7 +136,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
         totalSupply -= _amount;
         balanceOf[msg.sender] -= _amount;
         stakingToken.transfer(msg.sender, _amount);
-        emit Withdrawn(msg.sender, _amount);
+        emit XPoolWithdraw(msg.sender, _amount);
     }
 
     function exit() external {
@@ -155,12 +155,12 @@ contract Launchpool is ReentrancyGuard, Ownable {
             userRewardDebt[msg.sender] = 0;
             userRewardPaid[msg.sender] += reward;
             rewardsToken.transfer(msg.sender, reward);
-            emit RewardPaid(msg.sender, reward);
+            emit XPoolGetReward(msg.sender, reward);
         }
     }
 
-    function setGetRewardTime(uint256 _getRewardTime) external onlyOwner {
+    function updateGetRewardTime(uint256 _getRewardTime) external onlyOwner {
         getRewardTime = _getRewardTime;
-        emit GetRewartTimeUpdate(_getRewardTime);
+        emit XPoolUpdateGetRewartTime(_getRewardTime);
     }
 }
