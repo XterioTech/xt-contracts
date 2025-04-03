@@ -144,7 +144,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
     function getReward() public nonReentrant updateReward(msg.sender) {
         require(
-            rewardsToken != address(0),
+            address(rewardsToken) != address(0),
             "Launchpool: rewardsToken address is zero, can't getReward"
         );
         require(
