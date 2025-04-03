@@ -46,10 +46,6 @@ contract Launchpool is ReentrancyGuard, Ownable {
             "Launchpool: stakingToken address is zero"
         );
         require(
-            _rewardsToken != address(0),
-            "Launchpool: rewardsToken address is zero"
-        );
-        require(
             _stakingToken != _rewardsToken,
             "Launchpool: stakingToken can't equal rewardsToken"
         );
@@ -121,6 +117,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
         totalSupply += _amount;
         balanceOf[msg.sender] += _amount;
         stakingToken.transferFrom(msg.sender, address(this), _amount);
+
         emit XPoolStake(msg.sender, _amount);
     }
 
@@ -136,6 +133,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
         totalSupply -= _amount;
         balanceOf[msg.sender] -= _amount;
         stakingToken.transfer(msg.sender, _amount);
+
         emit XPoolWithdraw(msg.sender, _amount);
     }
 
@@ -146,6 +144,10 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
     function getReward() public nonReentrant updateReward(msg.sender) {
         require(
+            rewardsToken != address(0),
+            "Launchpool: rewardsToken address is zero, can't getReward"
+        );
+        require(
             block.timestamp >= getRewardTime,
             "Launchpool: it's not get reward time yet"
         );
@@ -155,12 +157,14 @@ contract Launchpool is ReentrancyGuard, Ownable {
             userRewardDebt[msg.sender] = 0;
             userRewardPaid[msg.sender] += reward;
             rewardsToken.transfer(msg.sender, reward);
+
             emit XPoolGetReward(msg.sender, reward);
         }
     }
 
     function updateGetRewardTime(uint256 _getRewardTime) external onlyOwner {
         getRewardTime = _getRewardTime;
+
         emit XPoolUpdateGetRewartTime(_getRewardTime);
     }
 }
