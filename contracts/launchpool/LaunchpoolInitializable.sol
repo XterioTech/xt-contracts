@@ -25,15 +25,16 @@ contract LaunchpoolInitializable is ReentrancyGuard, Ownable {
     uint256 public rewardPerTokenStored;
 
     mapping(address => uint256) public userRewardPerTokenPaid;
-    mapping(address => uint256) public userRewards;
+    mapping(address => uint256) public userRewardDebt;
+    mapping(address => uint256) public userRewardPaid;
 
     uint256 public totalSupply;
     mapping(address => uint256) public balanceOf;
 
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
-    event RewardPaid(address indexed user, uint256 reward);
-    event GetRewartTimeUpdate(uint256 newGetRewardTime);
+    event XPoolStake(address indexed user, uint256 amount);
+    event XPoolWithdraw(address indexed user, uint256 amount);
+    event XPoolGetReward(address indexed user, uint256 reward);
+    event XPoolUpdateGetRewartTime(uint256 getRewardTime);
 
     constructor() Ownable() {
         factory = msg.sender;
@@ -89,7 +90,7 @@ contract LaunchpoolInitializable is ReentrancyGuard, Ownable {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
         if (_account != address(0)) {
-            userRewards[_account] = earned(_account);
+            userRewardDebt[_account] = earned(_account);
             userRewardPerTokenPaid[_account] = rewardPerTokenStored;
         }
 
@@ -117,7 +118,7 @@ contract LaunchpoolInitializable is ReentrancyGuard, Ownable {
         return
             ((balanceOf[_account] *
                 (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
-            userRewards[_account];
+            userRewardDebt[_account];
     }
 
     function stake(
@@ -127,18 +128,19 @@ contract LaunchpoolInitializable is ReentrancyGuard, Ownable {
             block.timestamp >= startTime,
             "Launchpool: haven't started yet"
         );
-        require(_amount > 0, "Launchpool: cannot stake 0");
+        require(_amount > 0, "Launchpool: can't stake 0");
 
         totalSupply += _amount;
         balanceOf[msg.sender] += _amount;
         stakingToken.transferFrom(msg.sender, address(this), _amount);
-        emit Staked(msg.sender, _amount);
+
+        emit XPoolStake(msg.sender, _amount);
     }
 
     function withdraw(
         uint256 _amount
     ) public nonReentrant updateReward(msg.sender) {
-        require(_amount > 0, "Launchpool: cannot withdraw 0");
+        require(_amount > 0, "Launchpool: can't withdraw 0");
         require(
             balanceOf[msg.sender] >= _amount,
             "Launchpool: insufficient balance"
@@ -147,7 +149,8 @@ contract LaunchpoolInitializable is ReentrancyGuard, Ownable {
         totalSupply -= _amount;
         balanceOf[msg.sender] -= _amount;
         stakingToken.transfer(msg.sender, _amount);
-        emit Withdrawn(msg.sender, _amount);
+
+        emit XPoolWithdraw(msg.sender, _amount);
     }
 
     function exit() external {
@@ -157,20 +160,40 @@ contract LaunchpoolInitializable is ReentrancyGuard, Ownable {
 
     function getReward() public nonReentrant updateReward(msg.sender) {
         require(
+            address(rewardsToken) != address(0),
+            "Launchpool: rewardsToken address is zero, can't getReward"
+        );
+        require(
             block.timestamp >= getRewardTime,
             "Launchpool: it's not get reward time yet"
         );
 
-        uint256 reward = userRewards[msg.sender];
+        uint256 reward = userRewardDebt[msg.sender];
         if (reward > 0) {
-            userRewards[msg.sender] = 0;
+            userRewardDebt[msg.sender] = 0;
+            userRewardPaid[msg.sender] += reward;
             rewardsToken.transfer(msg.sender, reward);
-            emit RewardPaid(msg.sender, reward);
+
+            emit XPoolGetReward(msg.sender, reward);
         }
     }
 
-    function setGetRewardTime(uint64 _getRewardTime) external onlyOwner {
+    function updateGetRewardTime(uint64 _getRewardTime) external onlyOwner {
         getRewardTime = _getRewardTime;
-        emit GetRewartTimeUpdate(_getRewardTime);
+
+        emit XPoolUpdateGetRewartTime(_getRewardTime);
+    }
+
+    function withdrawERC20Token(
+        address _tokenAddress,
+        uint256 _tokenAmount,
+        address _recipient
+    ) external onlyOwner {
+        require(
+            _tokenAddress != address(stakingToken),
+            "Launchpool: can't withdraw staking token"
+        );
+
+        IERC20(_tokenAddress).transfer(_recipient, _tokenAmount);
     }
 }

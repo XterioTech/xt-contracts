@@ -12,7 +12,7 @@ contract LaunchpoolFactory is Ownable {
 
     address[] public allLaunchpools;
 
-    event LaunchpoolCreated(
+    event XPoolCreateLaunchpool(
         address indexed stakingToken,
         address indexed rewardsToken,
         uint256 startTime,
@@ -27,7 +27,7 @@ contract LaunchpoolFactory is Ownable {
         return allLaunchpools.length;
     }
 
-    function deployLaunchpool(
+    function createLaunchpool(
         address _owner,
         address _stakingToken,
         address _rewardsToken,
@@ -62,7 +62,7 @@ contract LaunchpoolFactory is Ownable {
 
         allLaunchpools.push(launchpool);
 
-        emit LaunchpoolCreated(
+        emit XPoolCreateLaunchpool(
             _stakingToken,
             _rewardsToken,
             _startTime,
