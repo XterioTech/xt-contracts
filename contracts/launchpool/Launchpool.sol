@@ -21,7 +21,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
     uint256 public rewardPerTokenStored;
 
     mapping(address => uint256) public userRewardPerTokenPaid;
-    mapping(address => uint256) public userRewards;
+    mapping(address => uint256) public userRewardDebt;
+    mapping(address => uint256) public userRewardPaid;
 
     uint256 public totalSupply;
     mapping(address => uint256) public balanceOf;
@@ -77,7 +78,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
         if (_account != address(0)) {
-            userRewards[_account] = earned(_account);
+            userRewardDebt[_account] = earned(_account);
             userRewardPerTokenPaid[_account] = rewardPerTokenStored;
         }
 
@@ -105,7 +106,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
         return
             ((balanceOf[_account] *
                 (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
-            userRewards[_account];
+            userRewardDebt[_account];
     }
 
     function stake(
@@ -149,9 +150,10 @@ contract Launchpool is ReentrancyGuard, Ownable {
             "Launchpool: it's not get reward time yet"
         );
 
-        uint256 reward = userRewards[msg.sender];
+        uint256 reward = userRewardDebt[msg.sender];
         if (reward > 0) {
-            userRewards[msg.sender] = 0;
+            userRewardDebt[msg.sender] = 0;
+            userRewardPaid[msg.sender] += reward;
             rewardsToken.transfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
