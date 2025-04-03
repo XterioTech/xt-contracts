@@ -112,7 +112,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
             block.timestamp >= startTime,
             "Launchpool: haven't started yet"
         );
-        require(_amount > 0, "Launchpool: cannot stake 0");
+        require(_amount > 0, "Launchpool: can't stake 0");
 
         totalSupply += _amount;
         balanceOf[msg.sender] += _amount;
@@ -124,7 +124,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
     function withdraw(
         uint256 _amount
     ) public nonReentrant updateReward(msg.sender) {
-        require(_amount > 0, "Launchpool: cannot withdraw 0");
+        require(_amount > 0, "Launchpool: can't withdraw 0");
         require(
             balanceOf[msg.sender] >= _amount,
             "Launchpool: insufficient balance"
@@ -166,5 +166,18 @@ contract Launchpool is ReentrancyGuard, Ownable {
         getRewardTime = _getRewardTime;
 
         emit XPoolUpdateGetRewartTime(_getRewardTime);
+    }
+
+    function withdrawERC20Token(
+        address _tokenAddress,
+        uint256 _tokenAmount,
+        address _recipient
+    ) external onlyOwner {
+        require(
+            _tokenAddress != address(stakingToken),
+            "Launchpool: can't withdraw staking token"
+        );
+
+        IERC20(_tokenAddress).transfer(_recipient, _tokenAmount);
     }
 }
