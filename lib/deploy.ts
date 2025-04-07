@@ -469,3 +469,18 @@ export const deployXterNFTStaking = async (
   await contract.waitForDeployment();
   return contract;
 };
+
+export const deployLaunchpool = async (
+  owner: AddressLike,
+  stakingToken: AddressLike,
+  rewardsToken: AddressLike,
+  startTime: string,
+  duration: string,
+  rewardAmount: string,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("Launchpool");
+  const contract = await Contract.deploy(owner, stakingToken, rewardsToken, startTime, duration, rewardAmount, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};

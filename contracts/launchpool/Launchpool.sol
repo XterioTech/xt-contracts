@@ -139,10 +139,12 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
     function exit() external {
         withdraw(balanceOf[msg.sender]);
-        getReward();
+        getReward(userRewardDebt[msg.sender]);
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getReward(
+        uint256 _amount
+    ) public nonReentrant updateReward(msg.sender) {
         require(
             address(rewardsToken) != address(0),
             "Launchpool: rewardsToken address is zero, can't getReward"
@@ -153,13 +155,13 @@ contract Launchpool is ReentrancyGuard, Ownable {
         );
 
         uint256 reward = userRewardDebt[msg.sender];
-        if (reward > 0) {
-            userRewardDebt[msg.sender] = 0;
-            userRewardPaid[msg.sender] += reward;
-            rewardsToken.transfer(msg.sender, reward);
+        require(reward >= _amount, "Launchpool: insufficient reward");
 
-            emit XPoolGetReward(msg.sender, reward);
-        }
+        userRewardDebt[msg.sender] -= _amount;
+        userRewardPaid[msg.sender] += _amount;
+        rewardsToken.transfer(msg.sender, _amount);
+
+        emit XPoolGetReward(msg.sender, _amount);
     }
 
     function updateGetRewardTime(uint256 _getRewardTime) external onlyOwner {
