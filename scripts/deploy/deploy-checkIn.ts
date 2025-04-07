@@ -30,7 +30,7 @@ async function main() {
     try {
       await hre.run("verify:verify", {
         address: address,
-        contract: "contracts/checkIn/CheckIn.sol:CheckInContract",
+        contract: "contracts/check-in/CheckIn.sol:CheckInContract",
         constructorArguments: [startTime],
       });
     } catch (e) {
