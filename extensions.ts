@@ -1,4 +1,4 @@
-import { BasicERC1155C, BasicERC721C, FansCreate, MarketplaceV2, OnchainIAP, TokenGateway } from "./typechain-types";
+import { BasicERC1155C, BasicERC721C, FansCreate, MarketplaceV2, OnchainIAP, TokenGateway, XterStaking } from "./typechain-types";
 import { extendEnvironment } from "hardhat/config";
 import "hardhat/types/runtime";
 import { ContractOrAddrName, getAddressForNetwork } from "./lib/constant";
@@ -10,6 +10,7 @@ interface HelperFuncs {
   loadOnchainIAP(): Promise<OnchainIAP>;
   loadBasicERC721C(address: string): Promise<BasicERC721C>;
   loadBasicERC1155C(address: string): Promise<BasicERC1155C>;
+  loadXterStaking(): Promise<XterStaking>;
 }
 
 declare module "hardhat/types/runtime" {
@@ -55,6 +56,12 @@ extendEnvironment((hre) => {
         "BasicERC1155C",
         address
       );
-    }
+    },
+    loadXterStaking: () => {
+      return hre.ethers.getContractAt(
+        "XterStaking",
+        getAddressForNetwork(ContractOrAddrName.XterStaking, hre.network.name)
+      );
+    },
   };
 });
