@@ -10,14 +10,17 @@ const main = async () => {
   const skipVerify = process.env.skipVerify || false;
   const owner = process.env.owner || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
   const uniswapV3Pool = process.env.uniswapV3Pool || "";
-  const tokenAddress = process.env.tokenAddress || "";
+  const decimals = parseInt(process.env.decimals || "6");
+  const version = 1;
+  const description = process.env.description || "";
 
   if (!address) {
     console.info(colorize(Color.blue, `Deploy UniswapV3Aggregator`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
-    console.info(colorize(Color.yellow, `Owner: ${owner}`));
     console.info(colorize(Color.yellow, `uniswapV3Pool: ${uniswapV3Pool}`));
-    console.info(colorize(Color.yellow, `tokenAddress: ${tokenAddress}`));
+    console.info(colorize(Color.yellow, `Owner: ${owner}`));
+    console.info(colorize(Color.yellow, `Decimals: ${decimals}`));
+    console.info(colorize(Color.yellow, `Description: ${description}`));
 
     if (!inputConfirm("Confirm? ")) {
       console.warn("Abort");
@@ -28,9 +31,11 @@ const main = async () => {
     console.info(`===================== Deploy UniswapV3Aggregator =================`);
     console.info(`=========================================================`);
     const UniswapV3Aggregator = await deployUniswapV3Aggregator(
-      owner,
       uniswapV3Pool,
-      tokenAddress,
+      owner,
+      decimals,
+      description,
+      version,
       getTxOverridesForNetwork(hre.network.name)
     );
     address = await UniswapV3Aggregator.getAddress();
@@ -42,7 +47,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/onchain-iap/UniswapV3Aggregator.sol:UniswapV3Aggregator",
-        constructorArguments: [owner, uniswapV3Pool],
+        constructorArguments: [uniswapV3Pool, owner, decimals, description, version,],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);

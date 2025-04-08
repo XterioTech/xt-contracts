@@ -409,13 +409,15 @@ export const deployAiCampaign = async (
 };
 
 export const deployUniswapV3Aggregator = async (
-  defaultOwner: AddressLike,
   uniswapV3Pool: AddressLike,
-  tokenAddress: AddressLike,
+  defaultOwner: AddressLike,
+  decimals: number,
+  description: string,
+  version: number,
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("UniswapV3Aggregator");
-  const contract = await Contract.deploy(defaultOwner, uniswapV3Pool, tokenAddress, txOverrides || {});
+  const contract = await Contract.deploy(uniswapV3Pool, defaultOwner, decimals, description, version, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
