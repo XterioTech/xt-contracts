@@ -13,7 +13,7 @@ go run main.go --help
         XterStaking address
 
 
-go run main.go -rpc https://xterio-testnet.alt.technology/ -xterStakingAddress 0xDC24e9e31664105b1866f8B6753896E20Bc56f59 -deployBlockNumber 5709734 -endBlockNumber 5819404 -rangeBlockNumber 1000 > testnet-user_stakings.csv
+go run main.go -rpc https://xterio-testnet.alt.technology/ -xterStakingAddress 0xDC24e9e31664105b1866f8B6753896E20Bc56f59 -deployBlockNumber 5709734 -endBlockNumber 5968911 -rangeBlockNumber 1000 > testnet-user_stakings.csv
 
 go run main.go -rpc https://xterio-fullnode.alt.technology/this-endpoint-is-not-rate-limited-please-keep-it-for-interal-use-only  -xterStakingAddress 0xC054eF315bCeAb5046848604DD98540c83Ba0B9a -deployBlockNumber 12177627 -endBlockNumber 15676868 -rangeBlockNumber 1000 > mainnet-user_stakings.csv
 
