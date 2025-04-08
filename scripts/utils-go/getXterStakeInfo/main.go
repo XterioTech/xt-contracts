@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"sort"
 	"time"
 
 	"getXterStakeInfo/contract"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -109,14 +111,29 @@ func main() {
 		}
 	}
 
+	totalStakeAmount := new(big.Int)
+
+	stakesSlice := make([]Stk, 0)
+
 	for id := range stakes {
 		if _, ok := unStakes[id]; ok {
 			stakes[id].claimed = unStakes[id].claimed
 		}
+		stakesSlice = append(stakesSlice, *stakes[id])
+		if stakes[id].claimed == 1 {
+			totalStakeAmount.Add(totalStakeAmount, stakes[id].Amount)
+		}
 	}
-	fmt.Println("staking_id,amount_raw,start_time,duration,status,address")
-	for _, stk := range stakes {
-		fmt.Println(fmt.Sprintf("%d,%d,%d,%d,%d,%s", stk.Id, stk.Amount, stk.StartTime, stk.Duration, stk.claimed, stk.User))
+
+	log.Println("total stake amount: ", totalStakeAmount)
+
+	sort.SliceStable(stakesSlice, func(i, j int) bool {
+		return stakesSlice[i].Id.Int64() < stakesSlice[j].Id.Int64()
+	})
+
+	fmt.Println("\"staking_id\",\"amount_raw\",\"start_time\",\"duration\",\"status\",\"address\"")
+	for _, stk := range stakesSlice {
+		fmt.Println(fmt.Sprintf("\"%d\",\"%d\",\"%d\",\"%d\",\"%d\",\"%s\"", stk.Id, stk.Amount, stk.StartTime, stk.Duration, stk.claimed, stk.User))
 	}
 
 	elapsedTime := time.Since(startTime)

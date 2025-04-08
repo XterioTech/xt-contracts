@@ -10,11 +10,12 @@ const main = async () => {
   // 
   let stakes: any[] = [];
 
-  let path = './scripts/others/testnet-user_stakings.csv';
+  let path = './scripts/others/user_stakings.csv';
   const data = fs.readFileSync(path, "utf-8");
   const lines = data.split("\n");
   lines.forEach(line => {
-    const columns = line.split(',');
+    let l = line.replace(/"/g, '');
+    const columns = l.split(',');
     let claimed = false;
     if (Number(columns[4]) == 2) {
       claimed = true;
