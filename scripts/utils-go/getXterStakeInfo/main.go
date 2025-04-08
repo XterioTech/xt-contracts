@@ -111,6 +111,8 @@ func main() {
 		}
 	}
 
+	totalStakeAmount := new(big.Int)
+
 	stakesSlice := make([]Stk, 0)
 
 	for id := range stakes {
@@ -118,7 +120,12 @@ func main() {
 			stakes[id].claimed = unStakes[id].claimed
 		}
 		stakesSlice = append(stakesSlice, *stakes[id])
+		if stakes[id].claimed == 1 {
+			totalStakeAmount.Add(totalStakeAmount, stakes[id].Amount)
+		}
 	}
+
+	log.Println("total stake amount: ", totalStakeAmount)
 
 	sort.SliceStable(stakesSlice, func(i, j int) bool {
 		return stakesSlice[i].Id.Int64() < stakesSlice[j].Id.Int64()
