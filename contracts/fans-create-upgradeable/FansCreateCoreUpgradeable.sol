@@ -7,13 +7,15 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 abstract contract FansCreateCoreUpgradeable is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
     ERC1155SupplyUpgradeable,
-    ReentrancyGuardUpgradeable
+    ReentrancyGuardUpgradeable,
+    PausableUpgradeable
 {
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
@@ -240,7 +242,7 @@ abstract contract FansCreateCoreUpgradeable is
         uint256 deadline,
         address signer,
         bytes calldata signature
-    ) external payable {
+    ) external payable whenNotPaused {
         require(creator == msg.sender, "FansCreateCore: not a valid creator");
 
         require(
@@ -285,7 +287,7 @@ abstract contract FansCreateCoreUpgradeable is
         uint256 workId,
         uint256 amount,
         uint256 maxPriceAfterFee
-    ) public payable nonReentrant {
+    ) public payable nonReentrant whenNotPaused {
         address creator = workCreator[workId];
         require(
             creator != address(0),
@@ -344,7 +346,7 @@ abstract contract FansCreateCoreUpgradeable is
         uint256 workId,
         uint256 amount,
         uint256 minPriceAfterFee
-    ) public nonReentrant {
+    ) public nonReentrant whenNotPaused {
         address creator = workCreator[workId];
         require(
             creator != address(0),
@@ -400,6 +402,14 @@ abstract contract FansCreateCoreUpgradeable is
     }
 
     /****************** Admin Functions ******************/
+    function setPaused(bool _paused) external onlyRole(MANAGER_ROLE) {
+        if (_paused) {
+            _pause();
+        } else {
+            _unpause();
+        }
+    }
+
     function setURI(string calldata uri) external onlyRole(MANAGER_ROLE) {
         _setURI(uri);
     }
