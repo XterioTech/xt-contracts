@@ -4,6 +4,7 @@ import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-help
 import { deployMajorToken, deployLaunchpool } from "../../lib/deploy";
 
 const amount10 = "10000000000000000000"; // 10 个
+const amount15 = "15000000000000000000"; // 15 个
 const amount50 = "50000000000000000000"; // 50 个
 const amount100 = "100000000000000000000"; // 100 个
 
@@ -13,8 +14,8 @@ describe("Launchpool", function () {
 
         const stakingToken = await deployMajorToken(owner.address, owner.address);
 
-        await stakingToken.transfer(alice, amount50); // 50 个
-        await stakingToken.transfer(bob, amount50); // 50 个
+        await stakingToken.transfer(alice, amount50);
+        await stakingToken.transfer(bob, amount50);
 
         const rewardsToken = await deployMajorToken(owner.address, owner.address);
 
@@ -24,20 +25,20 @@ describe("Launchpool", function () {
         startTime += 10; // 10 s 后开始
 
         const duration = "100"; // 100 s
-        const rewardAmount = amount100; // 100 个
+        const rewardAmount = amount100;
 
-        const poolStakeLimit = amount100; // 100 个
-        const userStakeLimit = amount10; // 10 个
+        const poolStakeLimit = amount15;
+        const userStakeLimit = amount10;
 
         const launchpool = await deployLaunchpool(owner, stakingToken, rewardsToken, startTime.toString(), duration, rewardAmount, poolStakeLimit, userStakeLimit);
 
         await rewardsToken.transfer(launchpool.target, rewardAmount);
 
-        return { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, launchpool };
+        return { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool };
     }
 
     it("Should deploy successfully", async function () {
-        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, launchpool } = await loadFixture(basicFixture);
+        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool } = await loadFixture(basicFixture);
 
         expect(await stakingToken.balanceOf(alice)).to.equal(amount50);
         expect(await stakingToken.balanceOf(bob)).to.equal(amount50);
@@ -47,10 +48,56 @@ describe("Launchpool", function () {
         expect(await launchpool.rewardAmount()).to.equal(rewardAmount);
         const rewardRate = BigInt(rewardAmount) / BigInt(duration);
         expect(await launchpool.rewardRate()).to.equal(rewardRate);
+        expect(await launchpool.poolStakeLimit()).to.equal(poolStakeLimit);
+        expect(await launchpool.userStakeLimit()).to.equal(userStakeLimit);
     });
 
+    it("Should be failed when user stake exceeds user stake limit", async function () {
+        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool } = await loadFixture(basicFixture);
+        // 活动开始
+        await time.increaseTo(startTime);
+        await stakingToken.connect(alice).approve(launchpool, amount50);
+        await expect(launchpool.connect(alice).stake(amount15)).to.be.revertedWith("Launchpool: exceed user stake limit");
+    })
+
+    it("Should be failed when user stake exceeds pool stake limit", async function () {
+        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool } = await loadFixture(basicFixture);
+        // 活动开始
+        await time.increaseTo(startTime);
+        await stakingToken.connect(alice).approve(launchpool, amount50);
+        await launchpool.connect(alice).stake(amount10);
+
+        await stakingToken.connect(bob).approve(launchpool, amount50);
+        await expect(launchpool.connect(bob).stake(amount10)).to.be.revertedWith("Launchpool: exceed pool stake limit");
+    })
+
+    it("Should be failed when user withdraws before withdraw time is not yet", async function () {
+        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool } = await loadFixture(basicFixture);
+        // 活动开始
+        await time.increaseTo(startTime);
+        await stakingToken.connect(alice).approve(launchpool, amount50);
+        await launchpool.connect(alice).stake(amount10);
+
+        await expect(launchpool.connect(alice).withdraw(amount10)).to.be.revertedWith("Launchpool: it's not withdraw time yet");
+    })
+
+    it("Should be failed when user gets reward before get reward time is not yet", async function () {
+        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool } = await loadFixture(basicFixture);
+        // 活动开始
+        await time.increaseTo(startTime);
+        await stakingToken.connect(alice).approve(launchpool, amount50); // 1
+        await launchpool.connect(alice).stake(amount10); // 2
+        // 再过 1 s
+        await time.increaseTo(BigInt(startTime) + BigInt(3)); // 3 s
+        expect(await launchpool.earned(alice)).to.equal("1000000000000000000");
+        await expect(launchpool.getReward("1000000000000000000")).to.be.revertedWith("Launchpool: it's not get reward time yet");
+    })
+
     it("Alice stake", async function () {
-        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, launchpool } = await loadFixture(basicFixture);
+        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool } = await loadFixture(basicFixture);
+
+        // 首先设置 withdrawTime 为 0
+        await launchpool.updateWithdrawTime(0);
 
         expect(await rewardsToken.balanceOf(launchpool)).to.equal(amount100);
 
@@ -89,7 +136,10 @@ describe("Launchpool", function () {
     });
 
     it("Alice and bob stake", async function () {
-        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, launchpool } = await loadFixture(basicFixture);
+        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool } = await loadFixture(basicFixture);
+
+        // 首先设置 withdrawTime 为 0
+        await launchpool.updateWithdrawTime(0);
 
         expect(await rewardsToken.balanceOf(launchpool)).to.equal(amount100);
 
