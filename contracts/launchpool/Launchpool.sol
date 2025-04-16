@@ -15,6 +15,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
     uint256 public lastUpdateTime;
     uint256 public getRewardTime;
+    uint256 public withdrawTime;
 
     uint256 public immutable rewardAmount;
     uint256 public immutable rewardRate;
@@ -31,6 +32,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
     event XPoolWithdraw(address indexed user, uint256 amount);
     event XPoolGetReward(address indexed user, uint256 reward);
     event XPoolUpdateGetRewartTime(uint256 getRewardTime);
+    event XPoolUpdateWithdrawTime(uint256 withdrawTime);
 
     constructor(
         address _owner,
@@ -65,6 +67,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
         finishTime = _startTime + _duration;
         getRewardTime = finishTime;
+        withdrawTime = finishTime;
 
         rewardAmount = _rewardAmount;
         rewardRate = _rewardAmount / _duration;
@@ -124,6 +127,10 @@ contract Launchpool is ReentrancyGuard, Ownable {
     function withdraw(
         uint256 _amount
     ) public nonReentrant updateReward(msg.sender) {
+        require(
+            block.timestamp >= withdrawTime,
+            "Launchpool: it's not withdraw time yet"
+        );
         require(_amount > 0, "Launchpool: can't withdraw 0");
         require(
             balanceOf[msg.sender] >= _amount,
@@ -168,6 +175,12 @@ contract Launchpool is ReentrancyGuard, Ownable {
         getRewardTime = _getRewardTime;
 
         emit XPoolUpdateGetRewartTime(_getRewardTime);
+    }
+
+    function updateWithdrawTime(uint256 _withdrawTime) external onlyOwner {
+        withdrawTime = _withdrawTime;
+
+        emit XPoolUpdateWithdrawTime(_withdrawTime);
     }
 
     function withdrawERC20Token(
