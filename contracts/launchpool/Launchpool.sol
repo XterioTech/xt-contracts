@@ -13,6 +13,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
     uint64 public immutable duration;
     uint64 public immutable finishTime;
 
+    uint256 public poolStakeLimit;
+    uint256 public userStakeLimit;
     uint256 public lastUpdateTime;
     uint256 public getRewardTime;
     uint256 public withdrawTime;
@@ -33,6 +35,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
     event XPoolGetReward(address indexed user, uint256 reward);
     event XPoolUpdateGetRewartTime(uint256 getRewardTime);
     event XPoolUpdateWithdrawTime(uint256 withdrawTime);
+    event XPoolUpdateStakeLimit(uint256 poolStakeLimit, uint256 userStakeLimit);
 
     constructor(
         address _owner,
@@ -40,7 +43,9 @@ contract Launchpool is ReentrancyGuard, Ownable {
         address _rewardsToken,
         uint64 _startTime,
         uint64 _duration,
-        uint256 _rewardAmount
+        uint256 _rewardAmount,
+        uint256 _poolStakeLimit,
+        uint256 _userStakeLimit
     ) Ownable() {
         require(_owner != address(0), "Launchpool: owner address is zero");
         require(
@@ -54,6 +59,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
         require(_startTime > block.timestamp, "Launchpool: invalid startTime");
         require(_duration > 0, "Launchpool: invalid duration");
         require(_rewardAmount > 0, "Launchpool: invalid rewardAmount");
+        require(_poolStakeLimit > 0, "Launchpool: invalid poolStakeLimit");
+        require(_userStakeLimit > 0, "Launchpool: invalid userStakeLimit");
 
         transferOwnership(_owner);
 
@@ -71,6 +78,9 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
         rewardAmount = _rewardAmount;
         rewardRate = _rewardAmount / _duration;
+
+        poolStakeLimit = _poolStakeLimit;
+        userStakeLimit = _userStakeLimit;
     }
 
     modifier updateReward(address _account) {
@@ -118,7 +128,16 @@ contract Launchpool is ReentrancyGuard, Ownable {
         require(_amount > 0, "Launchpool: can't stake 0");
 
         totalSupply += _amount;
+        require(
+            totalSupply <= poolStakeLimit,
+            "Launchpool: exceed pool stake limit"
+        );
+
         balanceOf[msg.sender] += _amount;
+        require(
+            balanceOf[msg.sender] <= userStakeLimit,
+            "Launchpool: exceed user stake limit"
+        );
         stakingToken.transferFrom(msg.sender, address(this), _amount);
 
         emit XPoolStake(msg.sender, _amount);
@@ -181,6 +200,15 @@ contract Launchpool is ReentrancyGuard, Ownable {
         withdrawTime = _withdrawTime;
 
         emit XPoolUpdateWithdrawTime(_withdrawTime);
+    }
+
+    function updateStakeLimit(
+        uint256 _poolStakeLimit,
+        uint256 _userStakeLimit
+    ) external onlyOwner {
+        poolStakeLimit = _poolStakeLimit;
+        userStakeLimit = _userStakeLimit;
+        emit XPoolUpdateStakeLimit(_poolStakeLimit, _userStakeLimit);
     }
 
     function withdrawERC20Token(
