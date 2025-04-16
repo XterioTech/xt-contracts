@@ -3,14 +3,18 @@ import { expect } from "chai";
 import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { deployMajorToken, deployLaunchpool } from "../../lib/deploy";
 
+const amount10 = "10000000000000000000"; // 10 个
+const amount50 = "50000000000000000000"; // 50 个
+const amount100 = "100000000000000000000"; // 100 个
+
 describe("Launchpool", function () {
     async function basicFixture() {
         const [owner, alice, bob] = await hre.ethers.getSigners();
 
         const stakingToken = await deployMajorToken(owner.address, owner.address);
 
-        await stakingToken.transfer(alice, "10000000000000000000"); // 10 个
-        await stakingToken.transfer(bob, "10000000000000000000"); // 10 个
+        await stakingToken.transfer(alice, amount50); // 50 个
+        await stakingToken.transfer(bob, amount50); // 50 个
 
         const rewardsToken = await deployMajorToken(owner.address, owner.address);
 
@@ -20,9 +24,12 @@ describe("Launchpool", function () {
         startTime += 10; // 10 s 后开始
 
         const duration = "100"; // 100 s
-        const rewardAmount = "100000000000000000000"; // 100 个
+        const rewardAmount = amount100; // 100 个
 
-        const launchpool = await deployLaunchpool(owner, stakingToken, rewardsToken, startTime.toString(), duration, rewardAmount);
+        const poolStakeLimit = amount100; // 100 个
+        const userStakeLimit = amount10; // 10 个
+
+        const launchpool = await deployLaunchpool(owner, stakingToken, rewardsToken, startTime.toString(), duration, rewardAmount, poolStakeLimit, userStakeLimit);
 
         await rewardsToken.transfer(launchpool.target, rewardAmount);
 
@@ -32,9 +39,9 @@ describe("Launchpool", function () {
     it("Should deploy successfully", async function () {
         const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, launchpool } = await loadFixture(basicFixture);
 
-        expect(await stakingToken.balanceOf(alice)).to.equal("10000000000000000000");
-        expect(await stakingToken.balanceOf(bob)).to.equal("10000000000000000000");
-        expect(await rewardsToken.balanceOf(launchpool)).to.equal("100000000000000000000");
+        expect(await stakingToken.balanceOf(alice)).to.equal(amount50);
+        expect(await stakingToken.balanceOf(bob)).to.equal(amount50);
+        expect(await rewardsToken.balanceOf(launchpool)).to.equal(amount100);
         expect(await launchpool.startTime()).to.equal(startTime);
         expect(await launchpool.duration()).to.equal(duration);
         expect(await launchpool.rewardAmount()).to.equal(rewardAmount);
@@ -45,7 +52,7 @@ describe("Launchpool", function () {
     it("Alice stake", async function () {
         const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, launchpool } = await loadFixture(basicFixture);
 
-        expect(await rewardsToken.balanceOf(launchpool)).to.equal("100000000000000000000");
+        expect(await rewardsToken.balanceOf(launchpool)).to.equal(amount100);
 
         // console.log("startTime: ", startTime)
         // 活动开始
@@ -55,7 +62,7 @@ describe("Launchpool", function () {
 
         // alice 在活动开始后第 3 秒质押了 2 个 token
         await time.increaseTo(BigInt(startTime) + BigInt(1)); // 1 s
-        await stakingToken.connect(alice).approve(launchpool, "2000000000000000000"); // 2 s
+        await stakingToken.connect(alice).approve(launchpool, amount50); // 2 s
         await launchpool.connect(alice).stake("2000000000000000000"); // 3 s
         // latestBlock = await hre.ethers.provider.getBlock("latest");
         // console.log("活动开始后第 3 秒: ", latestBlock?.timestamp);
@@ -84,7 +91,7 @@ describe("Launchpool", function () {
     it("Alice and bob stake", async function () {
         const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, launchpool } = await loadFixture(basicFixture);
 
-        expect(await rewardsToken.balanceOf(launchpool)).to.equal("100000000000000000000");
+        expect(await rewardsToken.balanceOf(launchpool)).to.equal(amount100);
 
         // 活动开始
         await time.increaseTo(startTime);

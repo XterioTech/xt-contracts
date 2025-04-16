@@ -74,7 +74,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
         finishTime = _startTime + _duration;
         getRewardTime = finishTime;
-        withdrawTime = finishTime;
+        // withdrawTime = finishTime;
 
         rewardAmount = _rewardAmount;
         rewardRate = _rewardAmount / _duration;

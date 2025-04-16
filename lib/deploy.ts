@@ -477,10 +477,12 @@ export const deployLaunchpool = async (
   startTime: string,
   duration: string,
   rewardAmount: string,
+  poolStakeLimit: string,
+  userStakeLimit: string,
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const Contract = await hre.ethers.getContractFactory("Launchpool");
-  const contract = await Contract.deploy(owner, stakingToken, rewardsToken, startTime, duration, rewardAmount, txOverrides || {});
+  const contract = await Contract.deploy(owner, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };
