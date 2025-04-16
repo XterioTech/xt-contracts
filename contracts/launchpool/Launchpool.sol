@@ -16,8 +16,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
     uint256 public poolStakeLimit;
     uint256 public userStakeLimit;
     uint256 public lastUpdateTime;
-    uint256 public getRewardTime;
-    uint256 public withdrawTime;
+    uint128 public getRewardTime;
+    uint128 public withdrawTime;
 
     uint256 public immutable rewardAmount;
     uint256 public immutable rewardRate;
@@ -33,8 +33,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
     event XPoolStake(address indexed user, uint256 amount);
     event XPoolWithdraw(address indexed user, uint256 amount);
     event XPoolGetReward(address indexed user, uint256 reward);
-    event XPoolUpdateGetRewartTime(uint256 getRewardTime);
-    event XPoolUpdateWithdrawTime(uint256 withdrawTime);
+    event XPoolUpdateGetRewartTime(uint128 getRewardTime);
+    event XPoolUpdateWithdrawTime(uint128 withdrawTime);
     event XPoolUpdateStakeLimit(uint256 poolStakeLimit, uint256 userStakeLimit);
 
     constructor(
@@ -190,13 +190,13 @@ contract Launchpool is ReentrancyGuard, Ownable {
         emit XPoolGetReward(msg.sender, _amount);
     }
 
-    function updateGetRewardTime(uint256 _getRewardTime) external onlyOwner {
+    function updateGetRewardTime(uint128 _getRewardTime) external onlyOwner {
         getRewardTime = _getRewardTime;
 
         emit XPoolUpdateGetRewartTime(_getRewardTime);
     }
 
-    function updateWithdrawTime(uint256 _withdrawTime) external onlyOwner {
+    function updateWithdrawTime(uint128 _withdrawTime) external onlyOwner {
         withdrawTime = _withdrawTime;
 
         emit XPoolUpdateWithdrawTime(_withdrawTime);
