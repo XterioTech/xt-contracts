@@ -220,6 +220,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
     ) external onlyOwner {
         poolStakeLimit = _poolStakeLimit;
         userStakeLimit = _userStakeLimit;
+
         emit XPoolUpdateStakeLimit(_poolStakeLimit, _userStakeLimit);
     }
 
@@ -229,6 +230,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
         uint256 _tokenAmount
     ) external onlyOwner {
         IERC20(_tokenAddress).transfer(_recipient, _tokenAmount);
+
         emit XPoolWithdrawERC20Token(_tokenAddress, _recipient, _tokenAmount);
     }
 }
