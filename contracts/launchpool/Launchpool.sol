@@ -36,6 +36,11 @@ contract Launchpool is ReentrancyGuard, Ownable {
     event XPoolUpdateGetRewartTime(uint128 getRewardTime);
     event XPoolUpdateWithdrawTime(uint128 withdrawTime);
     event XPoolUpdateStakeLimit(uint256 poolStakeLimit, uint256 userStakeLimit);
+    event XPoolWithdrawERC20Token(
+        address tokenAddress,
+        address recipient,
+        uint256 tokenAmount
+    );
 
     constructor(
         address _owner,
@@ -213,8 +218,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
     function withdrawERC20Token(
         address _tokenAddress,
-        uint256 _tokenAmount,
-        address _recipient
+        address _recipient,
+        uint256 _tokenAmount
     ) external onlyOwner {
         require(
             _tokenAddress != address(stakingToken),
@@ -222,5 +227,6 @@ contract Launchpool is ReentrancyGuard, Ownable {
         );
 
         IERC20(_tokenAddress).transfer(_recipient, _tokenAmount);
+        emit XPoolWithdrawERC20Token(_tokenAddress, _recipient, _tokenAmount);
     }
 }
