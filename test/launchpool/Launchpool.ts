@@ -32,7 +32,8 @@ describe("Launchpool", function () {
 
         const launchpool = await deployLaunchpool(owner, stakingToken, rewardsToken, startTime.toString(), duration, rewardAmount, poolStakeLimit, userStakeLimit);
 
-        await rewardsToken.transfer(launchpool.target, rewardAmount);
+        await rewardsToken.approve(launchpool.target, rewardAmount);
+        await launchpool.addRewardAmount();
 
         return { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool };
     }
