@@ -2,6 +2,7 @@ import hre from "hardhat";
 import { Color, colorize, infoAboutDeployer } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployXterStakeDelegator } from "../../lib/deploy";
+import { ContractOrAddrName, getAddressForNetwork } from "../../lib/constant";
 // import { ContractOrAddrName } from "../../lib/constant";
 // import { getAddressForNetwork } from "../../lib/constant";
 
@@ -10,14 +11,14 @@ async function main() {
   let skipVerify = process.env.skipVerify || false;
   let address = process.env.verifyAddress;
   // const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
-  const whitelistClaimERC20 = process.env.whitelistClaimERC20
-  const xterStaking = process.env.xterStaking
+  const whitelistClaimERC20 = process.env.whitelistClaimERC20;
+  const xterStaking = getAddressForNetwork(ContractOrAddrName.XterStaking, hre.network.name);
 
   if (!whitelistClaimERC20) {
     throw new Error("whitelistClaimERC20 not set");
   }
   if (!xterStaking) {
-    throw new Error("xterStaking not set");
+    throw new Error("XterStaking not deployed or configured on " + hre.network.name);
   }
 
   if (!address) {
@@ -33,7 +34,7 @@ async function main() {
     console.info(`=========================================================`);
     console.info(`============ Deploy XterStakeDelegator ==================`);
     console.info(`=========================================================`);
-    const XterStakeDelegator = await deployXterStakeDelegator(whitelistClaimERC20, xterStaking)
+    const XterStakeDelegator = await deployXterStakeDelegator(whitelistClaimERC20, xterStaking);
 
     address = await XterStakeDelegator.getAddress();
     console.info(`XterStakeDelegator @ ${address}`);

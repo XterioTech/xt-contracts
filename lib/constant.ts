@@ -86,6 +86,7 @@ export const safeManagerAddressMap: NetworkAddressMap = {
 
 export const xterStakingAddressMap: NetworkAddressMap = {
   xterio: "0xC054eF315bCeAb5046848604DD98540c83Ba0B9a",
+  bsc: "0x2e1954298A2fddE09A0E23e61b01bF2F475acee7",
   xterioTestnet: "0xDC24e9e31664105b1866f8B6753896E20Bc56f59",
   bscTestnet: "0xE1CBED88b5cC8b7064A6FB79A7C0144055f067Af",
 };
