@@ -32,9 +32,6 @@ describe("Launchpool", function () {
 
         const launchpool = await deployLaunchpool(owner, stakingToken, rewardsToken, startTime.toString(), duration, rewardAmount, poolStakeLimit, userStakeLimit);
 
-        await rewardsToken.approve(launchpool.target, rewardAmount);
-        await launchpool.addRewardAmount();
-
         return { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool };
     }
 
@@ -43,7 +40,7 @@ describe("Launchpool", function () {
 
         expect(await stakingToken.balanceOf(alice)).to.equal(amount50);
         expect(await stakingToken.balanceOf(bob)).to.equal(amount50);
-        expect(await rewardsToken.balanceOf(launchpool)).to.equal(amount100);
+        expect(await rewardsToken.balanceOf(launchpool)).to.equal(0);
         expect(await launchpool.startTime()).to.equal(startTime);
         expect(await launchpool.duration()).to.equal(duration);
         expect(await launchpool.rewardAmount()).to.equal(rewardAmount);
@@ -100,6 +97,9 @@ describe("Launchpool", function () {
         // 首先设置 withdrawTime 为 0
         await launchpool.updateWithdrawTime(0);
 
+        // vault is 0x000
+        await rewardsToken.transfer(launchpool.target, rewardAmount);
+
         expect(await rewardsToken.balanceOf(launchpool)).to.equal(amount100);
 
         // console.log("startTime: ", startTime)
@@ -142,7 +142,11 @@ describe("Launchpool", function () {
         // 首先设置 withdrawTime 为 0
         await launchpool.updateWithdrawTime(0);
 
-        expect(await rewardsToken.balanceOf(launchpool)).to.equal(amount100);
+        // set vault
+        await launchpool.updateVaultAddress(owner.address);
+        await rewardsToken.approve(launchpool.target, rewardAmount);
+
+        expect(await rewardsToken.balanceOf(launchpool)).to.equal(0);
 
         // 活动开始
         await time.increaseTo(startTime);
@@ -185,6 +189,6 @@ describe("Launchpool", function () {
         expect(await launchpool.userRewardDebt(alice)).to.equal("0");
         expect(await launchpool.userRewardDebt(bob)).to.equal("0");
 
-        expect(await rewardsToken.balanceOf(launchpool)).to.equal("93000000000000000000");
+        expect(await rewardsToken.balanceOf(launchpool)).to.equal(0);
     });
 })

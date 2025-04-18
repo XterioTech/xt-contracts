@@ -13,6 +13,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
     uint64 public immutable duration;
     uint64 public immutable finishTime;
 
+    address public vaultAddress;
+
     uint256 public poolStakeLimit;
     uint256 public userStakeLimit;
     uint256 public lastUpdateTime;
@@ -33,8 +35,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
     event XPoolStake(address indexed user, uint256 amount);
     event XPoolWithdraw(address indexed user, uint256 amount);
     event XPoolGetReward(address indexed user, uint256 reward);
-    event XPoolAddRewardAmount(uint256 rewardAmount);
-
+    event XPoolUpdateVaultAddress(address vaultAddress);
     event XPoolUpdateGetRewartTime(uint128 getRewardTime);
     event XPoolUpdateWithdrawTime(uint128 withdrawTime);
     event XPoolUpdateStakeLimit(uint256 poolStakeLimit, uint256 userStakeLimit);
@@ -192,14 +193,20 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
         userRewardDebt[msg.sender] -= _amount;
         userRewardPaid[msg.sender] += _amount;
-        rewardsToken.transfer(msg.sender, _amount);
+
+        if (vaultAddress == address(0)) {
+            rewardsToken.transfer(msg.sender, _amount);
+        } else {
+            rewardsToken.transferFrom(vaultAddress, msg.sender, _amount);
+        }
 
         emit XPoolGetReward(msg.sender, _amount);
     }
 
-    function addRewardAmount() external onlyOwner {
-        rewardsToken.transferFrom(msg.sender, address(this), rewardAmount);
-        emit XPoolAddRewardAmount(rewardAmount);
+    function updateVaultAddress(address _vaultAddress) external onlyOwner {
+        vaultAddress = _vaultAddress;
+
+        emit XPoolUpdateVaultAddress(_vaultAddress);
     }
 
     function updateGetRewardTime(uint128 _getRewardTime) external onlyOwner {
