@@ -216,6 +216,11 @@ contract Launchpool is ReentrancyGuard, Ownable {
     }
 
     function updateWithdrawTime(uint128 _withdrawTime) external onlyOwner {
+        require(
+            block.timestamp <= startTime,
+            "Launchpool: can't exceed start time"
+        );
+
         withdrawTime = _withdrawTime;
 
         emit XPoolUpdateWithdrawTime(_withdrawTime);
