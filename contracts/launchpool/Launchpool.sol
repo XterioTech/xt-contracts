@@ -230,6 +230,11 @@ contract Launchpool is ReentrancyGuard, Ownable {
         uint256 _poolStakeLimit,
         uint256 _userStakeLimit
     ) external onlyOwner {
+        require(
+            block.timestamp <= startTime,
+            "Launchpool: can't exceed start time"
+        );
+
         poolStakeLimit = _poolStakeLimit;
         userStakeLimit = _userStakeLimit;
 
