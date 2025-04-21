@@ -29,8 +29,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
     mapping(address => uint256) public userRewardDebt;
     mapping(address => uint256) public userRewardPaid;
 
-    uint256 public totalSupply;
-    mapping(address => uint256) public balanceOf;
+    uint256 public totalStakingAmount;
+    mapping(address => uint256) public userStakingAmount;
 
     event XPoolStake(address indexed user, uint256 amount);
     event XPoolWithdraw(address indexed user, uint256 amount);
@@ -103,7 +103,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
     }
 
     function rewardPerToken() public view returns (uint256) {
-        if (totalSupply == 0) {
+        if (totalStakingAmount == 0) {
             return rewardPerTokenStored;
         }
 
@@ -112,7 +112,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
             (rewardRate *
                 (lastTimeRewardApplicable() - lastUpdateTime) *
                 1e18) /
-            totalSupply;
+            totalStakingAmount;
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
@@ -121,7 +121,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
     function earned(address _account) public view returns (uint256) {
         return
-            ((balanceOf[_account] *
+            ((userStakingAmount[_account] *
                 (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
             userRewardDebt[_account];
     }
@@ -139,15 +139,15 @@ contract Launchpool is ReentrancyGuard, Ownable {
         );
         require(_amount > 0, "Launchpool: can't stake 0");
 
-        totalSupply += _amount;
+        totalStakingAmount += _amount;
         require(
-            totalSupply <= poolStakeLimit,
+            totalStakingAmount <= poolStakeLimit,
             "Launchpool: exceed pool stake limit"
         );
 
-        balanceOf[msg.sender] += _amount;
+        userStakingAmount[msg.sender] += _amount;
         require(
-            balanceOf[msg.sender] <= userStakeLimit,
+            userStakingAmount[msg.sender] <= userStakeLimit,
             "Launchpool: exceed user stake limit"
         );
         stakingToken.transferFrom(msg.sender, address(this), _amount);
@@ -164,19 +164,19 @@ contract Launchpool is ReentrancyGuard, Ownable {
         );
         require(_amount > 0, "Launchpool: can't withdraw 0");
         require(
-            balanceOf[msg.sender] >= _amount,
+            userStakingAmount[msg.sender] >= _amount,
             "Launchpool: insufficient balance"
         );
 
-        totalSupply -= _amount;
-        balanceOf[msg.sender] -= _amount;
+        totalStakingAmount -= _amount;
+        userStakingAmount[msg.sender] -= _amount;
         stakingToken.transfer(msg.sender, _amount);
 
         emit XPoolWithdraw(msg.sender, _amount);
     }
 
     function exit() external {
-        withdraw(balanceOf[msg.sender]);
+        withdraw(userStakingAmount[msg.sender]);
         getReward(userRewardDebt[msg.sender]);
     }
 
