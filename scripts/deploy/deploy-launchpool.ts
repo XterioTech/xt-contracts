@@ -10,8 +10,8 @@ const main = async () => {
   const skipVerify = process.env.skipVerify || false;
 
   const owner = process.env.owner || "";
-  const stakingToken = process.env.stakingToken || "";
-  const rewardsToken = process.env.rewardsToken || hre.ethers.ZeroAddress;
+  const stakeToken = process.env.stakeToken || "";
+  const rewardToken = process.env.rewardToken || hre.ethers.ZeroAddress;
   const startTime = process.env.startTime || "2692873314";
   const duration = process.env.duration || "1";
   const rewardAmount = process.env.rewardAmount || "1";
@@ -22,8 +22,8 @@ const main = async () => {
     console.info(colorize(Color.blue, `Deploy Launchpool`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
     console.info(colorize(Color.yellow, `Owner: ${owner}`));
-    console.info(colorize(Color.yellow, `stakingToken: ${stakingToken}`));
-    console.info(colorize(Color.yellow, `rewardsToken: ${rewardsToken}`));
+    console.info(colorize(Color.yellow, `stakeToken: ${stakeToken}`));
+    console.info(colorize(Color.yellow, `rewardToken: ${rewardToken}`));
     console.info(colorize(Color.yellow, `startTime: ${startTime}`));
     console.info(colorize(Color.yellow, `duration: ${duration}`));
     console.info(colorize(Color.yellow, `rewardAmount: ${rewardAmount}`));
@@ -40,8 +40,8 @@ const main = async () => {
     console.info(`=========================================================`);
     const Launchpool = await deployLaunchpool(
       owner,
-      stakingToken,
-      rewardsToken,
+      stakeToken,
+      rewardToken,
       startTime,
       duration,
       rewardAmount,
@@ -59,7 +59,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/launchpool/Launchpool.sol:Launchpool",
-        constructorArguments: [owner, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit],
+        constructorArguments: [owner, stakeToken, rewardToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);
