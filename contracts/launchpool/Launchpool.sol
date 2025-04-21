@@ -6,8 +6,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Launchpool is ReentrancyGuard, Ownable {
-    IERC20 public immutable stakingToken;
-    IERC20 public immutable rewardsToken;
+    IERC20 public immutable stakeToken;
+    IERC20 public immutable rewardToken;
 
     uint64 public immutable startTime;
     uint64 public immutable duration;
@@ -29,8 +29,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
     mapping(address => uint256) public userRewardDebt;
     mapping(address => uint256) public userRewardPaid;
 
-    uint256 public totalStakingAmount;
-    mapping(address => uint256) public userStakingAmount;
+    uint256 public totalStakeAmount;
+    mapping(address => uint256) public userStakeAmount;
 
     event XPoolStake(address indexed user, uint256 amount);
     event XPoolWithdraw(address indexed user, uint256 amount);
@@ -47,8 +47,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
     constructor(
         address _owner,
-        address _stakingToken,
-        address _rewardsToken,
+        address _stakeToken,
+        address _rewardToken,
         uint64 _startTime,
         uint64 _duration,
         uint256 _rewardAmount,
@@ -57,12 +57,12 @@ contract Launchpool is ReentrancyGuard, Ownable {
     ) Ownable() {
         require(_owner != address(0), "Launchpool: owner address is zero");
         require(
-            _stakingToken != address(0),
-            "Launchpool: stakingToken address is zero"
+            _stakeToken != address(0),
+            "Launchpool: stakeToken address is zero"
         );
         require(
-            _stakingToken != _rewardsToken,
-            "Launchpool: stakingToken can't equal rewardsToken"
+            _stakeToken != _rewardToken,
+            "Launchpool: stakeToken can't equal rewardToken"
         );
         require(_startTime > block.timestamp, "Launchpool: invalid startTime");
         require(_duration > 0, "Launchpool: invalid duration");
@@ -72,8 +72,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
         transferOwnership(_owner);
 
-        stakingToken = IERC20(_stakingToken);
-        rewardsToken = IERC20(_rewardsToken);
+        stakeToken = IERC20(_stakeToken);
+        rewardToken = IERC20(_rewardToken);
 
         startTime = _startTime;
         lastUpdateTime = _startTime;
@@ -103,7 +103,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
     }
 
     function rewardPerToken() public view returns (uint256) {
-        if (totalStakingAmount == 0) {
+        if (totalStakeAmount == 0) {
             return rewardPerTokenStored;
         }
 
@@ -112,7 +112,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
             (rewardRate *
                 (lastTimeRewardApplicable() - lastUpdateTime) *
                 1e18) /
-            totalStakingAmount;
+            totalStakeAmount;
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
@@ -121,7 +121,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
     function earned(address _account) public view returns (uint256) {
         return
-            ((userStakingAmount[_account] *
+            ((userStakeAmount[_account] *
                 (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
             userRewardDebt[_account];
     }
@@ -139,18 +139,18 @@ contract Launchpool is ReentrancyGuard, Ownable {
         );
         require(_amount > 0, "Launchpool: can't stake 0");
 
-        totalStakingAmount += _amount;
+        totalStakeAmount += _amount;
         require(
-            totalStakingAmount <= poolStakeLimit,
+            totalStakeAmount <= poolStakeLimit,
             "Launchpool: exceed pool stake limit"
         );
 
-        userStakingAmount[msg.sender] += _amount;
+        userStakeAmount[msg.sender] += _amount;
         require(
-            userStakingAmount[msg.sender] <= userStakeLimit,
+            userStakeAmount[msg.sender] <= userStakeLimit,
             "Launchpool: exceed user stake limit"
         );
-        stakingToken.transferFrom(msg.sender, address(this), _amount);
+        stakeToken.transferFrom(msg.sender, address(this), _amount);
 
         emit XPoolStake(msg.sender, _amount);
     }
@@ -164,19 +164,19 @@ contract Launchpool is ReentrancyGuard, Ownable {
         );
         require(_amount > 0, "Launchpool: can't withdraw 0");
         require(
-            userStakingAmount[msg.sender] >= _amount,
+            userStakeAmount[msg.sender] >= _amount,
             "Launchpool: insufficient balance"
         );
 
-        totalStakingAmount -= _amount;
-        userStakingAmount[msg.sender] -= _amount;
-        stakingToken.transfer(msg.sender, _amount);
+        totalStakeAmount -= _amount;
+        userStakeAmount[msg.sender] -= _amount;
+        stakeToken.transfer(msg.sender, _amount);
 
         emit XPoolWithdraw(msg.sender, _amount);
     }
 
     function exit() external {
-        withdraw(userStakingAmount[msg.sender]);
+        withdraw(userStakeAmount[msg.sender]);
         getReward(userRewardDebt[msg.sender]);
     }
 
@@ -184,8 +184,8 @@ contract Launchpool is ReentrancyGuard, Ownable {
         uint256 _amount
     ) public nonReentrant updateReward(msg.sender) {
         require(
-            address(rewardsToken) != address(0),
-            "Launchpool: rewardsToken address is zero, can't getReward"
+            address(rewardToken) != address(0),
+            "Launchpool: rewardToken address is zero, can't getReward"
         );
         require(
             block.timestamp >= getRewardTime,
@@ -199,9 +199,9 @@ contract Launchpool is ReentrancyGuard, Ownable {
         userRewardPaid[msg.sender] += _amount;
 
         if (vaultAddress == address(0)) {
-            rewardsToken.transfer(msg.sender, _amount);
+            rewardToken.transfer(msg.sender, _amount);
         } else {
-            rewardsToken.transferFrom(vaultAddress, msg.sender, _amount);
+            rewardToken.transferFrom(vaultAddress, msg.sender, _amount);
         }
 
         emit XPoolGetReward(msg.sender, _amount);

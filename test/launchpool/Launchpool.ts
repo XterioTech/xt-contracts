@@ -115,9 +115,9 @@ describe("Launchpool", function () {
         // latestBlock = await hre.ethers.provider.getBlock("latest");
         // console.log("活动开始后第 3 秒: ", latestBlock?.timestamp);
 
-        expect(await launchpool.userStakingAmount(alice)).to.equal("2000000000000000000");
+        expect(await launchpool.userStakeAmount(alice)).to.equal("2000000000000000000");
         expect(await stakingToken.balanceOf(launchpool)).to.equal("2000000000000000000");
-        expect(await launchpool.totalStakingAmount()).to.equal("2000000000000000000");
+        expect(await launchpool.totalStakeAmount()).to.equal("2000000000000000000");
 
         // 过了第 8 秒取出所有 token
         await time.increaseTo(BigInt(startTime) + BigInt(7)); // 7 s
