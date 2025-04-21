@@ -1,4 +1,4 @@
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployWhitelistClaimETH } from "../../lib/deploy";
@@ -12,6 +12,7 @@ const main = async () => {
   let claimMerkleRoot = process.env.claimMerkleRoot;
   let claimStartTime = Number.parseInt(process.env.claimStartTime || "0");
   let claimEndTime = Number.parseInt(process.env.claimEndTime || "0");
+  const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
 
   if (!claimMerkleRoot) {
     throw new Error("claimMerkleRoot not set");
@@ -26,7 +27,7 @@ const main = async () => {
   if (!address) {
     console.info(colorize(Color.blue, `Deploy WhitelistClaimETH`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
-    // console.info(colorize(Color.yellow, `Admin: ${admin}`));
+    console.info(colorize(Color.yellow, `Admin: ${admin}`));
     console.info(colorize(Color.yellow, `Claim Start Time: ${new Date(claimStartTime * 1000)}`));
     console.info(colorize(Color.yellow, `Claim End Time: ${new Date(claimEndTime * 1000)}`));
     if (!inputConfirm("Confirm? ")) {
@@ -38,11 +39,17 @@ const main = async () => {
     console.info(`================ Deploy WhitelistClaimETH ==================`);
     console.info(`============================================================`);
     const WhitelistClaimETH = await deployWhitelistClaimETH(
-      claimMerkleRoot, claimStartTime, claimEndTime,
+      claimMerkleRoot,
+      claimStartTime,
+      claimEndTime,
       getTxOverridesForNetwork(hre.network.name)
     );
     address = await WhitelistClaimETH.getAddress();
     console.info(`WhitelistClaimETH @ ${address}`);
+    if (admin != ethers.ZeroAddress) {
+      console.info(`Transfer ownership to: ${admin}...`);
+      await WhitelistClaimETH.transferOwnership(admin);
+    }
   }
 
   if (!skipVerify) {
@@ -50,7 +57,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/airdrop/WhitelistClaimETH.sol:WhitelistClaimETH",
-        constructorArguments: [claimMerkleRoot, claimStartTime, claimEndTime,],
+        constructorArguments: [claimMerkleRoot, claimStartTime, claimEndTime],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);
