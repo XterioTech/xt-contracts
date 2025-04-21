@@ -191,4 +191,87 @@ describe("Launchpool", function () {
 
         expect(await rewardsToken.balanceOf(launchpool)).to.equal(0);
     });
+
+    it("Alice stake more", async function () {
+        const { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool } = await loadFixture(basicFixture);
+
+        // 首先设置 withdrawTime 为 0
+        await launchpool.updateWithdrawTime(0);
+
+        // vault is 0x000
+        await rewardsToken.transfer(launchpool.target, rewardAmount);
+
+        expect(await rewardsToken.balanceOf(launchpool)).to.equal(amount100);
+
+        // console.log("startTime: ", startTime)
+        // 活动开始
+        await time.increaseTo(startTime);
+        // let latestBlock = await hre.ethers.provider.getBlock("latest");
+        // console.log("活动开始: ", latestBlock?.timestamp);
+
+        // alice 在活动开始后第 3 秒质押了 2 个 token
+        await time.increaseTo(BigInt(startTime) + BigInt(1)); // 1 s
+        await stakingToken.connect(alice).approve(launchpool, amount50); // 2 s
+        await launchpool.connect(alice).stake("2000000000000000000"); // 3 s
+        // latestBlock = await hre.ethers.provider.getBlock("latest");
+        // console.log("活动开始后第 3 秒: ", latestBlock?.timestamp);
+
+        expect(await stakingToken.balanceOf(launchpool)).to.equal("2000000000000000000");
+
+        // 过了第 8 秒取出所有 token
+        await time.increaseTo(BigInt(startTime) + BigInt(7)); // 7 s
+        // latestBlock = await hre.ethers.provider.getBlock("latest");
+        // console.log("活动开始后第 8 秒: ", latestBlock?.timestamp);
+        await launchpool.connect(alice).withdraw("2000000000000000000"); // 8 s
+        // latestBlock = await hre.ethers.provider.getBlock("latest");
+        // console.log("活动开始后第 8 秒: ", latestBlock?.timestamp);
+        // 查询当前的奖励应该是 （2/2） * （8-3） * rewardRate = 5 * 1000000000000000000 = 5 个 reward token
+        expect(await launchpool.earned(alice)).to.equal("5000000000000000000");
+        expect(await stakingToken.balanceOf(launchpool)).to.equal("0");
+        await expect(launchpool.getReward("5000000000000000000")).to.be.revertedWith("Launchpool: it's not get reward time yet"); // 9s
+        await launchpool.updateGetRewardTime(startTime); // 10 s
+        await launchpool.connect(alice).getReward("5000000000000000000"); // 11 s
+        expect(await launchpool.earned(alice)).to.equal("0");
+        expect(await launchpool.userRewardPaid(alice)).to.equal("5000000000000000000");
+        expect(await launchpool.userRewardDebt(alice)).to.equal("0");
+
+        expect(await rewardsToken.balanceOf(alice)).to.equal("5000000000000000000");
+        expect(await rewardsToken.balanceOf(launchpool)).to.equal("95000000000000000000");
+
+        // 新质押
+        await launchpool.connect(alice).stake("2000000000000000000"); // 12 s
+
+
+        expect(await stakingToken.balanceOf(launchpool)).to.equal("2000000000000000000");
+
+        // 过了第 8 秒取出所有 token
+        await time.increaseTo(BigInt(startTime) + BigInt(17)); // 7 s
+        // latestBlock = await hre.ethers.provider.getBlock("latest");
+        // console.log("活动开始后第 8 秒: ", latestBlock?.timestamp);
+        // 查询当前的奖励应该是 （2/2） * （8-3） * rewardRate = 5 * 1000000000000000000 = 5 个 reward token
+        expect(await launchpool.earned(alice)).to.equal("5000000000000000000");
+        expect(await launchpool.userRewardPaid(alice)).to.equal("5000000000000000000");
+        expect(await launchpool.totalReward(alice)).to.equal("10000000000000000000");
+        expect(await launchpool.userRewardDebt(alice)).to.equal("0");
+
+        await launchpool.connect(alice).withdraw("2000000000000000000"); // 多一秒
+
+        expect(await stakingToken.balanceOf(launchpool)).to.equal("0");
+
+        expect(await launchpool.earned(alice)).to.equal("6000000000000000000");
+        expect(await launchpool.userRewardPaid(alice)).to.equal("5000000000000000000");
+        expect(await launchpool.totalReward(alice)).to.equal("11000000000000000000");
+        expect(await launchpool.userRewardDebt(alice)).to.equal("6000000000000000000");
+
+        await launchpool.connect(alice).getReward("6000000000000000000");
+
+        expect(await launchpool.earned(alice)).to.equal("0");
+        expect(await launchpool.userRewardPaid(alice)).to.equal("11000000000000000000");
+        expect(await launchpool.totalReward(alice)).to.equal("11000000000000000000");
+        expect(await launchpool.userRewardDebt(alice)).to.equal("0");
+
+        expect(await rewardsToken.balanceOf(alice)).to.equal("11000000000000000000");
+        expect(await rewardsToken.balanceOf(launchpool)).to.equal("89000000000000000000");
+
+    });
 })

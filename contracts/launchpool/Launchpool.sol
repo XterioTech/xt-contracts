@@ -126,6 +126,10 @@ contract Launchpool is ReentrancyGuard, Ownable {
             userRewardDebt[_account];
     }
 
+    function totalReward(address _account) public view returns (uint256) {
+        return earned(_account) + userRewardPaid[_account];
+    }
+
     function stake(
         uint256 _amount
     ) public nonReentrant updateReward(msg.sender) {
