@@ -1,9 +1,7 @@
 import hre, { ethers } from "hardhat";
-import { FansCreateBNBUpgradeable, FansCreateERC20Upgradeable, MarketplaceV2, TokenGateway, XterStaking } from "../typechain-types";
+import { FansCreateBNBUpgradeable, FansCreateERC20Upgradeable, MarketplaceV2, TokenGateway, XterNFTStaking, XterStaking } from "../typechain-types";
 import { AddressLike, Overrides, BigNumberish } from "ethers";
 import { NonPayableOverrides } from "../typechain-types/common";
-import MerkleTree from "merkletreejs";
-import keccak256 from "keccak256";
 import { DeployProxyOptions } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 export const deployMajorToken = async (
@@ -301,6 +299,18 @@ export const deployWhitelistClaimETH = async (
   return whitelistClaimETH;
 };
 
+export const deployWhitelistClaimETHWithUnlockTime = async (
+  merkleRoot: string,
+  startTime: number,
+  deadline: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const WhitelistClaimETH = await ethers.getContractFactory("WhitelistClaimETHWithUnlockTime");
+  const whitelistClaimETH = await WhitelistClaimETH.deploy(merkleRoot, startTime, deadline, txOverrides || {});
+  await whitelistClaimETH.waitForDeployment();
+  return whitelistClaimETH;
+};
+
 export const deployWhitelistClaimERC20 = async (
   merkleRoot: string,
   startTime: number,
@@ -310,6 +320,27 @@ export const deployWhitelistClaimERC20 = async (
   txOverrides?: NonPayableOverrides & { from?: string }
 ) => {
   const WhitelistClaimERC20 = await ethers.getContractFactory("WhitelistClaimERC20");
+  const whitelistClaimERC20 = await WhitelistClaimERC20.deploy(
+    merkleRoot,
+    startTime,
+    deadline,
+    paymentToken,
+    vault,
+    txOverrides || {}
+  );
+  await whitelistClaimERC20.waitForDeployment();
+  return whitelistClaimERC20;
+};
+
+export const deployWhitelistClaimERC20WithUnlockTime = async (
+  merkleRoot: string,
+  startTime: number,
+  deadline: number,
+  paymentToken: AddressLike,
+  vault: AddressLike,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const WhitelistClaimERC20 = await ethers.getContractFactory("WhitelistClaimERC20WithUnlockTime");
   const whitelistClaimERC20 = await WhitelistClaimERC20.deploy(
     merkleRoot,
     startTime,
@@ -377,6 +408,20 @@ export const deployAiCampaign = async (
   return contract;
 };
 
+export const deployUniswapV3Aggregator = async (
+  uniswapV3Pool: AddressLike,
+  defaultOwner: AddressLike,
+  decimals: number,
+  description: string,
+  version: number,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("UniswapV3Aggregator");
+  const contract = await Contract.deploy(uniswapV3Pool, defaultOwner, decimals, description, version, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
 export const deployXterStaking = async (
   admin: AddressLike,
   stakingToken: AddressLike,
@@ -403,6 +448,43 @@ export const deployXterStakeDelegator = async (
 ) => {
   const Contract = await hre.ethers.getContractFactory("XterStakeDelegator");
   const contract = await Contract.deploy(whitelistClaim, xterStaking, txOverrides || {});
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployXterNFTStaking = async (
+  admin: string,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const ContractFactory = await ethers.getContractFactory("XterNFTStaking");
+  const deployOptions: DeployProxyOptions = {
+    kind: "uups" as const,
+    txOverrides: txOverrides || {},
+  };
+
+  const contract = (await hre.upgrades.deployProxy(
+    ContractFactory,
+    [admin],
+    deployOptions
+  )) as unknown as XterNFTStaking;
+
+  await contract.waitForDeployment();
+  return contract;
+};
+
+export const deployLaunchpool = async (
+  owner: AddressLike,
+  stakeToken: AddressLike,
+  rewardToken: AddressLike,
+  startTime: string,
+  duration: string,
+  rewardAmount: string,
+  poolStakeLimit: string,
+  userStakeLimit: string,
+  txOverrides?: NonPayableOverrides & { from?: string }
+) => {
+  const Contract = await hre.ethers.getContractFactory("Launchpool");
+  const contract = await Contract.deploy(owner, stakeToken, rewardToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, txOverrides || {});
   await contract.waitForDeployment();
   return contract;
 };

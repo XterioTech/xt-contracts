@@ -76,4 +76,22 @@ describe("WhitelistClaimERC20", function () {
     await time.increase(3601); // Increase time beyond deadline
     await expect(wc.connect(owner).withdraw(owner.address)).to.not.be.reverted;
   });
+
+  it("Should allow admin to invalidate some address", async function () {
+    const { wc, owner, u1, u2, amounts, merkleTree } = await loadFixture(basicFixture);
+    await expect(wc.connect(owner).invalidate(u1, 0)).to.not.be.reverted;
+    const leaf = ethers.solidityPackedKeccak256(
+      ["address", "uint256"],
+      [u1.address, amounts[0]]
+    )
+    const proof = merkleTree.getHexProof(leaf);
+    await expect(wc.connect(u1).claim(amounts[0], proof)).to.be.revertedWith("WhitelistClaim: already invalidated");
+
+    const leaf2 = ethers.solidityPackedKeccak256(
+      ["address", "uint256"],
+      [u2.address, amounts[1]]
+    )
+    const proof2 = merkleTree.getHexProof(leaf2);
+    await expect(wc.connect(u2).claim(amounts[1], proof2)).to.not.be.reverted;
+  });
 });

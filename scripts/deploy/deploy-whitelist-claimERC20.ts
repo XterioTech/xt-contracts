@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 import { Color, colorize } from "../../lib/utils";
 import { inputConfirm } from "../../lib/input";
 import { deployWhitelistClaimERC20 } from "../../lib/deploy";
-import { getTxOverridesForNetwork } from "../../lib/constant";
+import { ContractOrAddrName, getAddressForNetwork, getTxOverridesForNetwork } from "../../lib/constant";
 
 const main = async () => {
   const [deployer] = await hre.ethers.getSigners();
@@ -14,7 +14,7 @@ const main = async () => {
   let claimEndTime = Number.parseInt(process.env.claimEndTime || "0");
   let paymentToken = process.env.paymentToken;
   let vault = process.env.vault ?? ethers.ZeroAddress;
-
+  const admin = process.env.admin || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
 
   if (!claimMerkleRoot) {
     throw new Error("claimMerkleRoot not set");
@@ -32,7 +32,7 @@ const main = async () => {
   if (!address) {
     console.info(colorize(Color.blue, `Deploy WhitelistClaimERC20`));
     console.info(colorize(Color.yellow, `Network: ${hre.network.name}, Deployer: ${deployer.address}`));
-    // console.info(colorize(Color.yellow, `Admin: ${admin}`));
+    console.info(colorize(Color.yellow, `Admin: ${admin}`));
     console.info(colorize(Color.yellow, `Claim Merkle Root: ${claimMerkleRoot}`));
     console.info(colorize(Color.yellow, `Token Address: ${paymentToken}`));
     console.info(colorize(Color.yellow, `Claim Start Time: ${new Date(claimStartTime * 1000)}`));
@@ -51,6 +51,10 @@ const main = async () => {
     );
     address = await WhitelistClaimERC20.getAddress();
     console.info(`WhitelistClaimERC20 @ ${address}`);
+    if (admin != ethers.ZeroAddress) {
+      console.info(`Transfer ownership to: ${admin}...`);
+      await WhitelistClaimERC20.transferOwnership(admin);
+    }    
   }
 
   if (!skipVerify) {

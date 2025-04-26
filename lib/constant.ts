@@ -7,6 +7,7 @@ export enum ContractOrAddrName {
   FansCreate = "FansCreate",
   SafeManager = "SafeManager",
   OnchainIAP = "OnchainIAP",
+  XterStaking = "XterStaking",
 }
 
 export const tokenGatewayAddressMap: NetworkAddressMap = {
@@ -63,6 +64,7 @@ export const onchainIAPAddressMap: NetworkAddressMap = {
   // sepolia: '0x1cDc98Abe4dB79b332206dD7a89742F0f59255F7',        //for test eng
   xterioTestnet: "0xd3875f07496d65fc09Ad455ca53194A77eBCb504",  // for stage env
   // xterioTestnet: "0x5949430506ff6Ce098a5DdD8a062D3Da7373b365",  // for test env
+  bscTestnet: "0x80e3D84C66ddEC4f0E25400a51297353a26243d1",   // for stage env
 };
 
 export const safeManagerAddressMap: NetworkAddressMap = {
@@ -82,12 +84,20 @@ export const safeManagerAddressMap: NetworkAddressMap = {
   xterioTestnet: "0x6F272C3b23Fc0525b6696aF4405434c3c10C7c26",
 };
 
+export const xterStakingAddressMap: NetworkAddressMap = {
+  xterio: "0xC054eF315bCeAb5046848604DD98540c83Ba0B9a",
+  bsc: "0x2e1954298A2fddE09A0E23e61b01bF2F475acee7",
+  xterioTestnet: "0xDC24e9e31664105b1866f8B6753896E20Bc56f59",
+  bscTestnet: "0xE1CBED88b5cC8b7064A6FB79A7C0144055f067Af",
+};
+
 const hyperMap = {
   [ContractOrAddrName.TokenGateway]: tokenGatewayAddressMap,
   [ContractOrAddrName.MarketplaceV2]: marketplaceV2AddressMap,
   [ContractOrAddrName.FansCreate]: fansCreateAddressMap,
   [ContractOrAddrName.SafeManager]: safeManagerAddressMap,
   [ContractOrAddrName.OnchainIAP]: onchainIAPAddressMap,
+  [ContractOrAddrName.XterStaking]: xterStakingAddressMap,
 };
 
 // helper functions

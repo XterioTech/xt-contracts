@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/interfaces/IERC1271.sol";
 abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     bytes32 public merkleRoot;
     mapping(address => bool) public claimed;
+    mapping(address => bool) public invalidated;
     uint256 public startTime;
     uint256 public deadline;
 
@@ -20,6 +21,8 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
         uint256 amount
     );
     event UpdateMerkleRoot(bytes32 newMerkleRoot);
+    event Withdraw(address to);
+    event Invalidate(address indexed account, uint256 refund);
 
     constructor(bytes32 _merkleRoot, uint256 _startTime, uint256 _deadline) {
         merkleRoot = _merkleRoot;
@@ -56,6 +59,7 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
             "WhitelistClaim: not whitelisted"
         );
         require(!claimed[account], "WhitelistClaim: already claimed");
+        require(!invalidated[account], "WhitelistClaim: already invalidated");
         claimed[account] = true;
         _;
     }
@@ -116,6 +120,17 @@ abstract contract WhitelistClaim is Ownable, ReentrancyGuard {
     /****************** Admin Functions ******************/
     function withdraw(address to) external onlyOwner nonReentrant {
         _withdraw(to);
+        emit Withdraw(to);
+    }
+
+    function invalidate(address account, uint256 refund) external onlyOwner nonReentrant {
+        require(!claimed[account], "WhitelistClaim: already claimed");
+        require(!invalidated[account], "WhitelistClaim: already invalidated");
+        invalidated[account] = true;
+        if (refund > 0) {
+            _payOut(refund, msg.sender);
+        }
+        emit Invalidate(account, refund);
     }
 
     function updateMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {

@@ -29,8 +29,8 @@ interface IXterStaking {
 contract XterStakeDelegator is ReentrancyGuard, Pausable, Ownable {
     using SafeERC20 for IERC20;
 
-    IWhitelistClaimERC20 public whitelistClaim;
-    IXterStaking public xterStaking;
+    IWhitelistClaimERC20 public immutable whitelistClaim;
+    IXterStaking public immutable xterStaking;
 
     event ClaimAndStake(
         address indexed user,
