@@ -24,13 +24,13 @@ describe("Launchpool", function () {
         let startTime = latestBlock?.timestamp || 0;
         startTime += 10; // 10 s 后开始
 
-        const duration = "100"; // 100 s
+        const duration = 100; // 100 s
         const rewardAmount = amount100;
 
         const poolStakeLimit = amount15;
         const userStakeLimit = amount10;
 
-        const launchpool = await deployLaunchpool(owner, stakingToken, rewardsToken, startTime.toString(), duration, rewardAmount, poolStakeLimit, userStakeLimit);
+        const launchpool = await deployLaunchpool(owner, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit);
 
         return { owner, alice, bob, stakingToken, rewardsToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit, launchpool };
     }
