@@ -9,7 +9,7 @@ const main = async () => {
   let address = process.env.verifyAddress;
   const skipVerify = process.env.skipVerify || false;
 
-  const owner = process.env.owner || "";
+  const owner = process.env.owner || getAddressForNetwork(ContractOrAddrName.SafeManager, hre.network.name);
   const stakeToken = process.env.stakeToken || getAddressForNetwork(ContractOrAddrName.XterToken, hre.network.name);
   const rewardToken = process.env.rewardToken || hre.ethers.ZeroAddress;
   const startTime = Number.parseInt(process.env.startTime || "0");
@@ -95,7 +95,7 @@ const main = async () => {
       await hre.run("verify:verify", {
         address: address,
         contract: "contracts/launchpool/Launchpool.sol:Launchpool",
-        constructorArguments: [owner, stakeToken, rewardToken, startTime, duration, rewardAmount, poolStakeLimit, userStakeLimit],
+        constructorArguments: [owner, stakeToken, rewardToken, startTime, duration, rewardAmountRaw, poolStakeLimitRaw, userStakeLimitRaw],
       });
     } catch (e) {
       console.warn(`Verify failed: ${e}`);
