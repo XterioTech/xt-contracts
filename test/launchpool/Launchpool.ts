@@ -129,6 +129,7 @@ describe("Launchpool", function () {
         expect(await stakingToken.balanceOf(launchpool)).to.equal("0");
         await expect(launchpool.getReward("5000000000000000000")).to.be.revertedWith("Launchpool: it's not get reward time yet");
         await launchpool.updateGetRewardTime(startTime);
+        await expect(launchpool.getReward("0")).to.be.revertedWith("Launchpool: can't get reward 0");
         await launchpool.connect(alice).getReward("5000000000000000000");
         expect(await launchpool.earned(alice)).to.equal("0");
         expect(await launchpool.userRewardPaid(alice)).to.equal("5000000000000000000");
@@ -136,6 +137,10 @@ describe("Launchpool", function () {
 
         expect(await rewardsToken.balanceOf(alice)).to.equal("5000000000000000000");
         expect(await rewardsToken.balanceOf(launchpool)).to.equal("95000000000000000000");
+
+        // 结束
+        await time.increaseTo(BigInt(startTime) + BigInt(101));
+        await expect(launchpool.connect(alice).stake("2000000000000000000")).to.be.revertedWith("Launchpool: it's already finished");
     });
 
     it("Alice and bob stake", async function () {
