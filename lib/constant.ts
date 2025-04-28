@@ -8,6 +8,7 @@ export enum ContractOrAddrName {
   SafeManager = "SafeManager",
   OnchainIAP = "OnchainIAP",
   XterStaking = "XterStaking",
+  XterToken= "XterToken",
 }
 
 export const tokenGatewayAddressMap: NetworkAddressMap = {
@@ -91,6 +92,15 @@ export const xterStakingAddressMap: NetworkAddressMap = {
   bscTestnet: "0xE1CBED88b5cC8b7064A6FB79A7C0144055f067Af",
 };
 
+export const xterAddressMap: NetworkAddressMap = {
+  xterio: "0xefd4bC9afD210517803f293ABABd701CaeeCdfd0",
+  bsc: "0x103071Da56e7cD95b415320760D6a0dDC4DA1ca5",
+  xterioTestnet: "0x579B9F7967215af340Eb7e5c27EDaFcD6edc649f",
+  bscTestnet: "0x347A9071B31eaAdb599F28c1C2540c0651F14CB3",
+  opbnbTestnet: "0x65d827Ae2834b238a686Cf3E383670Cb7cFA8f3B",
+  sepolia: "0xbC271fa96e0B315e3DF9512b8E88739B5552023D"
+}
+
 const hyperMap = {
   [ContractOrAddrName.TokenGateway]: tokenGatewayAddressMap,
   [ContractOrAddrName.MarketplaceV2]: marketplaceV2AddressMap,
@@ -98,6 +108,7 @@ const hyperMap = {
   [ContractOrAddrName.SafeManager]: safeManagerAddressMap,
   [ContractOrAddrName.OnchainIAP]: onchainIAPAddressMap,
   [ContractOrAddrName.XterStaking]: xterStakingAddressMap,
+  [ContractOrAddrName.XterToken]: xterAddressMap,
 };
 
 // helper functions

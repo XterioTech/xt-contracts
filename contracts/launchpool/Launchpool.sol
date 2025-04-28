@@ -137,6 +137,10 @@ contract Launchpool is ReentrancyGuard, Ownable {
             block.timestamp >= startTime,
             "Launchpool: haven't started yet"
         );
+        require(
+            block.timestamp <= finishTime,
+            "Launchpool: it's already finished"
+        );
         require(_amount > 0, "Launchpool: can't stake 0");
 
         totalStakeAmount += _amount;
@@ -191,6 +195,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
             block.timestamp >= getRewardTime,
             "Launchpool: it's not get reward time yet"
         );
+        require(_amount > 0, "Launchpool: can't get reward 0");
 
         uint256 reward = userRewardDebt[msg.sender];
         require(reward >= _amount, "Launchpool: insufficient reward");
