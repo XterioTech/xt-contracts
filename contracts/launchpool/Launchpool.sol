@@ -255,6 +255,11 @@ contract Launchpool is ReentrancyGuard, Ownable {
         address _recipient,
         uint256 _tokenAmount
     ) external onlyOwner {
+        require(
+            _tokenAddress != address(stakeToken),
+            "Launchpool: can't withdraw stake token"
+        );
+
         IERC20(_tokenAddress).transfer(_recipient, _tokenAmount);
 
         emit XPoolWithdrawERC20Token(_tokenAddress, _recipient, _tokenAmount);
