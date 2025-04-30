@@ -4,8 +4,11 @@ pragma solidity ^0.8.20;
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract Launchpool is ReentrancyGuard, Ownable {
+    using SafeERC20 for IERC20;
+
     IERC20 public immutable stakeToken;
     IERC20 public immutable rewardToken;
 
@@ -154,7 +157,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
             userStakeAmount[msg.sender] <= userStakeLimit,
             "Launchpool: exceed user stake limit"
         );
-        stakeToken.transferFrom(msg.sender, address(this), _amount);
+        stakeToken.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit XPoolStake(msg.sender, _amount);
     }
@@ -174,7 +177,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
 
         totalStakeAmount -= _amount;
         userStakeAmount[msg.sender] -= _amount;
-        stakeToken.transfer(msg.sender, _amount);
+        stakeToken.safeTransfer(msg.sender, _amount);
 
         emit XPoolWithdraw(msg.sender, _amount);
     }
@@ -204,9 +207,9 @@ contract Launchpool is ReentrancyGuard, Ownable {
         userRewardPaid[msg.sender] += _amount;
 
         if (vaultAddress == address(0)) {
-            rewardToken.transfer(msg.sender, _amount);
+            rewardToken.safeTransfer(msg.sender, _amount);
         } else {
-            rewardToken.transferFrom(vaultAddress, msg.sender, _amount);
+            rewardToken.safeTransferFrom(vaultAddress, msg.sender, _amount);
         }
 
         emit XPoolGetReward(msg.sender, _amount);
@@ -260,7 +263,7 @@ contract Launchpool is ReentrancyGuard, Ownable {
             "Launchpool: can't withdraw stake token"
         );
 
-        IERC20(_tokenAddress).transfer(_recipient, _tokenAmount);
+        IERC20(_tokenAddress).safeTransfer(_recipient, _tokenAmount);
 
         emit XPoolWithdrawERC20Token(_tokenAddress, _recipient, _tokenAmount);
     }
